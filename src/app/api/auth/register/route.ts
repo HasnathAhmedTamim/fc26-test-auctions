@@ -1,0 +1,47 @@
+import { NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
+import { getDb } from "@/lib/mongodb";
+import { registerSchema } from "@/lib/validations";
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    const parsed = registerSchema.safeParse(body);
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues[0]?.message ?? "Invalid input" },
+        { status: 400 }
+      );
+    }
+
+    const db = await getDb();
+    const users = db.collection("users");
+
+    const existing = await users.findOne({ email: parsed.data.email });
+
+    if (existing) {
+      return NextResponse.json({ error: "User already exists" }, { status: 409 });
+    }
+
+    const passwordHash = await bcrypt.hash(parsed.data.password, 10);
+
+    const result = await users.insertOne({
+      name: parsed.data.name,
+      email: parsed.data.email,
+      passwordHash,
+      role: "manager",
+      createdAt: new Date(),
+    });
+
+    return NextResponse.json({
+      message: "User created successfully",
+      userId: result.insertedId.toString(),
+    });
+  } catch {
+    return NextResponse.json(
+      { error: "Something went wrong" },
+      { status: 500 }
+    );
+  }
+}
