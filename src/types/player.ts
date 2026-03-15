@@ -4,6 +4,7 @@ export type Player = {
   rating: number;
   position: string;
   club: string;
+  league?: string;
   nation: string;
   price: number;
   pace: number;
@@ -13,4 +14,11 @@ export type Player = {
   defending: number;
   physical: number;
   image: string;
+  age?: number;
+  preferredFoot?: "Left" | "Right";
+  height?: string;
+  weight?: string;
+  playstyles?: Array<{ name: string; description: string; plus?: boolean }>;
+  attributes?: Record<string, number>;
+  edition?: string;
 };

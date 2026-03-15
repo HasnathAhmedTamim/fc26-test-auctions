@@ -171,22 +171,31 @@ export function AuctionPlayerDetails({ player }: Props) {
 
   return (
     <div className="space-y-5">
-      <section className="overflow-hidden rounded-3xl border border-emerald-500/20 bg-linear-to-b from-slate-900 via-slate-950 to-black">
-        <div className="relative h-48 w-full">
-          <Image src={player.image} alt={player.name} fill className="object-cover opacity-75" />
-          <div className="absolute inset-0 bg-linear-to-t from-black via-black/30 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 p-5">
-            <div className="flex items-end justify-between gap-4">
-              <div>
-                <h2 className="text-3xl font-black leading-tight text-white">{player.name}</h2>
-                <p className="mt-1 text-sm text-slate-300">
-                  {player.club} | {league} | {player.nation}
-                </p>
-              </div>
-              <div className="rounded-2xl border border-emerald-400/40 bg-emerald-400/15 px-3 py-2 text-right">
-                <p className="text-xs font-bold tracking-[0.2em] text-emerald-300">OVR</p>
+      <section className="overflow-hidden rounded-3xl border border-emerald-500/20 bg-linear-to-br from-slate-900 via-slate-950 to-black">
+        <div className="flex items-center gap-5 p-5">
+          {/* FC Card image displayed at proper aspect ratio */}
+          <div className="relative h-44 w-32 shrink-0 overflow-hidden rounded-2xl shadow-2xl shadow-black/80">
+            <Image
+              src={player.cardImage || player.image}
+              alt={player.name}
+              fill
+              className="object-contain"
+              sizes="128px"
+            />
+          </div>
+          {/* Player info */}
+          <div className="min-w-0 flex-1">
+            <h2 className="truncate text-2xl font-black leading-tight text-white">{player.name}</h2>
+            <p className="mt-1 text-sm text-slate-400">{player.club}</p>
+            <p className="text-sm text-slate-500">{league} · {player.nation}</p>
+            <div className="mt-4 flex items-center gap-3">
+              <div className="rounded-2xl border border-emerald-400/40 bg-emerald-400/10 px-4 py-2 text-center">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">OVR</p>
                 <p className="text-3xl font-black text-emerald-200">{player.rating}</p>
-                <p className="text-sm font-bold text-slate-200">{player.position}</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-center">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">POS</p>
+                <p className="text-xl font-black text-white">{player.position}</p>
               </div>
             </div>
           </div>

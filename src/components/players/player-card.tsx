@@ -3,6 +3,8 @@ import Link from "next/link";
 import { Player } from "@/types/player";
 
 export function PlayerCard({ player }: { player: Player }) {
+  const imageSrc = player.image?.trim() ? player.image : "/player-placeholder.svg";
+
   return (
     <Link
       href={`/players/${player.id}`}
@@ -10,7 +12,7 @@ export function PlayerCard({ player }: { player: Player }) {
     >
       <div className="relative h-60 w-full overflow-hidden">
         <Image
-          src={player.image}
+          src={imageSrc}
           alt={player.name}
           fill
           className="object-cover transition duration-500 group-hover:scale-105"

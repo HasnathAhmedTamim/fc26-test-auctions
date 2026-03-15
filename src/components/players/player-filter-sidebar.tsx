@@ -5,9 +5,27 @@ type Props = {
   setMinRating: (v: string) => void;
   maxPrice: string;
   setMaxPrice: (v: string) => void;
+  positions?: string[];
 };
 
-const POSITIONS = ["All", "ST", "CF", "LW", "RW", "CAM", "CM", "CDM", "LB", "RB", "CB", "GK"];
+const DEFAULT_POSITIONS = [
+  "All",
+  "ST",
+  "CF",
+  "LW",
+  "RW",
+  "LM",
+  "RM",
+  "CAM",
+  "CM",
+  "CDM",
+  "LWB",
+  "RWB",
+  "LB",
+  "RB",
+  "CB",
+  "GK",
+];
 
 export function PlayerFilterSidebar({
   position,
@@ -16,8 +34,10 @@ export function PlayerFilterSidebar({
   setMinRating,
   maxPrice,
   setMaxPrice,
+  positions,
 }: Props) {
   const hasFilters = position !== "All" || minRating !== "" || maxPrice !== "";
+  const options = positions && positions.length > 0 ? positions : DEFAULT_POSITIONS;
 
   return (
     <aside className="rounded-3xl border border-white/10 bg-white/5 p-5">
@@ -46,7 +66,7 @@ export function PlayerFilterSidebar({
             onChange={(e) => setPosition(e.target.value)}
             className="w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-sm outline-none"
           >
-            {POSITIONS.map((p) => (
+            {options.map((p) => (
               <option key={p}>{p}</option>
             ))}
           </select>

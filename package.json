@@ -6,7 +6,9 @@
     "dev": "node server.mjs",
     "build": "next build",
     "start": "NODE_ENV=production node server.mjs",
-    "lint": "eslint"
+    "lint": "eslint",
+    "import:players": "node -r dotenv/config scripts/import-fc-players.mjs",
+    "players:version": "node -r dotenv/config scripts/set-active-edition.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",

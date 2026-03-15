@@ -1,0 +1,3602 @@
+[
+  {
+    "firstName": "Kylian",
+    "lastName": "Mbappé",
+    "fullName": "Kylian Mbappé",
+    "position": "ST",
+    "overall": 91,
+    "basePrice": 120,
+    "slug": "kylian-mbappe"
+  },
+  {
+    "firstName": "Rodrigo",
+    "lastName": "Hernández Cascante",
+    "fullName": "Rodrigo Hernández Cascante",
+    "position": "CDM",
+    "overall": 91,
+    "basePrice": 120,
+    "slug": "rodrigo-hernandez-cascante"
+  },
+  {
+    "firstName": "Erling",
+    "lastName": "Haaland",
+    "fullName": "Erling Haaland",
+    "position": "ST",
+    "overall": 91,
+    "basePrice": 120,
+    "slug": "erling-haaland"
+  },
+  {
+    "firstName": "Jude",
+    "lastName": "Bellingham",
+    "fullName": "Jude Bellingham",
+    "position": "CAM",
+    "overall": 90,
+    "basePrice": 100,
+    "slug": "jude-bellingham"
+  },
+  {
+    "firstName": "Vinícius José",
+    "lastName": "de Oliveira Júnior",
+    "fullName": "Vinícius José de Oliveira Júnior",
+    "position": "LW",
+    "overall": 90,
+    "basePrice": 100,
+    "slug": "vinicius-jose-de-oliveira-junior"
+  },
+  {
+    "firstName": "Kevin",
+    "lastName": "De Bruyne",
+    "fullName": "Kevin De Bruyne",
+    "position": "CM",
+    "overall": 90,
+    "basePrice": 100,
+    "slug": "kevin-de-bruyne"
+  },
+  {
+    "firstName": "Harry",
+    "lastName": "Kane",
+    "fullName": "Harry Kane",
+    "position": "ST",
+    "overall": 90,
+    "basePrice": 100,
+    "slug": "harry-kane"
+  },
+  {
+    "firstName": "Martin",
+    "lastName": "Ødegaard",
+    "fullName": "Martin Ødegaard",
+    "position": "CM",
+    "overall": 89,
+    "basePrice": 85,
+    "slug": "martin-degaard"
+  },
+  {
+    "firstName": "Gianluigi",
+    "lastName": "Donnarumma",
+    "fullName": "Gianluigi Donnarumma",
+    "position": "GK",
+    "overall": 89,
+    "basePrice": 85,
+    "slug": "gianluigi-donnarumma"
+  },
+  {
+    "firstName": "Alisson",
+    "lastName": "Ramses Becker",
+    "fullName": "Alisson Ramses Becker",
+    "position": "GK",
+    "overall": 89,
+    "basePrice": 85,
+    "slug": "alisson-ramses-becker"
+  },
+  {
+    "firstName": "Thibaut",
+    "lastName": "Courtois",
+    "fullName": "Thibaut Courtois",
+    "position": "GK",
+    "overall": 89,
+    "basePrice": 85,
+    "slug": "thibaut-courtois"
+  },
+  {
+    "firstName": "Lautaro",
+    "lastName": "Martínez",
+    "fullName": "Lautaro Martínez",
+    "position": "ST",
+    "overall": 89,
+    "basePrice": 85,
+    "slug": "lautaro-martinez"
+  },
+  {
+    "firstName": "Virgil",
+    "lastName": "van Dijk",
+    "fullName": "Virgil van Dijk",
+    "position": "CB",
+    "overall": 89,
+    "basePrice": 85,
+    "slug": "virgil-van-dijk"
+  },
+  {
+    "firstName": "Marc-André",
+    "lastName": "ter Stegen",
+    "fullName": "Marc-André ter Stegen",
+    "position": "GK",
+    "overall": 89,
+    "basePrice": 85,
+    "slug": "marc-andre-ter-stegen"
+  },
+  {
+    "firstName": "Mohamed",
+    "lastName": "Salah",
+    "fullName": "Mohamed Salah",
+    "position": "RW",
+    "overall": 89,
+    "basePrice": 85,
+    "slug": "mohamed-salah"
+  },
+  {
+    "firstName": "Phil",
+    "lastName": "Foden",
+    "fullName": "Phil Foden",
+    "position": "RW",
+    "overall": 88,
+    "basePrice": 70,
+    "slug": "phil-foden"
+  },
+  {
+    "firstName": "Lionel",
+    "lastName": "Messi",
+    "fullName": "Lionel Messi",
+    "position": "RW",
+    "overall": 88,
+    "basePrice": 70,
+    "slug": "lionel-messi"
+  },
+  {
+    "firstName": "Antoine",
+    "lastName": "Griezmann",
+    "fullName": "Antoine Griezmann",
+    "position": "ST",
+    "overall": 88,
+    "basePrice": 70,
+    "slug": "antoine-griezmann"
+  },
+  {
+    "firstName": "Rúben Santos",
+    "lastName": "Gato Alves Dias",
+    "fullName": "Rúben Santos Gato Alves Dias",
+    "position": "CB",
+    "overall": 88,
+    "basePrice": 70,
+    "slug": "ruben-santos-gato-alves-dias"
+  },
+  {
+    "firstName": "Robert",
+    "lastName": "Lewandowski",
+    "fullName": "Robert Lewandowski",
+    "position": "ST",
+    "overall": 88,
+    "basePrice": 70,
+    "slug": "robert-lewandowski"
+  },
+  {
+    "firstName": "Federico",
+    "lastName": "Valverde",
+    "fullName": "Federico Valverde",
+    "position": "CM",
+    "overall": 88,
+    "basePrice": 70,
+    "slug": "federico-valverde"
+  },
+  {
+    "firstName": "Ederson",
+    "lastName": "Santana de Moraes",
+    "fullName": "Ederson Santana de Moraes",
+    "position": "GK",
+    "overall": 88,
+    "basePrice": 70,
+    "slug": "ederson-santana-de-moraes"
+  },
+  {
+    "firstName": "Bernardo Mota",
+    "lastName": "Carvalho e Silva",
+    "fullName": "Bernardo Mota Carvalho e Silva",
+    "position": "CM",
+    "overall": 88,
+    "basePrice": 70,
+    "slug": "bernardo-mota-carvalho-e-silva"
+  },
+  {
+    "firstName": "Jan",
+    "lastName": "Oblak",
+    "fullName": "Jan Oblak",
+    "position": "GK",
+    "overall": 88,
+    "basePrice": 70,
+    "slug": "jan-oblak"
+  },
+  {
+    "firstName": "Antonio",
+    "lastName": "Rüdiger",
+    "fullName": "Antonio Rüdiger",
+    "position": "CB",
+    "overall": 88,
+    "basePrice": 70,
+    "slug": "antonio-rudiger"
+  },
+  {
+    "firstName": "Florian",
+    "lastName": "Wirtz",
+    "fullName": "Florian Wirtz",
+    "position": "CAM",
+    "overall": 88,
+    "basePrice": 70,
+    "slug": "florian-wirtz"
+  },
+  {
+    "firstName": "Gregor",
+    "lastName": "Kobel",
+    "fullName": "Gregor Kobel",
+    "position": "GK",
+    "overall": 88,
+    "basePrice": 70,
+    "slug": "gregor-kobel"
+  },
+  {
+    "firstName": "William",
+    "lastName": "Saliba",
+    "fullName": "William Saliba",
+    "position": "CB",
+    "overall": 87,
+    "basePrice": 65,
+    "slug": "william-saliba"
+  },
+  {
+    "firstName": "Victor",
+    "lastName": "Osimhen",
+    "fullName": "Victor Osimhen",
+    "position": "ST",
+    "overall": 87,
+    "basePrice": 65,
+    "slug": "victor-osimhen"
+  },
+  {
+    "firstName": "Jamal",
+    "lastName": "Musiala",
+    "fullName": "Jamal Musiala",
+    "position": "CAM",
+    "overall": 87,
+    "basePrice": 65,
+    "slug": "jamal-musiala"
+  },
+  {
+    "firstName": "Bukayo",
+    "lastName": "Saka",
+    "fullName": "Bukayo Saka",
+    "position": "RW",
+    "overall": 87,
+    "basePrice": 65,
+    "slug": "bukayo-saka"
+  },
+  {
+    "firstName": "Paulo",
+    "lastName": "Dybala",
+    "fullName": "Paulo Dybala",
+    "position": "CAM",
+    "overall": 87,
+    "basePrice": 65,
+    "slug": "paulo-dybala"
+  },
+  {
+    "firstName": "Theo",
+    "lastName": "Hernández",
+    "fullName": "Theo Hernández",
+    "position": "LB",
+    "overall": 87,
+    "basePrice": 65,
+    "slug": "theo-hernandez"
+  },
+  {
+    "firstName": "Neymar",
+    "lastName": "da Silva Santos Jr.",
+    "fullName": "Neymar da Silva Santos Jr.",
+    "position": "LW",
+    "overall": 87,
+    "basePrice": 65,
+    "slug": "neymar-da-silva-santos-jr"
+  },
+  {
+    "firstName": "Declan",
+    "lastName": "Rice",
+    "fullName": "Declan Rice",
+    "position": "CDM",
+    "overall": 87,
+    "basePrice": 65,
+    "slug": "declan-rice"
+  },
+  {
+    "firstName": "Frenkie",
+    "lastName": "de Jong",
+    "fullName": "Frenkie de Jong",
+    "position": "CM",
+    "overall": 87,
+    "basePrice": 65,
+    "slug": "frenkie-de-jong"
+  },
+  {
+    "firstName": "Mike",
+    "lastName": "Maignan",
+    "fullName": "Mike Maignan",
+    "position": "GK",
+    "overall": 87,
+    "basePrice": 65,
+    "slug": "mike-maignan"
+  },
+  {
+    "firstName": "Bruno Miguel",
+    "lastName": "Borges Fernandes",
+    "fullName": "Bruno Miguel Borges Fernandes",
+    "position": "CAM",
+    "overall": 87,
+    "basePrice": 65,
+    "slug": "bruno-miguel-borges-fernandes"
+  },
+  {
+    "firstName": "Heung Min",
+    "lastName": "Son",
+    "fullName": "Heung Min Son",
+    "position": "ST",
+    "overall": 87,
+    "basePrice": 65,
+    "slug": "heung-min-son"
+  },
+  {
+    "firstName": "Marcos",
+    "lastName": "Aoás Corrêa",
+    "fullName": "Marcos Aoás Corrêa",
+    "position": "CB",
+    "overall": 87,
+    "basePrice": 65,
+    "slug": "marcos-aoas-correa"
+  },
+  {
+    "firstName": "Alessandro",
+    "lastName": "Bastoni",
+    "fullName": "Alessandro Bastoni",
+    "position": "CB",
+    "overall": 87,
+    "basePrice": 65,
+    "slug": "alessandro-bastoni"
+  },
+  {
+    "firstName": "İlkay",
+    "lastName": "Gündoğan",
+    "fullName": "İlkay Gündoğan",
+    "position": "CM",
+    "overall": 87,
+    "basePrice": 65,
+    "slug": "ilkay-gundogan"
+  },
+  {
+    "firstName": "Emiliano",
+    "lastName": "Martínez",
+    "fullName": "Emiliano Martínez",
+    "position": "GK",
+    "overall": 87,
+    "basePrice": 65,
+    "slug": "emiliano-martinez"
+  },
+  {
+    "firstName": "Nicolò",
+    "lastName": "Barella",
+    "fullName": "Nicolò Barella",
+    "position": "CM",
+    "overall": 87,
+    "basePrice": 65,
+    "slug": "nicolo-barella"
+  },
+  {
+    "firstName": "Yann",
+    "lastName": "Sommer",
+    "fullName": "Yann Sommer",
+    "position": "GK",
+    "overall": 87,
+    "basePrice": 65,
+    "slug": "yann-sommer"
+  },
+  {
+    "firstName": "C. Ronaldo",
+    "lastName": "dos Santos Aveiro",
+    "fullName": "C. Ronaldo dos Santos Aveiro",
+    "position": "ST",
+    "overall": 86,
+    "basePrice": 55,
+    "slug": "c-ronaldo-dos-santos-aveiro"
+  },
+  {
+    "firstName": "Gabriel",
+    "lastName": "dos S. Magalhães",
+    "fullName": "Gabriel dos S. Magalhães",
+    "position": "CB",
+    "overall": 86,
+    "basePrice": 55,
+    "slug": "gabriel-dos-s-magalhaes"
+  },
+  {
+    "firstName": "Granit",
+    "lastName": "Xhaka",
+    "fullName": "Granit Xhaka",
+    "position": "CDM",
+    "overall": 86,
+    "basePrice": 55,
+    "slug": "granit-xhaka"
+  },
+  {
+    "firstName": "Rodrygo",
+    "lastName": "Silva de Goes",
+    "fullName": "Rodrygo Silva de Goes",
+    "position": "RW",
+    "overall": 86,
+    "basePrice": 55,
+    "slug": "rodrygo-silva-de-goes"
+  },
+  {
+    "firstName": "João Pedro",
+    "lastName": "Cavaco Cancelo",
+    "fullName": "João Pedro Cavaco Cancelo",
+    "position": "LB",
+    "overall": 86,
+    "basePrice": 55,
+    "slug": "joao-pedro-cavaco-cancelo"
+  },
+  {
+    "firstName": "Rafael",
+    "lastName": "da Conceição Leão",
+    "fullName": "Rafael da Conceição Leão",
+    "position": "LW",
+    "overall": 86,
+    "basePrice": 55,
+    "slug": "rafael-da-conceicao-leao"
+  },
+  {
+    "firstName": "Alejandro",
+    "lastName": "Grimaldo García",
+    "fullName": "Alejandro Grimaldo García",
+    "position": "LM",
+    "overall": 86,
+    "basePrice": 55,
+    "slug": "alejandro-grimaldo-garcia"
+  },
+  {
+    "firstName": "Luka",
+    "lastName": "Modrić",
+    "fullName": "Luka Modrić",
+    "position": "CM",
+    "overall": 86,
+    "basePrice": 55,
+    "slug": "luka-modric"
+  },
+  {
+    "firstName": "Alexis",
+    "lastName": "Mac Allister",
+    "fullName": "Alexis Mac Allister",
+    "position": "CM",
+    "overall": 86,
+    "basePrice": 55,
+    "slug": "alexis-mac-allister"
+  },
+  {
+    "firstName": "Daniel",
+    "lastName": "Carvajal Ramos",
+    "fullName": "Daniel Carvajal Ramos",
+    "position": "RB",
+    "overall": 86,
+    "basePrice": 55,
+    "slug": "daniel-carvajal-ramos"
+  },
+  {
+    "firstName": "Ousmane",
+    "lastName": "Dembélé",
+    "fullName": "Ousmane Dembélé",
+    "position": "RW",
+    "overall": 86,
+    "basePrice": 55,
+    "slug": "ousmane-dembele"
+  },
+  {
+    "firstName": "Trent",
+    "lastName": "Alexander-Arnold",
+    "fullName": "Trent Alexander-Arnold",
+    "position": "RB",
+    "overall": 86,
+    "basePrice": 55,
+    "slug": "trent-alexander-arnold"
+  },
+  {
+    "firstName": "Pedro",
+    "lastName": "González López",
+    "fullName": "Pedro González López",
+    "position": "CM",
+    "overall": 86,
+    "basePrice": 55,
+    "slug": "pedro-gonzalez-lopez"
+  },
+  {
+    "firstName": "Jonathan",
+    "lastName": "Tah",
+    "fullName": "Jonathan Tah",
+    "position": "CB",
+    "overall": 86,
+    "basePrice": 55,
+    "slug": "jonathan-tah"
+  },
+  {
+    "firstName": "Karim",
+    "lastName": "Benzema",
+    "fullName": "Karim Benzema",
+    "position": "ST",
+    "overall": 86,
+    "basePrice": 55,
+    "slug": "karim-benzema"
+  },
+  {
+    "firstName": "Gleison Bremer",
+    "lastName": "Silva Nascimento",
+    "fullName": "Gleison Bremer Silva Nascimento",
+    "position": "CB",
+    "overall": 86,
+    "basePrice": 55,
+    "slug": "gleison-bremer-silva-nascimento"
+  },
+  {
+    "firstName": "Joshua",
+    "lastName": "Kimmich",
+    "fullName": "Joshua Kimmich",
+    "position": "RB",
+    "overall": 86,
+    "basePrice": 55,
+    "slug": "joshua-kimmich"
+  },
+  {
+    "firstName": "Unai",
+    "lastName": "Simón Mendibil",
+    "fullName": "Unai Simón Mendibil",
+    "position": "GK",
+    "overall": 86,
+    "basePrice": 55,
+    "slug": "unai-simon-mendibil"
+  },
+  {
+    "firstName": "Manuel",
+    "lastName": "Neuer",
+    "fullName": "Manuel Neuer",
+    "position": "GK",
+    "overall": 86,
+    "basePrice": 55,
+    "slug": "manuel-neuer"
+  },
+  {
+    "firstName": "Hakan",
+    "lastName": "Çalhanoğlu",
+    "fullName": "Hakan Çalhanoğlu",
+    "position": "CDM",
+    "overall": 86,
+    "basePrice": 55,
+    "slug": "hakan-calhanoglu"
+  },
+  {
+    "firstName": "Khvicha",
+    "lastName": "Kvaratskhelia",
+    "fullName": "Khvicha Kvaratskhelia",
+    "position": "LW",
+    "overall": 85,
+    "basePrice": 50,
+    "slug": "khvicha-kvaratskhelia"
+  },
+  {
+    "firstName": "David",
+    "lastName": "Alaba",
+    "fullName": "David Alaba",
+    "position": "CB",
+    "overall": 85,
+    "basePrice": 50,
+    "slug": "david-alaba"
+  },
+  {
+    "firstName": "Ronald",
+    "lastName": "Araujo",
+    "fullName": "Ronald Araujo",
+    "position": "CB",
+    "overall": 85,
+    "basePrice": 50,
+    "slug": "ronald-araujo"
+  },
+  {
+    "firstName": "Julian",
+    "lastName": "Brandt",
+    "fullName": "Julian Brandt",
+    "position": "CAM",
+    "overall": 85,
+    "basePrice": 50,
+    "slug": "julian-brandt"
+  },
+  {
+    "firstName": "Éder",
+    "lastName": "Gabriel Militão",
+    "fullName": "Éder Gabriel Militão",
+    "position": "CB",
+    "overall": 85,
+    "basePrice": 50,
+    "slug": "eder-gabriel-militao"
+  },
+  {
+    "firstName": "Bruno",
+    "lastName": "Guimarães Moura",
+    "fullName": "Bruno Guimarães Moura",
+    "position": "CDM",
+    "overall": 85,
+    "basePrice": 50,
+    "slug": "bruno-guimaraes-moura"
+  },
+  {
+    "firstName": "Alexander",
+    "lastName": "Isak",
+    "fullName": "Alexander Isak",
+    "position": "ST",
+    "overall": 85,
+    "basePrice": 50,
+    "slug": "alexander-isak"
+  },
+  {
+    "firstName": "N'Golo",
+    "lastName": "Kanté",
+    "fullName": "N'Golo Kanté",
+    "position": "CDM",
+    "overall": 85,
+    "basePrice": 50,
+    "slug": "n-golo-kante"
+  },
+  {
+    "firstName": "Jules",
+    "lastName": "Koundé",
+    "fullName": "Jules Koundé",
+    "position": "RB",
+    "overall": 85,
+    "basePrice": 50,
+    "slug": "jules-kounde"
+  },
+  {
+    "firstName": "Vítor",
+    "lastName": "Machado Ferreira",
+    "fullName": "Vítor Machado Ferreira",
+    "position": "CM",
+    "overall": 85,
+    "basePrice": 50,
+    "slug": "vitor-machado-ferreira"
+  },
+  {
+    "firstName": "James",
+    "lastName": "Maddison",
+    "fullName": "James Maddison",
+    "position": "CAM",
+    "overall": 85,
+    "basePrice": 50,
+    "slug": "james-maddison"
+  },
+  {
+    "firstName": "Riyad",
+    "lastName": "Mahrez",
+    "fullName": "Riyad Mahrez",
+    "position": "RM",
+    "overall": 85,
+    "basePrice": 50,
+    "slug": "riyad-mahrez"
+  },
+  {
+    "firstName": "Giorgi",
+    "lastName": "Mamardashvili",
+    "fullName": "Giorgi Mamardashvili",
+    "position": "GK",
+    "overall": 85,
+    "basePrice": 50,
+    "slug": "giorgi-mamardashvili"
+  },
+  {
+    "firstName": "Mikel",
+    "lastName": "Merino Zazón",
+    "fullName": "Mikel Merino Zazón",
+    "position": "CM",
+    "overall": 85,
+    "basePrice": 50,
+    "slug": "mikel-merino-zazon"
+  },
+  {
+    "firstName": "Sergej",
+    "lastName": "Milinković-Savić",
+    "fullName": "Sergej Milinković-Savić",
+    "position": "CM",
+    "overall": 85,
+    "basePrice": 50,
+    "slug": "sergej-milinkovic-savic"
+  },
+  {
+    "firstName": "Loïs",
+    "lastName": "Openda",
+    "fullName": "Loïs Openda",
+    "position": "ST",
+    "overall": 85,
+    "basePrice": 50,
+    "slug": "lois-openda"
+  },
+  {
+    "firstName": "João Maria",
+    "lastName": "Palhinha Gonçalves",
+    "fullName": "João Maria Palhinha Gonçalves",
+    "position": "CDM",
+    "overall": 85,
+    "basePrice": 50,
+    "slug": "joao-maria-palhinha-goncalves"
+  },
+  {
+    "firstName": "Cole",
+    "lastName": "Palmer",
+    "fullName": "Cole Palmer",
+    "position": "RM",
+    "overall": 85,
+    "basePrice": 50,
+    "slug": "cole-palmer"
+  },
+  {
+    "firstName": "Andrew",
+    "lastName": "Robertson",
+    "fullName": "Andrew Robertson",
+    "position": "LB",
+    "overall": 85,
+    "basePrice": 50,
+    "slug": "andrew-robertson"
+  },
+  {
+    "firstName": "Leroy",
+    "lastName": "Sané",
+    "fullName": "Leroy Sané",
+    "position": "RM",
+    "overall": 85,
+    "basePrice": 50,
+    "slug": "leroy-sane"
+  },
+  {
+    "firstName": "Nico",
+    "lastName": "Schlotterbeck",
+    "fullName": "Nico Schlotterbeck",
+    "position": "CB",
+    "overall": 85,
+    "basePrice": 50,
+    "slug": "nico-schlotterbeck"
+  },
+  {
+    "firstName": "John",
+    "lastName": "Stones",
+    "fullName": "John Stones",
+    "position": "CB",
+    "overall": 85,
+    "basePrice": 50,
+    "slug": "john-stones"
+  },
+  {
+    "firstName": "Aurélien",
+    "lastName": "Tchouaméni",
+    "fullName": "Aurélien Tchouaméni",
+    "position": "CDM",
+    "overall": 85,
+    "basePrice": 50,
+    "slug": "aurelien-tchouameni"
+  },
+  {
+    "firstName": "Diogo José",
+    "lastName": "Teixeira da Silva",
+    "fullName": "Diogo José Teixeira da Silva",
+    "position": "ST",
+    "overall": 85,
+    "basePrice": 50,
+    "slug": "diogo-jose-teixeira-da-silva"
+  },
+  {
+    "firstName": "Sandro",
+    "lastName": "Tonali",
+    "fullName": "Sandro Tonali",
+    "position": "CDM",
+    "overall": 85,
+    "basePrice": 50,
+    "slug": "sandro-tonali"
+  },
+  {
+    "firstName": "Ollie",
+    "lastName": "Watkins",
+    "fullName": "Ollie Watkins",
+    "position": "ST",
+    "overall": 85,
+    "basePrice": 50,
+    "slug": "ollie-watkins"
+  },
+  {
+    "firstName": "Nicholas",
+    "lastName": "Williams Arthuer",
+    "fullName": "Nicholas Williams Arthuer",
+    "position": "LM",
+    "overall": 85,
+    "basePrice": 50,
+    "slug": "nicholas-williams-arthuer"
+  },
+  {
+    "firstName": "Francesco",
+    "lastName": "Acerbi",
+    "fullName": "Francesco Acerbi",
+    "position": "CB",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "francesco-acerbi"
+  },
+  {
+    "firstName": "Manuel",
+    "lastName": "Akanji",
+    "fullName": "Manuel Akanji",
+    "position": "CB",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "manuel-akanji"
+  },
+  {
+    "firstName": "Nathan",
+    "lastName": "Aké",
+    "fullName": "Nathan Aké",
+    "position": "CB",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "nathan-ake"
+  },
+  {
+    "firstName": "Julián",
+    "lastName": "Álvarez",
+    "fullName": "Julián Álvarez",
+    "position": "ST",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "julian-alvarez"
+  },
+  {
+    "firstName": "Iago",
+    "lastName": "Aspas Juncal",
+    "fullName": "Iago Aspas Juncal",
+    "position": "ST",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "iago-aspas-juncal"
+  },
+  {
+    "firstName": "Yassine",
+    "lastName": "Bounou",
+    "fullName": "Yassine Bounou",
+    "position": "GK",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "yassine-bounou"
+  },
+  {
+    "firstName": "Federico",
+    "lastName": "Chiesa",
+    "fullName": "Federico Chiesa",
+    "position": "RW",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "federico-chiesa"
+  },
+  {
+    "firstName": "Kingsley",
+    "lastName": "Coman",
+    "fullName": "Kingsley Coman",
+    "position": "LM",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "kingsley-coman"
+  },
+  {
+    "firstName": "Rúben Diogo",
+    "lastName": "da Silva Neves",
+    "fullName": "Rúben Diogo da Silva Neves",
+    "position": "CDM",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "ruben-diogo-da-silva-neves"
+  },
+  {
+    "firstName": "Matthijs",
+    "lastName": "de Ligt",
+    "fullName": "Matthijs de Ligt",
+    "position": "CB",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "matthijs-de-ligt"
+  },
+  {
+    "firstName": "Rodrigo",
+    "lastName": "De Paul",
+    "fullName": "Rodrigo De Paul",
+    "position": "CM",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "rodrigo-de-paul"
+  },
+  {
+    "firstName": "Raphael",
+    "lastName": "Dias Belloli",
+    "fullName": "Raphael Dias Belloli",
+    "position": "RW",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "raphael-dias-belloli"
+  },
+  {
+    "firstName": "Luis",
+    "lastName": "Díaz",
+    "fullName": "Luis Díaz",
+    "position": "LW",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "luis-diaz"
+  },
+  {
+    "firstName": "Federico",
+    "lastName": "Dimarco",
+    "fullName": "Federico Dimarco",
+    "position": "LB",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "federico-dimarco"
+  },
+  {
+    "firstName": "Artem",
+    "lastName": "Dovbyk",
+    "fullName": "Artem Dovbyk",
+    "position": "ST",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "artem-dovbyk"
+  },
+  {
+    "firstName": "Jeremie",
+    "lastName": "Frimpong",
+    "fullName": "Jeremie Frimpong",
+    "position": "RM",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "jeremie-frimpong"
+  },
+  {
+    "firstName": "Aleix",
+    "lastName": "García Serrano",
+    "fullName": "Aleix García Serrano",
+    "position": "CM",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "aleix-garcia-serrano"
+  },
+  {
+    "firstName": "Jack",
+    "lastName": "Grealish",
+    "fullName": "Jack Grealish",
+    "position": "LW",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "jack-grealish"
+  },
+  {
+    "firstName": "Serhou",
+    "lastName": "Guirassy",
+    "fullName": "Serhou Guirassy",
+    "position": "ST",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "serhou-guirassy"
+  },
+  {
+    "firstName": "Viktor",
+    "lastName": "Gyökeres",
+    "fullName": "Viktor Gyökeres",
+    "position": "ST",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "viktor-gyokeres"
+  },
+  {
+    "firstName": "Achraf",
+    "lastName": "Hakimi",
+    "fullName": "Achraf Hakimi",
+    "position": "RB",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "achraf-hakimi"
+  },
+  {
+    "firstName": "Lukáš",
+    "lastName": "Hrádecký",
+    "fullName": "Lukáš Hrádecký",
+    "position": "GK",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "lukas-hradecky"
+  },
+  {
+    "firstName": "Kalidou",
+    "lastName": "Koulibaly",
+    "fullName": "Kalidou Koulibaly",
+    "position": "CB",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "kalidou-koulibaly"
+  },
+  {
+    "firstName": "Sadio",
+    "lastName": "Mané",
+    "fullName": "Sadio Mané",
+    "position": "LM",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "sadio-mane"
+  },
+  {
+    "firstName": "Lisandro",
+    "lastName": "Martínez",
+    "fullName": "Lisandro Martínez",
+    "position": "CB",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "lisandro-martinez"
+  },
+  {
+    "firstName": "Diogo",
+    "lastName": "Meireles Costa",
+    "fullName": "Diogo Meireles Costa",
+    "position": "GK",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "diogo-meireles-costa"
+  },
+  {
+    "firstName": "Ferland",
+    "lastName": "Mendy",
+    "fullName": "Ferland Mendy",
+    "position": "LB",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "ferland-mendy"
+  },
+  {
+    "firstName": "Christopher",
+    "lastName": "Nkunku",
+    "fullName": "Christopher Nkunku",
+    "position": "CAM",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "christopher-nkunku"
+  },
+  {
+    "firstName": "Daniel",
+    "lastName": "Olmo Carvajal",
+    "fullName": "Daniel Olmo Carvajal",
+    "position": "CAM",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "daniel-olmo-carvajal"
+  },
+  {
+    "firstName": "Exequiel",
+    "lastName": "Palacios",
+    "fullName": "Exequiel Palacios",
+    "position": "CM",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "exequiel-palacios"
+  },
+  {
+    "firstName": "Benjamin",
+    "lastName": "Pavard",
+    "fullName": "Benjamin Pavard",
+    "position": "CB",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "benjamin-pavard"
+  },
+  {
+    "firstName": "Alejandro",
+    "lastName": "Remiro Gargallo",
+    "fullName": "Alejandro Remiro Gargallo",
+    "position": "GK",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "alejandro-remiro-gargallo"
+  },
+  {
+    "firstName": "Cristian",
+    "lastName": "Romero",
+    "fullName": "Cristian Romero",
+    "position": "CB",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "cristian-romero"
+  },
+  {
+    "firstName": "Marcel",
+    "lastName": "Sabitzer",
+    "fullName": "Marcel Sabitzer",
+    "position": "CM",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "marcel-sabitzer"
+  },
+  {
+    "firstName": "Carlos Henrique",
+    "lastName": "Venancio Casimiro",
+    "fullName": "Carlos Henrique Venancio Casimiro",
+    "position": "CDM",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "carlos-henrique-venancio-casimiro"
+  },
+  {
+    "firstName": "Guglielmo",
+    "lastName": "Vicario",
+    "fullName": "Guglielmo Vicario",
+    "position": "GK",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "guglielmo-vicario"
+  },
+  {
+    "firstName": "Dušan",
+    "lastName": "Vlahović",
+    "fullName": "Dušan Vlahović",
+    "position": "ST",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "dusan-vlahovic"
+  },
+  {
+    "firstName": "Kyle",
+    "lastName": "Walker",
+    "fullName": "Kyle Walker",
+    "position": "RB",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "kyle-walker"
+  },
+  {
+    "firstName": "Benjamin",
+    "lastName": "White",
+    "fullName": "Benjamin White",
+    "position": "RB",
+    "overall": 84,
+    "basePrice": 40,
+    "slug": "benjamin-white"
+  },
+  {
+    "firstName": "Marcos",
+    "lastName": "Acuña",
+    "fullName": "Marcos Acuña",
+    "position": "LB",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "marcos-acuna"
+  },
+  {
+    "firstName": "Robert",
+    "lastName": "Andrich",
+    "fullName": "Robert Andrich",
+    "position": "CDM",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "robert-andrich"
+  },
+  {
+    "firstName": "Ismaël",
+    "lastName": "Bennacer",
+    "fullName": "Ismaël Bennacer",
+    "position": "CDM",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "ismael-bennacer"
+  },
+  {
+    "firstName": "Domenico",
+    "lastName": "Berardi",
+    "fullName": "Domenico Berardi",
+    "position": "RW",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "domenico-berardi"
+  },
+  {
+    "firstName": "Eduardo",
+    "lastName": "Camavinga",
+    "fullName": "Eduardo Camavinga",
+    "position": "CM",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "eduardo-camavinga"
+  },
+  {
+    "firstName": "Yannick",
+    "lastName": "Carrasco",
+    "fullName": "Yannick Carrasco",
+    "position": "LW",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "yannick-carrasco"
+  },
+  {
+    "firstName": "Andreas",
+    "lastName": "Christensen",
+    "fullName": "Andreas Christensen",
+    "position": "CB",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "andreas-christensen"
+  },
+  {
+    "firstName": "Stefan",
+    "lastName": "de Vrij",
+    "fullName": "Stefan de Vrij",
+    "position": "CB",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "stefan-de-vrij"
+  },
+  {
+    "firstName": "Ángel",
+    "lastName": "Di María",
+    "fullName": "Ángel Di María",
+    "position": "RM",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "angel-di-maria"
+  },
+  {
+    "firstName": "Moussa",
+    "lastName": "Diaby",
+    "fullName": "Moussa Diaby",
+    "position": "RM",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "moussa-diaby"
+  },
+  {
+    "firstName": "Youssef",
+    "lastName": "En-Nesyri",
+    "fullName": "Youssef En-Nesyri",
+    "position": "ST",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "youssef-en-nesyri"
+  },
+  {
+    "firstName": "Rafael A.",
+    "lastName": "Ferreira Silva",
+    "fullName": "Rafael A. Ferreira Silva",
+    "position": "CAM",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "rafael-a-ferreira-silva"
+  },
+  {
+    "firstName": "Cody",
+    "lastName": "Gakpo",
+    "fullName": "Cody Gakpo",
+    "position": "ST",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "cody-gakpo"
+  },
+  {
+    "firstName": "José María",
+    "lastName": "Giménez",
+    "fullName": "José María Giménez",
+    "position": "CB",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "jose-maria-gimenez"
+  },
+  {
+    "firstName": "Olivier",
+    "lastName": "Giroud",
+    "fullName": "Olivier Giroud",
+    "position": "ST",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "olivier-giroud"
+  },
+  {
+    "firstName": "Leon",
+    "lastName": "Goretzka",
+    "fullName": "Leon Goretzka",
+    "position": "CM",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "leon-goretzka"
+  },
+  {
+    "firstName": "Joško",
+    "lastName": "Gvardiol",
+    "fullName": "Joško Gvardiol",
+    "position": "LB",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "josko-gvardiol"
+  },
+  {
+    "firstName": "Kai",
+    "lastName": "Havertz",
+    "fullName": "Kai Havertz",
+    "position": "ST",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "kai-havertz"
+  },
+  {
+    "firstName": "Lucas",
+    "lastName": "Hernández",
+    "fullName": "Lucas Hernández",
+    "position": "CB",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "lucas-hernandez"
+  },
+  {
+    "firstName": "Mauro",
+    "lastName": "Icardi",
+    "fullName": "Mauro Icardi",
+    "position": "ST",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "mauro-icardi"
+  },
+  {
+    "firstName": "Min Jae",
+    "lastName": "Kim",
+    "fullName": "Min Jae Kim",
+    "position": "CB",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "min-jae-kim"
+  },
+  {
+    "firstName": "Ibrahima",
+    "lastName": "Konaté",
+    "fullName": "Ibrahima Konaté",
+    "position": "CB",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "ibrahima-konate"
+  },
+  {
+    "firstName": "Teun",
+    "lastName": "Koopmeiners",
+    "fullName": "Teun Koopmeiners",
+    "position": "CM",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "teun-koopmeiners"
+  },
+  {
+    "firstName": "Mateo",
+    "lastName": "Kovačić",
+    "fullName": "Mateo Kovačić",
+    "position": "CM",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "mateo-kovacic"
+  },
+  {
+    "firstName": "Konrad",
+    "lastName": "Laimer",
+    "fullName": "Konrad Laimer",
+    "position": "CDM",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "konrad-laimer"
+  },
+  {
+    "firstName": "Aymeric",
+    "lastName": "Laporte",
+    "fullName": "Aymeric Laporte",
+    "position": "CB",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "aymeric-laporte"
+  },
+  {
+    "firstName": "Robin",
+    "lastName": "Le Normand",
+    "fullName": "Robin Le Normand",
+    "position": "CB",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "robin-le-normand"
+  },
+  {
+    "firstName": "Marcos",
+    "lastName": "Llorente Moreno",
+    "fullName": "Marcos Llorente Moreno",
+    "position": "RM",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "marcos-llorente-moreno"
+  },
+  {
+    "firstName": "Manuel",
+    "lastName": "Locatelli",
+    "fullName": "Manuel Locatelli",
+    "position": "CDM",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "manuel-locatelli"
+  },
+  {
+    "firstName": "Donyell",
+    "lastName": "Malen",
+    "fullName": "Donyell Malen",
+    "position": "RM",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "donyell-malen"
+  },
+  {
+    "firstName": "Gabriel Teodoro",
+    "lastName": "Martinelli Silva",
+    "fullName": "Gabriel Teodoro Martinelli Silva",
+    "position": "LW",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "gabriel-teodoro-martinelli-silva"
+  },
+  {
+    "firstName": "Henrikh",
+    "lastName": "Mkhitaryan",
+    "fullName": "Henrikh Mkhitaryan",
+    "position": "CM",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "henrikh-mkhitaryan"
+  },
+  {
+    "firstName": "Álvaro Borja",
+    "lastName": "Morata Martín",
+    "fullName": "Álvaro Borja Morata Martín",
+    "position": "ST",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "alvaro-borja-morata-martin"
+  },
+  {
+    "firstName": "Gerard",
+    "lastName": "Moreno Balagueró",
+    "fullName": "Gerard Moreno Balagueró",
+    "position": "ST",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "gerard-moreno-balaguero"
+  },
+  {
+    "firstName": "André",
+    "lastName": "Onana",
+    "fullName": "André Onana",
+    "position": "GK",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "andre-onana"
+  },
+  {
+    "firstName": "Willi",
+    "lastName": "Orban",
+    "fullName": "Willi Orban",
+    "position": "CB",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "willi-orban"
+  },
+  {
+    "firstName": "Pablo Martín",
+    "lastName": "Páez Gavira",
+    "fullName": "Pablo Martín Páez Gavira",
+    "position": "CM",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "pablo-martin-paez-gavira"
+  },
+  {
+    "firstName": "Daniel",
+    "lastName": "Parejo Muñoz",
+    "fullName": "Daniel Parejo Muñoz",
+    "position": "CM",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "daniel-parejo-munoz"
+  },
+  {
+    "firstName": "Lorenzo",
+    "lastName": "Pellegrini",
+    "fullName": "Lorenzo Pellegrini",
+    "position": "CAM",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "lorenzo-pellegrini"
+  },
+  {
+    "firstName": "Pedro António",
+    "lastName": "Pereira Gonçalves",
+    "fullName": "Pedro António Pereira Gonçalves",
+    "position": "LW",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "pedro-antonio-pereira-goncalves"
+  },
+  {
+    "firstName": "Jordan",
+    "lastName": "Pickford",
+    "fullName": "Jordan Pickford",
+    "position": "GK",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "jordan-pickford"
+  },
+  {
+    "firstName": "Nick",
+    "lastName": "Pope",
+    "fullName": "Nick Pope",
+    "position": "GK",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "nick-pope"
+  },
+  {
+    "firstName": "Pedro Antonio",
+    "lastName": "Porro Sauceda",
+    "fullName": "Pedro Antonio Porro Sauceda",
+    "position": "RB",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "pedro-antonio-porro-sauceda"
+  },
+  {
+    "firstName": "Ivan",
+    "lastName": "Provedel",
+    "fullName": "Ivan Provedel",
+    "position": "GK",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "ivan-provedel"
+  },
+  {
+    "firstName": "Christian",
+    "lastName": "Pulisic",
+    "fullName": "Christian Pulisic",
+    "position": "RW",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "christian-pulisic"
+  },
+  {
+    "firstName": "David",
+    "lastName": "Raya Martin",
+    "fullName": "David Raya Martin",
+    "position": "GK",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "david-raya-martin"
+  },
+  {
+    "firstName": "Jorge",
+    "lastName": "Resurrección",
+    "fullName": "Jorge Resurrección",
+    "position": "CDM",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "jorge-resurreccion"
+  },
+  {
+    "firstName": "Guido",
+    "lastName": "Rodríguez",
+    "fullName": "Guido Rodríguez",
+    "position": "CDM",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "guido-rodriguez"
+  },
+  {
+    "firstName": "Alessio",
+    "lastName": "Romagnoli",
+    "fullName": "Alessio Romagnoli",
+    "position": "CB",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "alessio-romagnoli"
+  },
+  {
+    "firstName": "Xavi",
+    "lastName": "Simons",
+    "fullName": "Xavi Simons",
+    "position": "CAM",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "xavi-simons"
+  },
+  {
+    "firstName": "Douglas Luiz",
+    "lastName": "Soares de Paulo",
+    "fullName": "Douglas Luiz Soares de Paulo",
+    "position": "CM",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "douglas-luiz-soares-de-paulo"
+  },
+  {
+    "firstName": "Dušan",
+    "lastName": "Tadić",
+    "fullName": "Dušan Tadić",
+    "position": "LM",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "dusan-tadic"
+  },
+  {
+    "firstName": "Edmond",
+    "lastName": "Tapsoba",
+    "fullName": "Edmond Tapsoba",
+    "position": "CB",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "edmond-tapsoba"
+  },
+  {
+    "firstName": "Nuno Alexandre",
+    "lastName": "Tavares Mendes",
+    "fullName": "Nuno Alexandre Tavares Mendes",
+    "position": "LB",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "nuno-alexandre-tavares-mendes"
+  },
+  {
+    "firstName": "Marcus",
+    "lastName": "Thuram",
+    "fullName": "Marcus Thuram",
+    "position": "ST",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "marcus-thuram"
+  },
+  {
+    "firstName": "Fikayo",
+    "lastName": "Tomori",
+    "fullName": "Fikayo Tomori",
+    "position": "CB",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "fikayo-tomori"
+  },
+  {
+    "firstName": "Lucas",
+    "lastName": "Torreira",
+    "fullName": "Lucas Torreira",
+    "position": "CDM",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "lucas-torreira"
+  },
+  {
+    "firstName": "Kieran",
+    "lastName": "Trippier",
+    "fullName": "Kieran Trippier",
+    "position": "RB",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "kieran-trippier"
+  },
+  {
+    "firstName": "Leandro",
+    "lastName": "Trossard",
+    "fullName": "Leandro Trossard",
+    "position": "LW",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "leandro-trossard"
+  },
+  {
+    "firstName": "Viktor",
+    "lastName": "Tsygankov",
+    "fullName": "Viktor Tsygankov",
+    "position": "RM",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "viktor-tsygankov"
+  },
+  {
+    "firstName": "Mattia",
+    "lastName": "Zaccagni",
+    "fullName": "Mattia Zaccagni",
+    "position": "LW",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "mattia-zaccagni"
+  },
+  {
+    "firstName": "Duván",
+    "lastName": "Zapata",
+    "fullName": "Duván Zapata",
+    "position": "ST",
+    "overall": 83,
+    "basePrice": 30,
+    "slug": "duvan-zapata"
+  },
+  {
+    "firstName": "Francisco Román",
+    "lastName": "Alarcón Suárez",
+    "fullName": "Francisco Román Alarcón Suárez",
+    "position": "CAM",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "francisco-roman-alarcon-suarez"
+  },
+  {
+    "firstName": "Joelinton",
+    "lastName": "Apolinário de Lira",
+    "fullName": "Joelinton Apolinário de Lira",
+    "position": "CM",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "joelinton-apolinario-de-lira"
+  },
+  {
+    "firstName": "Eduardo Gabriel",
+    "lastName": "Aquino Cossa",
+    "fullName": "Eduardo Gabriel Aquino Cossa",
+    "position": "CAM",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "eduardo-gabriel-aquino-cossa"
+  },
+  {
+    "firstName": "Pierre-Emerick",
+    "lastName": "Aubameyang",
+    "fullName": "Pierre-Emerick Aubameyang",
+    "position": "ST",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "pierre-emerick-aubameyang"
+  },
+  {
+    "firstName": "Leon",
+    "lastName": "Bailey",
+    "fullName": "Leon Bailey",
+    "position": "RM",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "leon-bailey"
+  },
+  {
+    "firstName": "Oliver",
+    "lastName": "Baumann",
+    "fullName": "Oliver Baumann",
+    "position": "GK",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "oliver-baumann"
+  },
+  {
+    "firstName": "Victor",
+    "lastName": "Boniface",
+    "fullName": "Victor Boniface",
+    "position": "ST",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "victor-boniface"
+  },
+  {
+    "firstName": "Sven",
+    "lastName": "Botman",
+    "fullName": "Sven Botman",
+    "position": "CB",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "sven-botman"
+  },
+  {
+    "firstName": "Jarrod",
+    "lastName": "Bowen",
+    "fullName": "Jarrod Bowen",
+    "position": "RM",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "jarrod-bowen"
+  },
+  {
+    "firstName": "Marcelo",
+    "lastName": "Brozović",
+    "fullName": "Marcelo Brozović",
+    "position": "CDM",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "marcelo-brozovic"
+  },
+  {
+    "firstName": "Moisés",
+    "lastName": "Caicedo",
+    "fullName": "Moisés Caicedo",
+    "position": "CDM",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "moises-caicedo"
+  },
+  {
+    "firstName": "Emre",
+    "lastName": "Can",
+    "fullName": "Emre Can",
+    "position": "CDM",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "emre-can"
+  },
+  {
+    "firstName": "Marco",
+    "lastName": "Carnesecchi",
+    "fullName": "Marco Carnesecchi",
+    "position": "GK",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "marco-carnesecchi"
+  },
+  {
+    "firstName": "Koen",
+    "lastName": "Casteels",
+    "fullName": "Koen Casteels",
+    "position": "GK",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "koen-casteels"
+  },
+  {
+    "firstName": "Lucas Tolentino",
+    "lastName": "Coelho de Lima",
+    "fullName": "Lucas Tolentino Coelho de Lima",
+    "position": "LM",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "lucas-tolentino-coelho-de-lima"
+  },
+  {
+    "firstName": "Ángel",
+    "lastName": "Correa",
+    "fullName": "Ángel Correa",
+    "position": "ST",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "angel-correa"
+  },
+  {
+    "firstName": "Marc",
+    "lastName": "Cucurella Saseta",
+    "fullName": "Marc Cucurella Saseta",
+    "position": "LB",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "marc-cucurella-saseta"
+  },
+  {
+    "firstName": "Danilo Luiz",
+    "lastName": "da Silva",
+    "fullName": "Danilo Luiz da Silva",
+    "position": "CB",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "danilo-luiz-da-silva"
+  },
+  {
+    "firstName": "Otávio Edmilson",
+    "lastName": "da Silva Monteiro",
+    "fullName": "Otávio Edmilson da Silva Monteiro",
+    "position": "CAM",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "otavio-edmilson-da-silva-monteiro"
+  },
+  {
+    "firstName": "José Diogo",
+    "lastName": "Dalot Teixeira",
+    "fullName": "José Diogo Dalot Teixeira",
+    "position": "RB",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "jose-diogo-dalot-teixeira"
+  },
+  {
+    "firstName": "Sergi",
+    "lastName": "Darder Moll",
+    "fullName": "Sergi Darder Moll",
+    "position": "CM",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "sergi-darder-moll"
+  },
+  {
+    "firstName": "Alphonso",
+    "lastName": "Davies",
+    "fullName": "Alphonso Davies",
+    "position": "LB",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "alphonso-davies"
+  },
+  {
+    "firstName": "Giovanni",
+    "lastName": "Di Lorenzo",
+    "fullName": "Giovanni Di Lorenzo",
+    "position": "RB",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "giovanni-di-lorenzo"
+  },
+  {
+    "firstName": "Brahim",
+    "lastName": "Díaz",
+    "fullName": "Brahim Díaz",
+    "position": "CAM",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "brahim-diaz"
+  },
+  {
+    "firstName": "Denzel",
+    "lastName": "Dumfries",
+    "fullName": "Denzel Dumfries",
+    "position": "RB",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "denzel-dumfries"
+  },
+  {
+    "firstName": "Edin",
+    "lastName": "Džeko",
+    "fullName": "Edin Džeko",
+    "position": "ST",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "edin-dzeko"
+  },
+  {
+    "firstName": "Enzo",
+    "lastName": "Fernández",
+    "fullName": "Enzo Fernández",
+    "position": "CM",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "enzo-fernandez"
+  },
+  {
+    "firstName": "José Ignacio",
+    "lastName": "Fernández Iglesias",
+    "fullName": "José Ignacio Fernández Iglesias",
+    "position": "CB",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "jose-ignacio-fernandez-iglesias"
+  },
+  {
+    "firstName": "Gabriel",
+    "lastName": "Fernando de Jesus",
+    "fullName": "Gabriel Fernando de Jesus",
+    "position": "ST",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "gabriel-fernando-de-jesus"
+  },
+  {
+    "firstName": "Luiz Frello",
+    "lastName": "Filho Jorge",
+    "fullName": "Luiz Frello Filho Jorge",
+    "position": "CDM",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "luiz-frello-filho-jorge"
+  },
+  {
+    "firstName": "Pau",
+    "lastName": "Francisco Torres",
+    "fullName": "Pau Francisco Torres",
+    "position": "CB",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "pau-francisco-torres"
+  },
+  {
+    "firstName": "Niclas",
+    "lastName": "Füllkrug",
+    "fullName": "Niclas Füllkrug",
+    "position": "ST",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "niclas-fullkrug"
+  },
+  {
+    "firstName": "José Luís",
+    "lastName": "Gayà Peña",
+    "fullName": "José Luís Gayà Peña",
+    "position": "LB",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "jose-luis-gaya-pena"
+  },
+  {
+    "firstName": "Paulo",
+    "lastName": "Gazzaniga",
+    "fullName": "Paulo Gazzaniga",
+    "position": "GK",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "paulo-gazzaniga"
+  },
+  {
+    "firstName": "Matthias",
+    "lastName": "Ginter",
+    "fullName": "Matthias Ginter",
+    "position": "CB",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "matthias-ginter"
+  },
+  {
+    "firstName": "Serge",
+    "lastName": "Gnabry",
+    "fullName": "Serge Gnabry",
+    "position": "RM",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "serge-gnabry"
+  },
+  {
+    "firstName": "Anthony",
+    "lastName": "Gordon",
+    "fullName": "Anthony Gordon",
+    "position": "LW",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "anthony-gordon"
+  },
+  {
+    "firstName": "Raphaël",
+    "lastName": "Guerreiro",
+    "fullName": "Raphaël Guerreiro",
+    "position": "LB",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "raphael-guerreiro"
+  },
+  {
+    "firstName": "Péter",
+    "lastName": "Gulácsi",
+    "fullName": "Péter Gulácsi",
+    "position": "GK",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "peter-gulacsi"
+  },
+  {
+    "firstName": "Fábio",
+    "lastName": "Henrique Tavares",
+    "fullName": "Fábio Henrique Tavares",
+    "position": "CDM",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "fabio-henrique-tavares"
+  },
+  {
+    "firstName": "Yangel",
+    "lastName": "Herrera",
+    "fullName": "Yangel Herrera",
+    "position": "CDM",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "yangel-herrera"
+  },
+  {
+    "firstName": "Jonas",
+    "lastName": "Hofmann",
+    "fullName": "Jonas Hofmann",
+    "position": "CAM",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "jonas-hofmann"
+  },
+  {
+    "firstName": "Ciro",
+    "lastName": "Immobile",
+    "fullName": "Ciro Immobile",
+    "position": "ST",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "ciro-immobile"
+  },
+  {
+    "firstName": "Reece",
+    "lastName": "James",
+    "fullName": "Reece James",
+    "position": "RB",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "reece-james"
+  },
+  {
+    "firstName": "Boubacar",
+    "lastName": "Kamara",
+    "fullName": "Boubacar Kamara",
+    "position": "CDM",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "boubacar-kamara"
+  },
+  {
+    "firstName": "Franck Yannick",
+    "lastName": "Kessié",
+    "fullName": "Franck Yannick Kessié",
+    "position": "CDM",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "franck-yannick-kessie"
+  },
+  {
+    "firstName": "Randal",
+    "lastName": "Kolo Muani",
+    "fullName": "Randal Kolo Muani",
+    "position": "ST",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "randal-kolo-muani"
+  },
+  {
+    "firstName": "Filip",
+    "lastName": "Kostić",
+    "fullName": "Filip Kostić",
+    "position": "LM",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "filip-kostic"
+  },
+  {
+    "firstName": "Mohammed",
+    "lastName": "Kudus",
+    "fullName": "Mohammed Kudus",
+    "position": "RM",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "mohammed-kudus"
+  },
+  {
+    "firstName": "Dejan",
+    "lastName": "Kulusevski",
+    "fullName": "Dejan Kulusevski",
+    "position": "RM",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "dejan-kulusevski"
+  },
+  {
+    "firstName": "Alexandre",
+    "lastName": "Lacazette",
+    "fullName": "Alexandre Lacazette",
+    "position": "ST",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "alexandre-lacazette"
+  },
+  {
+    "firstName": "Jeremías Conan",
+    "lastName": "Ledesma",
+    "fullName": "Jeremías Conan Ledesma",
+    "position": "GK",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "jeremias-conan-ledesma"
+  },
+  {
+    "firstName": "Bernd",
+    "lastName": "Leno",
+    "fullName": "Bernd Leno",
+    "position": "GK",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "bernd-leno"
+  },
+  {
+    "firstName": "Stanislav",
+    "lastName": "Lobotka",
+    "fullName": "Stanislav Lobotka",
+    "position": "CM",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "stanislav-lobotka"
+  },
+  {
+    "firstName": "Ademola",
+    "lastName": "Lookman",
+    "fullName": "Ademola Lookman",
+    "position": "ST",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "ademola-lookman"
+  },
+  {
+    "firstName": "Romelu",
+    "lastName": "Lukaku",
+    "fullName": "Romelu Lukaku",
+    "position": "ST",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "romelu-lukaku"
+  },
+  {
+    "firstName": "Gianluca",
+    "lastName": "Mancini",
+    "fullName": "Gianluca Mancini",
+    "position": "CB",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "gianluca-mancini"
+  },
+  {
+    "firstName": "John",
+    "lastName": "McGinn",
+    "fullName": "John McGinn",
+    "position": "CM",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "john-mcginn"
+  },
+  {
+    "firstName": "Aleksandar",
+    "lastName": "Mitrović",
+    "fullName": "Aleksandar Mitrović",
+    "position": "ST",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "aleksandar-mitrovic"
+  },
+  {
+    "firstName": "Nahuel",
+    "lastName": "Molina",
+    "fullName": "Nahuel Molina",
+    "position": "RB",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "nahuel-molina"
+  },
+  {
+    "firstName": "Sávio",
+    "lastName": "Moreira de Oliveira",
+    "fullName": "Sávio Moreira de Oliveira",
+    "position": "LW",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "savio-moreira-de-oliveira"
+  },
+  {
+    "firstName": "Thomas",
+    "lastName": "Müller",
+    "fullName": "Thomas Müller",
+    "position": "CAM",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "thomas-muller"
+  },
+  {
+    "firstName": "Darwin",
+    "lastName": "Núñez",
+    "fullName": "Darwin Núñez",
+    "position": "ST",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "darwin-nunez"
+  },
+  {
+    "firstName": "Michael",
+    "lastName": "Olise",
+    "fullName": "Michael Olise",
+    "position": "RM",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "michael-olise"
+  },
+  {
+    "firstName": "Mikel",
+    "lastName": "Oyarzabal Ugarte",
+    "fullName": "Mikel Oyarzabal Ugarte",
+    "position": "ST",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "mikel-oyarzabal-ugarte"
+  },
+  {
+    "firstName": "Thomas",
+    "lastName": "Partey",
+    "fullName": "Thomas Partey",
+    "position": "CDM",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "thomas-partey"
+  },
+  {
+    "firstName": "Tijjani",
+    "lastName": "Reijnders",
+    "fullName": "Tijjani Reijnders",
+    "position": "CM",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "tijjani-reijnders"
+  },
+  {
+    "firstName": "Fabián",
+    "lastName": "Ruiz Peña",
+    "fullName": "Fabián Ruiz Peña",
+    "position": "CM",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "fabian-ruiz-pena"
+  },
+  {
+    "firstName": "Brice",
+    "lastName": "Samba",
+    "fullName": "Brice Samba",
+    "position": "GK",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "brice-samba"
+  },
+  {
+    "firstName": "Oihan",
+    "lastName": "Sancet Tirapu",
+    "fullName": "Oihan Sancet Tirapu",
+    "position": "CAM",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "oihan-sancet-tirapu"
+  },
+  {
+    "firstName": "Jadon",
+    "lastName": "Sancho",
+    "fullName": "Jadon Sancho",
+    "position": "LM",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "jadon-sancho"
+  },
+  {
+    "firstName": "Fabian",
+    "lastName": "Schär",
+    "fullName": "Fabian Schär",
+    "position": "CB",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "fabian-schar"
+  },
+  {
+    "firstName": "Patrik",
+    "lastName": "Schick",
+    "fullName": "Patrik Schick",
+    "position": "ST",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "patrik-schick"
+  },
+  {
+    "firstName": "Luke",
+    "lastName": "Shaw",
+    "fullName": "Luke Shaw",
+    "position": "LB",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "luke-shaw"
+  },
+  {
+    "firstName": "Malcom Filipe",
+    "lastName": "Silva de Oliveira",
+    "fullName": "Malcom Filipe Silva de Oliveira",
+    "position": "CAM",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "malcom-filipe-silva-de-oliveira"
+  },
+  {
+    "firstName": "Chris",
+    "lastName": "Smalling",
+    "fullName": "Chris Smalling",
+    "position": "CB",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "chris-smalling"
+  },
+  {
+    "firstName": "Alexander",
+    "lastName": "Sørloth",
+    "fullName": "Alexander Sørloth",
+    "position": "ST",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "alexander-srloth"
+  },
+  {
+    "firstName": "Anderson",
+    "lastName": "Souza Conceição",
+    "fullName": "Anderson Souza Conceição",
+    "position": "RM",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "anderson-souza-conceicao"
+  },
+  {
+    "firstName": "Luis",
+    "lastName": "Suárez",
+    "fullName": "Luis Suárez",
+    "position": "ST",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "luis-suarez"
+  },
+  {
+    "firstName": "Niklas",
+    "lastName": "Süle",
+    "fullName": "Niklas Süle",
+    "position": "CB",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "niklas-sule"
+  },
+  {
+    "firstName": "Kevin",
+    "lastName": "Trapp",
+    "fullName": "Kevin Trapp",
+    "position": "GK",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "kevin-trapp"
+  },
+  {
+    "firstName": "Destiny",
+    "lastName": "Udogie",
+    "fullName": "Destiny Udogie",
+    "position": "LB",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "destiny-udogie"
+  },
+  {
+    "firstName": "Dayot",
+    "lastName": "Upamecano",
+    "fullName": "Dayot Upamecano",
+    "position": "CB",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "dayot-upamecano"
+  },
+  {
+    "firstName": "Micky",
+    "lastName": "van de Ven",
+    "fullName": "Micky van de Ven",
+    "position": "CB",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "micky-van-de-ven"
+  },
+  {
+    "firstName": "Raphaël",
+    "lastName": "Varane",
+    "fullName": "Raphaël Varane",
+    "position": "CB",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "raphael-varane"
+  },
+  {
+    "firstName": "Iñaki",
+    "lastName": "Williams Arthuer",
+    "fullName": "Iñaki Williams Arthuer",
+    "position": "RM",
+    "overall": 82,
+    "basePrice": 20,
+    "slug": "inaki-williams-arthuer"
+  },
+  {
+    "firstName": "Luciano",
+    "lastName": "Acosta",
+    "fullName": "Luciano Acosta",
+    "position": "CAM",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "luciano-acosta"
+  },
+  {
+    "firstName": "Edson",
+    "lastName": "Álvarez",
+    "fullName": "Edson Álvarez",
+    "position": "CDM",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "edson-alvarez"
+  },
+  {
+    "firstName": "Yeray",
+    "lastName": "Álvarez López",
+    "fullName": "Yeray Álvarez López",
+    "position": "CB",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "yeray-alvarez-lopez"
+  },
+  {
+    "firstName": "Waldemar",
+    "lastName": "Anton",
+    "fullName": "Waldemar Anton",
+    "position": "CB",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "waldemar-anton"
+  },
+  {
+    "firstName": "Alphonse",
+    "lastName": "Areola",
+    "fullName": "Alphonse Areola",
+    "position": "GK",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "alphonse-areola"
+  },
+  {
+    "firstName": "Marco",
+    "lastName": "Asensio Willemsen",
+    "fullName": "Marco Asensio Willemsen",
+    "position": "RW",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "marco-asensio-willemsen"
+  },
+  {
+    "firstName": "Alejandro",
+    "lastName": "Balde Martínez",
+    "fullName": "Alejandro Balde Martínez",
+    "position": "LB",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "alejandro-balde-martinez"
+  },
+  {
+    "firstName": "Rodrigo",
+    "lastName": "Bentancur",
+    "fullName": "Rodrigo Bentancur",
+    "position": "CM",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "rodrigo-bentancur"
+  },
+  {
+    "firstName": "Alejandro",
+    "lastName": "Berenguer Remiro",
+    "fullName": "Alejandro Berenguer Remiro",
+    "position": "LM",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "alejandro-berenguer-remiro"
+  },
+  {
+    "firstName": "Sergio",
+    "lastName": "Busquets Burgos",
+    "fullName": "Sergio Busquets Burgos",
+    "position": "CDM",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "sergio-busquets-burgos"
+  },
+  {
+    "firstName": "Bryan",
+    "lastName": "Cristante",
+    "fullName": "Bryan Cristante",
+    "position": "CM",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "bryan-cristante"
+  },
+  {
+    "firstName": "Ricardo Jorge",
+    "lastName": "da Luz Horta",
+    "fullName": "Ricardo Jorge da Luz Horta",
+    "position": "CAM",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "ricardo-jorge-da-luz-horta"
+  },
+  {
+    "firstName": "Rui Tiago",
+    "lastName": "Dantas da Silva",
+    "fullName": "Rui Tiago Dantas da Silva",
+    "position": "GK",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "rui-tiago-dantas-da-silva"
+  },
+  {
+    "firstName": "Matteo",
+    "lastName": "Darmian",
+    "fullName": "Matteo Darmian",
+    "position": "RB",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "matteo-darmian"
+  },
+  {
+    "firstName": "Jonathan",
+    "lastName": "David",
+    "fullName": "Jonathan David",
+    "position": "ST",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "jonathan-david"
+  },
+  {
+    "firstName": "Richarlison",
+    "lastName": "de Andrade",
+    "fullName": "Richarlison de Andrade",
+    "position": "ST",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "richarlison-de-andrade"
+  },
+  {
+    "firstName": "Luuk",
+    "lastName": "de Jong",
+    "fullName": "Luuk de Jong",
+    "position": "ST",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "luuk-de-jong"
+  },
+  {
+    "firstName": "Frederico",
+    "lastName": "de Paula Santos",
+    "fullName": "Frederico de Paula Santos",
+    "position": "CDM",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "frederico-de-paula-santos"
+  },
+  {
+    "firstName": "Eberechi",
+    "lastName": "Eze",
+    "fullName": "Eberechi Eze",
+    "position": "CAM",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "eberechi-eze"
+  },
+  {
+    "firstName": "Youssouf",
+    "lastName": "Fofana",
+    "fullName": "Youssouf Fofana",
+    "position": "CDM",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "youssouf-fofana"
+  },
+  {
+    "firstName": "Davide",
+    "lastName": "Frattesi",
+    "fullName": "Davide Frattesi",
+    "position": "CM",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "davide-frattesi"
+  },
+  {
+    "firstName": "Remo",
+    "lastName": "Freuler",
+    "fullName": "Remo Freuler",
+    "position": "CDM",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "remo-freuler"
+  },
+  {
+    "firstName": "Conor",
+    "lastName": "Gallagher",
+    "fullName": "Conor Gallagher",
+    "position": "CM",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "conor-gallagher"
+  },
+  {
+    "firstName": "Alexandr",
+    "lastName": "Golovin",
+    "fullName": "Alexandr Golovin",
+    "position": "LM",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "alexandr-golovin"
+  },
+  {
+    "firstName": "Pascal",
+    "lastName": "Groß",
+    "fullName": "Pascal Groß",
+    "position": "CDM",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "pascal-gro"
+  },
+  {
+    "firstName": "Marc",
+    "lastName": "Guéhi",
+    "fullName": "Marc Guéhi",
+    "position": "CB",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "marc-guehi"
+  },
+  {
+    "firstName": "Dávid",
+    "lastName": "Hancko",
+    "fullName": "Dávid Hancko",
+    "position": "CB",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "david-hancko"
+  },
+  {
+    "firstName": "Benjamin",
+    "lastName": "Henrichs",
+    "fullName": "Benjamin Henrichs",
+    "position": "RB",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "benjamin-henrichs"
+  },
+  {
+    "firstName": "Piero",
+    "lastName": "Hincapié",
+    "fullName": "Piero Hincapié",
+    "position": "CB",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "piero-hincapie"
+  },
+  {
+    "firstName": "Ferdi",
+    "lastName": "Kadıoğlu",
+    "fullName": "Ferdi Kadıoğlu",
+    "position": "LB",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "ferdi-kadoglu"
+  },
+  {
+    "firstName": "Daichi",
+    "lastName": "Kamada",
+    "fullName": "Daichi Kamada",
+    "position": "CAM",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "daichi-kamada"
+  },
+  {
+    "firstName": "Presnel",
+    "lastName": "Kimpembe",
+    "fullName": "Presnel Kimpembe",
+    "position": "CB",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "presnel-kimpembe"
+  },
+  {
+    "firstName": "Orkun",
+    "lastName": "Kökçü",
+    "fullName": "Orkun Kökçü",
+    "position": "CM",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "orkun-kokcu"
+  },
+  {
+    "firstName": "Ezri",
+    "lastName": "Konsa",
+    "fullName": "Ezri Konsa",
+    "position": "CB",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "ezri-konsa"
+  },
+  {
+    "firstName": "Odilon",
+    "lastName": "Kossounou",
+    "fullName": "Odilon Kossounou",
+    "position": "CB",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "odilon-kossounou"
+  },
+  {
+    "firstName": "Andrej",
+    "lastName": "Kramarić",
+    "fullName": "Andrej Kramarić",
+    "position": "ST",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "andrej-kramaric"
+  },
+  {
+    "firstName": "Takefusa",
+    "lastName": "Kubo",
+    "fullName": "Takefusa Kubo",
+    "position": "RW",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "takefusa-kubo"
+  },
+  {
+    "firstName": "Ruben",
+    "lastName": "Loftus-Cheek",
+    "fullName": "Ruben Loftus-Cheek",
+    "position": "CM",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "ruben-loftus-cheek"
+  },
+  {
+    "firstName": "Andriy",
+    "lastName": "Lunin",
+    "fullName": "Andriy Lunin",
+    "position": "GK",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "andriy-lunin"
+  },
+  {
+    "firstName": "Iñigo",
+    "lastName": "Martínez Berridi",
+    "fullName": "Iñigo Martínez Berridi",
+    "position": "CB",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "inigo-martinez-berridi"
+  },
+  {
+    "firstName": "Noussair",
+    "lastName": "Mazraoui",
+    "fullName": "Noussair Mazraoui",
+    "position": "RB",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "noussair-mazraoui"
+  },
+  {
+    "firstName": "Brais",
+    "lastName": "Méndez Portela",
+    "fullName": "Brais Méndez Portela",
+    "position": "CM",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "brais-mendez-portela"
+  },
+  {
+    "firstName": "Alex",
+    "lastName": "Meret",
+    "fullName": "Alex Meret",
+    "position": "GK",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "alex-meret"
+  },
+  {
+    "firstName": "Arkadiusz",
+    "lastName": "Milik",
+    "fullName": "Arkadiusz Milik",
+    "position": "ST",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "arkadiusz-milik"
+  },
+  {
+    "firstName": "Kaoru",
+    "lastName": "Mitoma",
+    "fullName": "Kaoru Mitoma",
+    "position": "LM",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "kaoru-mitoma"
+  },
+  {
+    "firstName": "Fernando",
+    "lastName": "Muslera",
+    "fullName": "Fernando Muslera",
+    "position": "GK",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "fernando-muslera"
+  },
+  {
+    "firstName": "Riccardo",
+    "lastName": "Orsolini",
+    "fullName": "Riccardo Orsolini",
+    "position": "RM",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "riccardo-orsolini"
+  },
+  {
+    "firstName": "Stefan",
+    "lastName": "Ortega",
+    "fullName": "Stefan Ortega",
+    "position": "GK",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "stefan-ortega"
+  },
+  {
+    "firstName": "Nicolás",
+    "lastName": "Otamendi",
+    "fullName": "Nicolás Otamendi",
+    "position": "CB",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "nicolas-otamendi"
+  },
+  {
+    "firstName": "Isaac",
+    "lastName": "Palazón Camacho",
+    "fullName": "Isaac Palazón Camacho",
+    "position": "RM",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "isaac-palazon-camacho"
+  },
+  {
+    "firstName": "Aaron",
+    "lastName": "Ramsdale",
+    "fullName": "Aaron Ramsdale",
+    "position": "GK",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "aaron-ramsdale"
+  },
+  {
+    "firstName": "Marcus",
+    "lastName": "Rashford",
+    "fullName": "Marcus Rashford",
+    "position": "LM",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "marcus-rashford"
+  },
+  {
+    "firstName": "David",
+    "lastName": "Raum",
+    "fullName": "David Raum",
+    "position": "LB",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "david-raum"
+  },
+  {
+    "firstName": "Stefan",
+    "lastName": "Savić",
+    "fullName": "Stefan Savić",
+    "position": "CB",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "stefan-savic"
+  },
+  {
+    "firstName": "Xaver",
+    "lastName": "Schlager",
+    "fullName": "Xaver Schlager",
+    "position": "CDM",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "xaver-schlager"
+  },
+  {
+    "firstName": "Jerdy",
+    "lastName": "Schouten",
+    "fullName": "Jerdy Schouten",
+    "position": "CDM",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "jerdy-schouten"
+  },
+  {
+    "firstName": "Ellyes",
+    "lastName": "Skhiri",
+    "fullName": "Ellyes Skhiri",
+    "position": "CDM",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "ellyes-skhiri"
+  },
+  {
+    "firstName": "Milan",
+    "lastName": "Škriniar",
+    "fullName": "Milan Škriniar",
+    "position": "CB",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "milan-skriniar"
+  },
+  {
+    "firstName": "Dominic",
+    "lastName": "Solanke",
+    "fullName": "Dominic Solanke",
+    "position": "ST",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "dominic-solanke"
+  },
+  {
+    "firstName": "David",
+    "lastName": "Soria Solís",
+    "fullName": "David Soria Solís",
+    "position": "GK",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "david-soria-solis"
+  },
+  {
+    "firstName": "Raheem",
+    "lastName": "Sterling",
+    "fullName": "Raheem Sterling",
+    "position": "LM",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "raheem-sterling"
+  },
+  {
+    "firstName": "Dominik",
+    "lastName": "Szoboszlai",
+    "fullName": "Dominik Szoboszlai",
+    "position": "CAM",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "dominik-szoboszlai"
+  },
+  {
+    "firstName": "Youri",
+    "lastName": "Tielemans",
+    "fullName": "Youri Tielemans",
+    "position": "CM",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "youri-tielemans"
+  },
+  {
+    "firstName": "Manuel",
+    "lastName": "Ugarte",
+    "fullName": "Manuel Ugarte",
+    "position": "CDM",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "manuel-ugarte"
+  },
+  {
+    "firstName": "Deniz",
+    "lastName": "Undav",
+    "fullName": "Deniz Undav",
+    "position": "ST",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "deniz-undav"
+  },
+  {
+    "firstName": "Álvaro",
+    "lastName": "Valles Rosa",
+    "fullName": "Álvaro Valles Rosa",
+    "position": "GK",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "alvaro-valles-rosa"
+  },
+  {
+    "firstName": "Lucas",
+    "lastName": "Vázquez Iglesias",
+    "fullName": "Lucas Vázquez Iglesias",
+    "position": "RB",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "lucas-vazquez-iglesias"
+  },
+  {
+    "firstName": "Joey",
+    "lastName": "Veerman",
+    "fullName": "Joey Veerman",
+    "position": "CM",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "joey-veerman"
+  },
+  {
+    "firstName": "Daniel",
+    "lastName": "Vivian Moreno",
+    "fullName": "Daniel Vivian Moreno",
+    "position": "CB",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "daniel-vivian-moreno"
+  },
+  {
+    "firstName": "Callum",
+    "lastName": "Wilson",
+    "fullName": "Callum Wilson",
+    "position": "ST",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "callum-wilson"
+  },
+  {
+    "firstName": "Lamine",
+    "lastName": "Yamal",
+    "fullName": "Lamine Yamal",
+    "position": "RW",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "lamine-yamal"
+  },
+  {
+    "firstName": "Wilfried",
+    "lastName": "Zaha",
+    "fullName": "Wilfried Zaha",
+    "position": "LM",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "wilfried-zaha"
+  },
+  {
+    "firstName": "Piotr",
+    "lastName": "Zieliński",
+    "fullName": "Piotr Zieliński",
+    "position": "CM",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "piotr-zielinski"
+  },
+  {
+    "firstName": "Martín",
+    "lastName": "Zubimendi Ibáñez",
+    "fullName": "Martín Zubimendi Ibáñez",
+    "position": "CDM",
+    "overall": 81,
+    "basePrice": 20,
+    "slug": "martin-zubimendi-ibanez"
+  },
+  {
+    "firstName": "Salem",
+    "lastName": "Al Dawsari",
+    "fullName": "Salem Al Dawsari",
+    "position": "LM",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "salem-al-dawsari"
+  },
+  {
+    "firstName": "Ali",
+    "lastName": "Al Musrati",
+    "fullName": "Ali Al Musrati",
+    "position": "CDM",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "ali-al-musrati"
+  },
+  {
+    "firstName": "Jordi",
+    "lastName": "Alba Ramos",
+    "fullName": "Jordi Alba Ramos",
+    "position": "LB",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "jordi-alba-ramos"
+  },
+  {
+    "firstName": "Toby",
+    "lastName": "Alderweireld",
+    "fullName": "Toby Alderweireld",
+    "position": "CB",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "toby-alderweireld"
+  },
+  {
+    "firstName": "Joachim",
+    "lastName": "Andersen",
+    "fullName": "Joachim Andersen",
+    "position": "CB",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "joachim-andersen"
+  },
+  {
+    "firstName": "Benjamin",
+    "lastName": "André",
+    "fullName": "Benjamin André",
+    "position": "CDM",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "benjamin-andre"
+  },
+  {
+    "firstName": "Marko",
+    "lastName": "Arnautović",
+    "fullName": "Marko Arnautović",
+    "position": "ST",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "marko-arnautovic"
+  },
+  {
+    "firstName": "Maximilian",
+    "lastName": "Arnold",
+    "fullName": "Maximilian Arnold",
+    "position": "CDM",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "maximilian-arnold"
+  },
+  {
+    "firstName": "Fredrik",
+    "lastName": "Aursnes",
+    "fullName": "Fredrik Aursnes",
+    "position": "RB",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "fredrik-aursnes"
+  },
+  {
+    "firstName": "Simon",
+    "lastName": "Banza",
+    "fullName": "Simon Banza",
+    "position": "ST",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "simon-banza"
+  },
+  {
+    "firstName": "Roberto Firmino",
+    "lastName": "Barbosa de Oliveira",
+    "fullName": "Roberto Firmino Barbosa de Oliveira",
+    "position": "CAM",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "roberto-firmino-barbosa-de-oliveira"
+  },
+  {
+    "firstName": "Bradley",
+    "lastName": "Barcola",
+    "fullName": "Bradley Barcola",
+    "position": "LW",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "bradley-barcola"
+  },
+  {
+    "firstName": "Harvey",
+    "lastName": "Barnes",
+    "fullName": "Harvey Barnes",
+    "position": "LW",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "harvey-barnes"
+  },
+  {
+    "firstName": "Christoph",
+    "lastName": "Baumgartner",
+    "fullName": "Christoph Baumgartner",
+    "position": "CAM",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "christoph-baumgartner"
+  },
+  {
+    "firstName": "Walter",
+    "lastName": "Benítez",
+    "fullName": "Walter Benítez",
+    "position": "GK",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "walter-benitez"
+  },
+  {
+    "firstName": "Gonçalo",
+    "lastName": "Bernardo Inácio",
+    "fullName": "Gonçalo Bernardo Inácio",
+    "position": "CB",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "goncalo-bernardo-inacio"
+  },
+  {
+    "firstName": "Yves",
+    "lastName": "Bissouma",
+    "fullName": "Yves Bissouma",
+    "position": "CDM",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "yves-bissouma"
+  },
+  {
+    "firstName": "Daley",
+    "lastName": "Blind",
+    "fullName": "Daley Blind",
+    "position": "CB",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "daley-blind"
+  },
+  {
+    "firstName": "Denis",
+    "lastName": "Bouanga",
+    "fullName": "Denis Bouanga",
+    "position": "LW",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "denis-bouanga"
+  },
+  {
+    "firstName": "Yan",
+    "lastName": "Bueno Couto",
+    "fullName": "Yan Bueno Couto",
+    "position": "RM",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "yan-bueno-couto"
+  },
+  {
+    "firstName": "Alessandro",
+    "lastName": "Buongiorno",
+    "fullName": "Alessandro Buongiorno",
+    "position": "CB",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "alessandro-buongiorno"
+  },
+  {
+    "firstName": "Davide",
+    "lastName": "Calabria",
+    "fullName": "Davide Calabria",
+    "position": "RB",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "davide-calabria"
+  },
+  {
+    "firstName": "Lucas",
+    "lastName": "Chevalier",
+    "fullName": "Lucas Chevalier",
+    "position": "GK",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "lucas-chevalier"
+  },
+  {
+    "firstName": "Samuel",
+    "lastName": "Chukwueze",
+    "fullName": "Samuel Chukwueze",
+    "position": "RW",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "samuel-chukwueze"
+  },
+  {
+    "firstName": "Jonathan",
+    "lastName": "Clauss",
+    "fullName": "Jonathan Clauss",
+    "position": "RB",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "jonathan-clauss"
+  },
+  {
+    "firstName": "Kevin",
+    "lastName": "Danso",
+    "fullName": "Kevin Danso",
+    "position": "CB",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "kevin-danso"
+  },
+  {
+    "firstName": "F. Evanilson",
+    "lastName": "de Lima Barbosa",
+    "fullName": "F. Evanilson de Lima Barbosa",
+    "position": "ST",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "f-evanilson-de-lima-barbosa"
+  },
+  {
+    "firstName": "Oscar",
+    "lastName": "De Marcos Arana",
+    "fullName": "Oscar De Marcos Arana",
+    "position": "RB",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "oscar-de-marcos-arana"
+  },
+  {
+    "firstName": "Michele",
+    "lastName": "Di Gregorio",
+    "fullName": "Michele Di Gregorio",
+    "position": "GK",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "michele-di-gregorio"
+  },
+  {
+    "firstName": "Eric",
+    "lastName": "Dier",
+    "fullName": "Eric Dier",
+    "position": "CB",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "eric-dier"
+  },
+  {
+    "firstName": "Jérémy",
+    "lastName": "Doku",
+    "fullName": "Jérémy Doku",
+    "position": "LW",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "jeremy-doku"
+  },
+  {
+    "firstName": "Éderson José",
+    "lastName": "dos Santos",
+    "fullName": "Éderson José dos Santos",
+    "position": "CM",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "ederson-jose-dos-santos"
+  },
+  {
+    "firstName": "Wataru",
+    "lastName": "Endo",
+    "fullName": "Wataru Endo",
+    "position": "CDM",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "wataru-endo"
+  },
+  {
+    "firstName": "Pervis",
+    "lastName": "Estupiñán",
+    "fullName": "Pervis Estupiñán",
+    "position": "LB",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "pervis-estupinan"
+  },
+  {
+    "firstName": "Wladimiro",
+    "lastName": "Falcone",
+    "fullName": "Wladimiro Falcone",
+    "position": "GK",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "wladimiro-falcone"
+  },
+  {
+    "firstName": "João",
+    "lastName": "Félix Sequeira",
+    "fullName": "João Félix Sequeira",
+    "position": "LW",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "joao-felix-sequeira"
+  },
+  {
+    "firstName": "Jesús Joaquín",
+    "lastName": "Fernández Sáez",
+    "fullName": "Jesús Joaquín Fernández Sáez",
+    "position": "RM",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "jesus-joaquin-fernandez-saez"
+  },
+  {
+    "firstName": "Seko",
+    "lastName": "Fofana",
+    "fullName": "Seko Fofana",
+    "position": "CM",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "seko-fofana"
+  },
+  {
+    "firstName": "Juan",
+    "lastName": "Foyth",
+    "fullName": "Juan Foyth",
+    "position": "RB",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "juan-foyth"
+  },
+  {
+    "firstName": "Javier",
+    "lastName": "Galán Gil",
+    "fullName": "Javier Galán Gil",
+    "position": "LB",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "javier-galan-gil"
+  },
+  {
+    "firstName": "Jose Luís",
+    "lastName": "García Vayá",
+    "fullName": "Jose Luís García Vayá",
+    "position": "CM",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "jose-luis-garcia-vaya"
+  },
+  {
+    "firstName": "Nuno Miguel",
+    "lastName": "Gomes dos Santos",
+    "fullName": "Nuno Miguel Gomes dos Santos",
+    "position": "LM",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "nuno-miguel-gomes-dos-santos"
+  },
+  {
+    "firstName": "Joe",
+    "lastName": "Gomez",
+    "fullName": "Joe Gomez",
+    "position": "CB",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "joe-gomez"
+  },
+  {
+    "firstName": "Nicolás",
+    "lastName": "González",
+    "fullName": "Nicolás González",
+    "position": "RW",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "nicolas-gonzalez"
+  },
+  {
+    "firstName": "Mario",
+    "lastName": "Götze",
+    "fullName": "Mario Götze",
+    "position": "CAM",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "mario-gotze"
+  },
+  {
+    "firstName": "Vincenzo",
+    "lastName": "Grifo",
+    "fullName": "Vincenzo Grifo",
+    "position": "LM",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "vincenzo-grifo"
+  },
+  {
+    "firstName": "Nemanja",
+    "lastName": "Gudelj",
+    "fullName": "Nemanja Gudelj",
+    "position": "CB",
+    "overall": 80,
+    "basePrice": 20,
+    "slug": "nemanja-gudelj"
+  }
+]

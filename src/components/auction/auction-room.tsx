@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { AuctionRoomState, BidEntry } from "@/types/auction";
 import { LiveFeed } from "./live-feed";
 import { BidPanel } from "./bid-panel";
-import { players } from "@/data/players";
 import { AuctionPlayerDetails } from "./auction-player-details";
+import { Player } from "@/types/player";
 
 let socket: Socket | null = null;
 
@@ -59,11 +59,16 @@ export function AuctionRoom({ roomId, user }: Props) {
   const [error, setError] = useState("");
   const [notification, setNotification] = useState("");
   const [selectedPlayerId, setSelectedPlayerId] = useState("");
+  const [playerPool, setPlayerPool] = useState<Player[]>([]);
   const [hasOptedOut, setHasOptedOut] = useState(false);
   const [activityLog, setActivityLog] = useState<ActivityItem[]>([]);
   const [soldPlayers, setSoldPlayers] = useState<
     Array<{ playerName: string; winnerName: string; amount: number; timestamp: string }>
   >([]);
+  const [autoPauseAlert, setAutoPauseAlert] = useState<{
+    leadingBidder: string;
+    amount: number;
+  } | null>(null);
 
   const isLive = state.status === "live";
   const minNextBid = useMemo(() => state.currentBid + 10, [state.currentBid]);
@@ -84,6 +89,24 @@ export function AuctionRoom({ roomId, user }: Props) {
       },
     ]);
   }
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadPlayers() {
+      const res = await fetch("/api/players", { cache: "no-store" });
+      const data = await res.json();
+      if (!cancelled) {
+        setPlayerPool(data.players ?? []);
+      }
+    }
+
+    loadPlayers();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     socket = io(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000");
@@ -140,11 +163,13 @@ export function AuctionRoom({ roomId, user }: Props) {
       setHasOptedOut(false);
       setBidAmount(String(currentBid + 10));
       pushActivity(`${player.name} is up for auction. Starting bid: ${currentBid + 10} coins.`);
+        setAutoPauseAlert(null);
       showNotification(`${player.name} is up for auction — set a bid and start!`);
     });
 
     socket.on("auction:sold", ({ player, winnerName, amount }) => {
       setState((prev) => ({ ...prev, status: "sold" }));
+        setAutoPauseAlert(null);
       setHasOptedOut(false);
       setSoldPlayers((prev) => [
         ...prev,
@@ -163,6 +188,7 @@ export function AuctionRoom({ roomId, user }: Props) {
     });
 
     socket.on("auction:no-bid", ({ message }: { message: string }) => {
+        setAutoPauseAlert(null);
       setState((prev) => ({
         ...prev,
         status: "waiting",
@@ -175,6 +201,7 @@ export function AuctionRoom({ roomId, user }: Props) {
     });
 
     socket.on("auction:skipped", () => {
+        setAutoPauseAlert(null);
       setState((prev) => ({
         ...prev,
         status: "waiting",
@@ -193,6 +220,21 @@ export function AuctionRoom({ roomId, user }: Props) {
 
     socket.on("auction:user-opted-out", ({ userName }) => {
       pushActivity(`${userName} is out for this player.`, "warn");
+    });
+
+    socket.on("auction:auto-paused", (payload: { status: string; timer: number; leadingBidder: string; amount: number }) => {
+      setState((prev) => ({ ...prev, status: "paused", timer: payload.timer }));
+      setAutoPauseAlert({ leadingBidder: payload.leadingBidder, amount: payload.amount });
+      pushActivity(
+        `All managers passed! ${payload.leadingBidder} leads at ${payload.amount} coins. Admin: sell now.`,
+        "success"
+      );
+      if (user.role !== "admin") {
+        showNotification(
+          `All managers are out — ${payload.leadingBidder} is the only bidder. Waiting for admin to confirm.`,
+          8000
+        );
+      }
     });
 
     socket.on("auction:error", (payload) => {
@@ -230,7 +272,7 @@ export function AuctionRoom({ roomId, user }: Props) {
 
   function setPlayer() {
     if (!selectedPlayerId) return;
-    const player = players.find((p) => p.id === selectedPlayerId);
+    const player = playerPool.find((p) => p.id === selectedPlayerId);
     if (!player) return;
 
     socket?.emit("auction:set-player", {
@@ -342,6 +384,20 @@ export function AuctionRoom({ roomId, user }: Props) {
                 : state.status === "sold"
                   ? "Sold"
                   : "Waiting"}
+
+                  {user.role === "admin" && autoPauseAlert ? (
+                    <div className="mt-4 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-4">
+                      <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-300">
+                        Auto Paused
+                      </p>
+                      <p className="mt-2 text-lg font-bold text-white">
+                        {autoPauseAlert.leadingBidder} is the last bidder standing.
+                      </p>
+                      <p className="mt-1 text-sm text-emerald-100/80">
+                        All other managers are out. Use Sold Now to award the player for {autoPauseAlert.amount} coins.
+                      </p>
+                    </div>
+                  ) : null}
           </p>
         </div>
 
@@ -383,7 +439,7 @@ export function AuctionRoom({ roomId, user }: Props) {
                 className="min-w-50 flex-1 rounded-xl border border-white/10 bg-slate-800 px-3 py-2 text-sm outline-none"
               >
                 <option value="">Select a player...</option>
-                {players.map((p) => (
+                {playerPool.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.name} ({p.position}, {p.rating} OVR) - {p.price} coins
                   </option>
@@ -414,7 +470,7 @@ export function AuctionRoom({ roomId, user }: Props) {
               </Button>
               <Button
                 onClick={soldNow}
-                disabled={state.status !== "live" || !state.highestBidderId}
+                disabled={!(["live", "paused"].includes(state.status)) || !state.highestBidderId}
                 variant="outline"
                 className="border-emerald-500/30 bg-transparent text-emerald-300 hover:bg-emerald-500/10"
               >

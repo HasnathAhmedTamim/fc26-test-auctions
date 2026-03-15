@@ -14,6 +14,7 @@ export type AuctionPlayer = {
   height?: string;
   weight?: string;
   image: string;
+  cardImage?: string;
   basePrice: number;
   pace?: number;
   shooting?: number;

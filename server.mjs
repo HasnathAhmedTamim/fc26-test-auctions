@@ -43,6 +43,9 @@ app.prepare().then(async () => {
   // Users who opted out for the current player in each room
   const roomOptOuts = new Map();
 
+  // Connected managers per room: roomId -> Map<userId, { role, userName, socketId }>
+  const roomConnectedManagers = new Map();
+
   function clearRoomTimer(roomId) {
     if (roomTimers.has(roomId)) {
       clearInterval(roomTimers.get(roomId));
@@ -53,6 +56,62 @@ app.prepare().then(async () => {
 
   function clearRoomOptOuts(roomId) {
     roomOptOuts.delete(roomId);
+  }
+
+  function addManagerToRoom(roomId, userId, userName, role, socketId) {
+    if (!roomConnectedManagers.has(roomId)) {
+      roomConnectedManagers.set(roomId, new Map());
+    }
+    roomConnectedManagers.get(roomId).set(userId, { role, userName, socketId });
+  }
+
+  function removeSocketFromRooms(socketId) {
+    for (const [, managers] of roomConnectedManagers.entries()) {
+      for (const [userId, info] of managers.entries()) {
+        if (info.socketId === socketId) {
+          managers.delete(userId);
+        }
+      }
+    }
+  }
+
+  async function checkAllOptedOut(roomId) {
+    const room = await db.collection("auctionRooms").findOne({ roomId });
+    if (!room || room.status !== "live" || !room.highestBidderId) return;
+
+    const managers = roomConnectedManagers.get(roomId) ?? new Map();
+    const optedOut = roomOptOuts.get(roomId) ?? new Set();
+    const highestBidderId = room.highestBidderId;
+
+    // All connected non-admin managers who are NOT the current highest bidder
+    const eligibleManagers = [...managers.entries()].filter(
+      ([userId, info]) => info.role !== "admin" && userId !== highestBidderId
+    );
+
+    // Need at least one other active non-highest-bidder manager for auto-pause to trigger
+    if (eligibleManagers.length === 0) return;
+
+    const allOtherOptedOut = eligibleManagers.every(([userId]) => optedOut.has(userId));
+    if (!allOtherOptedOut) return;
+
+    // Auto-pause: freeze the timer
+    const remaining = roomTimeLeft.get(roomId) ?? room.timer ?? ROUND_TIME_SECONDS;
+    if (roomTimers.has(roomId)) {
+      clearInterval(roomTimers.get(roomId));
+      roomTimers.delete(roomId);
+    }
+
+    await db.collection("auctionRooms").updateOne(
+      { roomId },
+      { $set: { status: "paused", timer: remaining, updatedAt: new Date() } }
+    );
+
+    io.to(roomId).emit("auction:auto-paused", {
+      status: "paused",
+      timer: remaining,
+      leadingBidder: room.highestBidderName,
+      amount: room.currentBid,
+    });
   }
 
   async function startRoomTimer(roomId, initialTime = ROUND_TIME_SECONDS) {
@@ -160,6 +219,11 @@ app.prepare().then(async () => {
   io.on("connection", (socket) => {
     socket.on("auction:join", async ({ roomId, user }) => {
       socket.join(roomId);
+
+      // Track this user so we can detect when all others opt out
+      if (user?.id) {
+        addManagerToRoom(roomId, user.id, user.name ?? "Unknown", user.role ?? "manager", socket.id);
+      }
 
       const room = await db.collection("auctionRooms").findOne({ roomId });
       const recentBids = await db
@@ -338,6 +402,7 @@ app.prepare().then(async () => {
               height: String(player.height || ""),
               weight: String(player.weight || ""),
               image: String(player.image || ""),
+              cardImage: String(player.cardImage || ""),
               basePrice,
               pace: Number(player.pace) || undefined,
               shooting: Number(player.shooting) || undefined,
@@ -383,6 +448,13 @@ app.prepare().then(async () => {
         userId,
         userName: userName ?? "Unknown",
       });
+
+      // If all other managers opted out and a leader exists, auto-pause
+      checkAllOptedOut(roomId);
+    });
+
+    socket.on("disconnect", () => {
+      removeSocketFromRooms(socket.id);
     });
 
     socket.on("auction:skip", async ({ roomId }) => {
