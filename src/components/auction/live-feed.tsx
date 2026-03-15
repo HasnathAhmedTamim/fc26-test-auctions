@@ -10,9 +10,15 @@ type ActivityItem = {
 type Props = {
   bidHistory: BidEntry[];
   activityLog: ActivityItem[];
+  soldPlayers: Array<{
+    playerName: string;
+    winnerName: string;
+    amount: number;
+    timestamp: string;
+  }>;
 };
 
-export function LiveFeed({ bidHistory, activityLog }: Props) {
+export function LiveFeed({ bidHistory, activityLog, soldPlayers }: Props) {
   return (
     <div className="space-y-6">
       <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
@@ -40,6 +46,26 @@ export function LiveFeed({ bidHistory, activityLog }: Props) {
                   <p className="mt-1 text-xs text-slate-400">
                     {new Date(item.timestamp).toLocaleTimeString()}
                   </p>
+                </div>
+              ))
+          )}
+        </div>
+      </div>
+
+      <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+        <h2 className="text-xl font-black">Sold Players</h2>
+        <div className="mt-4 max-h-56 space-y-3 overflow-y-auto pr-1">
+          {soldPlayers.length === 0 ? (
+            <p className="text-slate-400">No sold players yet.</p>
+          ) : (
+            soldPlayers
+              .slice()
+              .reverse()
+              .map((item, idx) => (
+                <div key={`${item.playerName}-${item.timestamp}-${idx}`} className="rounded-2xl bg-slate-900 p-4">
+                  <p className="font-semibold text-white">{item.playerName}</p>
+                  <p className="mt-1 text-sm text-slate-300">{item.winnerName} won for {item.amount} coins</p>
+                  <p className="mt-1 text-xs text-slate-400">{new Date(item.timestamp).toLocaleTimeString()}</p>
                 </div>
               ))
           )}

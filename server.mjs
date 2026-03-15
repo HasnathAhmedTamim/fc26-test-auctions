@@ -55,9 +55,9 @@ app.prepare().then(async () => {
     roomOptOuts.delete(roomId);
   }
 
-  async function startRoomTimer(roomId) {
+  async function startRoomTimer(roomId, initialTime = ROUND_TIME_SECONDS) {
     clearRoomTimer(roomId);
-    let timeLeft = ROUND_TIME_SECONDS;
+    let timeLeft = Math.max(1, Number(initialTime) || ROUND_TIME_SECONDS);
     roomTimeLeft.set(roomId, timeLeft);
 
     const interval = setInterval(async () => {
@@ -112,6 +112,49 @@ app.prepare().then(async () => {
     }, 1000);
 
     roomTimers.set(roomId, interval);
+  }
+
+  async function finalizeCurrentPlayerAsSold(roomId, sourceSocket) {
+    const room = await db.collection("auctionRooms").findOne({ roomId });
+
+    if (!room) {
+      sourceSocket.emit("auction:error", { message: "Room not found" });
+      return;
+    }
+
+    if (!room.currentPlayer) {
+      sourceSocket.emit("auction:error", { message: "No active player" });
+      return;
+    }
+
+    if (!room.highestBidderId) {
+      sourceSocket.emit("auction:error", { message: "No bids yet to mark as sold" });
+      return;
+    }
+
+    const winnerId = room.highestBidderId;
+    const winnerName = room.highestBidderName ?? "Unknown";
+    const amount = room.currentBid ?? 0;
+    const player = room.currentPlayer;
+
+    await db.collection("managerStats").updateOne(
+      { userId: winnerId, roomId },
+      {
+        $inc: { budgetSpent: amount },
+        $push: { playersBought: { playerId: player.id, playerName: player.name, amount } },
+        $setOnInsert: { userName: winnerName },
+      },
+      { upsert: true }
+    );
+
+    await db.collection("auctionRooms").updateOne(
+      { roomId },
+      { $set: { status: "sold", updatedAt: new Date() } }
+    );
+
+    clearRoomTimer(roomId);
+    clearRoomOptOuts(roomId);
+    io.to(roomId).emit("auction:sold", { player, winnerId, winnerName, amount });
   }
 
   io.on("connection", (socket) => {
@@ -223,13 +266,47 @@ app.prepare().then(async () => {
         return;
       }
 
+      if (room.status === "sold" || room.status === "ended") {
+        socket.emit("auction:error", { message: "Set next player before starting" });
+        return;
+      }
+
+      const startTime = room.status === "paused"
+        ? (roomTimeLeft.get(roomId) ?? room.timer ?? ROUND_TIME_SECONDS)
+        : ROUND_TIME_SECONDS;
+
       await db.collection("auctionRooms").updateOne(
         { roomId },
-        { $set: { status: "live", timer: ROUND_TIME_SECONDS, updatedAt: new Date() } }
+        { $set: { status: "live", timer: startTime, updatedAt: new Date() } }
       );
 
-      io.to(roomId).emit("auction:started", { status: "live", timer: ROUND_TIME_SECONDS });
-      await startRoomTimer(roomId);
+      io.to(roomId).emit("auction:started", { status: "live", timer: startTime });
+      await startRoomTimer(roomId, startTime);
+    });
+
+    socket.on("auction:pause", async ({ roomId }) => {
+      const room = await db.collection("auctionRooms").findOne({ roomId });
+      if (!room || room.status !== "live") {
+        socket.emit("auction:error", { message: "Auction is not live" });
+        return;
+      }
+
+      const remaining = roomTimeLeft.get(roomId) ?? room.timer ?? ROUND_TIME_SECONDS;
+      if (roomTimers.has(roomId)) {
+        clearInterval(roomTimers.get(roomId));
+        roomTimers.delete(roomId);
+      }
+
+      await db.collection("auctionRooms").updateOne(
+        { roomId },
+        { $set: { status: "paused", timer: remaining, updatedAt: new Date() } }
+      );
+
+      io.to(roomId).emit("auction:paused", { status: "paused", timer: remaining });
+    });
+
+    socket.on("auction:sold-now", async ({ roomId }) => {
+      await finalizeCurrentPlayerAsSold(roomId, socket);
     });
 
     socket.on("auction:set-player", async ({ roomId, player }) => {
@@ -248,10 +325,35 @@ app.prepare().then(async () => {
               name: String(player.name),
               rating: Number(player.rating) || 0,
               position: String(player.position || ""),
+              altPositions: Array.isArray(player.altPositions)
+                ? player.altPositions.map((item) => String(item))
+                : [],
               club: String(player.club || ""),
+              league: String(player.league || ""),
               nation: String(player.nation || ""),
+              age: Number(player.age) || undefined,
+              preferredFoot: player.preferredFoot === "Left" ? "Left" : "Right",
+              weakFoot: Number(player.weakFoot) || 4,
+              skillMoves: Number(player.skillMoves) || 4,
+              height: String(player.height || ""),
+              weight: String(player.weight || ""),
               image: String(player.image || ""),
               basePrice,
+              pace: Number(player.pace) || undefined,
+              shooting: Number(player.shooting) || undefined,
+              passing: Number(player.passing) || undefined,
+              dribbling: Number(player.dribbling) || undefined,
+              defending: Number(player.defending) || undefined,
+              physicality: Number(player.physicality) || undefined,
+              playstyles: Array.isArray(player.playstyles)
+                ? player.playstyles
+                    .filter((item) => item?.name)
+                    .map((item) => ({
+                      name: String(item.name),
+                      description: String(item.description || ""),
+                      plus: Boolean(item.plus),
+                    }))
+                : [],
             },
             currentBid: Math.max(0, basePrice - 10),
             status: "waiting",

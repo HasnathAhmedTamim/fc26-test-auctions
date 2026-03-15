@@ -7,6 +7,7 @@ import { AuctionRoomState, BidEntry } from "@/types/auction";
 import { LiveFeed } from "./live-feed";
 import { BidPanel } from "./bid-panel";
 import { players } from "@/data/players";
+import { AuctionPlayerDetails } from "./auction-player-details";
 
 let socket: Socket | null = null;
 
@@ -39,8 +40,8 @@ const initialState: AuctionRoomState = {
 
 function timerColor(timer: number, isLive: boolean) {
   if (!isLive) return "text-slate-400";
-  if (timer > 15) return "text-emerald-400";
-  if (timer > 5) return "text-yellow-400";
+  if (timer > 45) return "text-emerald-400";
+  if (timer > 15) return "text-yellow-400";
   return "text-red-400 animate-pulse";
 }
 
@@ -48,6 +49,7 @@ const STATUS_STYLES: Record<string, string> = {
   live: "bg-emerald-500 text-black",
   sold: "bg-yellow-500 text-black",
   waiting: "bg-slate-700 text-white",
+  paused: "bg-amber-500 text-black",
   ended: "bg-slate-600 text-slate-300",
 };
 
@@ -59,6 +61,9 @@ export function AuctionRoom({ roomId, user }: Props) {
   const [selectedPlayerId, setSelectedPlayerId] = useState("");
   const [hasOptedOut, setHasOptedOut] = useState(false);
   const [activityLog, setActivityLog] = useState<ActivityItem[]>([]);
+  const [soldPlayers, setSoldPlayers] = useState<
+    Array<{ playerName: string; winnerName: string; amount: number; timestamp: string }>
+  >([]);
 
   const isLive = state.status === "live";
   const minNextBid = useMemo(() => state.currentBid + 10, [state.currentBid]);
@@ -109,6 +114,12 @@ export function AuctionRoom({ roomId, user }: Props) {
 
     socket.on("auction:started", (payload) => {
       setState((prev) => ({ ...prev, status: payload.status, timer: payload.timer }));
+      pushActivity("Auction is live.");
+    });
+
+    socket.on("auction:paused", (payload) => {
+      setState((prev) => ({ ...prev, status: payload.status, timer: payload.timer }));
+      pushActivity("Auction paused by admin.", "warn");
     });
 
     socket.on("auction:timer-tick", ({ timer }: { timer: number }) => {
@@ -135,9 +146,18 @@ export function AuctionRoom({ roomId, user }: Props) {
     socket.on("auction:sold", ({ player, winnerName, amount }) => {
       setState((prev) => ({ ...prev, status: "sold" }));
       setHasOptedOut(false);
+      setSoldPlayers((prev) => [
+        ...prev,
+        {
+          playerName: player.name,
+          winnerName,
+          amount,
+          timestamp: new Date().toISOString(),
+        },
+      ]);
       pushActivity(`${winnerName} won ${player.name} for ${amount} coins.`, "success");
       showNotification(
-        `🏆 ${player.name} sold to ${winnerName} for ${amount} coins!`,
+        `${player.name} sold to ${winnerName} for ${amount} coins!`,
         8000
       );
     });
@@ -200,10 +220,19 @@ export function AuctionRoom({ roomId, user }: Props) {
     socket?.emit("auction:start", { roomId });
   }
 
+  function pauseAuction() {
+    socket?.emit("auction:pause", { roomId });
+  }
+
+  function soldNow() {
+    socket?.emit("auction:sold-now", { roomId });
+  }
+
   function setPlayer() {
     if (!selectedPlayerId) return;
     const player = players.find((p) => p.id === selectedPlayerId);
     if (!player) return;
+
     socket?.emit("auction:set-player", {
       roomId,
       player: {
@@ -211,10 +240,27 @@ export function AuctionRoom({ roomId, user }: Props) {
         name: player.name,
         rating: player.rating,
         position: player.position,
+        altPositions: player.position === "ST" ? ["CF"] : [player.position],
         club: player.club,
+        league:
+          player.club === "Real Madrid"
+            ? "LALIGA EA SPORTS"
+            : "Premier League",
         nation: player.nation,
+        age: 27,
+        preferredFoot: player.position.includes("L") ? "Left" : "Right",
+        weakFoot: 4,
+        skillMoves: 4,
+        height: "178cm / 5'10\"",
+        weight: "74kg / 163lb",
         image: player.image,
         basePrice: player.price,
+        pace: player.pace,
+        shooting: player.shooting,
+        passing: player.passing,
+        dribbling: player.dribbling,
+        defending: player.defending,
+        physicality: player.physical,
       },
     });
     setSelectedPlayerId("");
@@ -233,15 +279,18 @@ export function AuctionRoom({ roomId, user }: Props) {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-      {notification && (
+    <div className="grid gap-6 xl:grid-cols-12">
+      {notification ? (
         <div className="col-span-full rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-5 py-3 font-semibold text-emerald-300">
           {notification}
         </div>
-      )}
+      ) : null}
 
-      {/* Main panel */}
-      <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+      <div className="xl:col-span-5">
+        <AuctionPlayerDetails player={state.currentPlayer} />
+      </div>
+
+      <div className="rounded-3xl border border-white/10 bg-white/5 p-6 xl:col-span-4">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-slate-400">Room</p>
@@ -254,31 +303,18 @@ export function AuctionRoom({ roomId, user }: Props) {
           </span>
         </div>
 
-        {/* Current player card */}
-        <div className="mt-8 rounded-3xl border border-white/10 bg-slate-900 p-6">
+        <div className="mt-6 rounded-2xl border border-white/10 bg-slate-900 p-4">
           <p className="text-sm text-slate-400">Current Player</p>
-          {state.currentPlayer ? (
-            <>
-              <h2 className="mt-2 text-2xl font-black">{state.currentPlayer.name}</h2>
-              <p className="mt-1 text-slate-300">
-                {state.currentPlayer.position} &bull; {state.currentPlayer.club} &bull;{" "}
-                {state.currentPlayer.nation}
-              </p>
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-sm text-emerald-300">
-                  {state.currentPlayer.rating} OVR
-                </span>
-                <span className="rounded-full border border-white/10 px-3 py-1 text-sm text-slate-300">
-                  Base: {state.currentPlayer.basePrice} coins
-                </span>
-              </div>
-            </>
-          ) : (
-            <p className="mt-3 text-slate-400">Waiting for admin to set a player...</p>
-          )}
+          <p className="mt-1 text-xl font-bold text-white">
+            {state.currentPlayer?.name ?? "No active player"}
+          </p>
+          <p className="text-sm text-slate-300">
+            {state.currentPlayer
+              ? `${state.currentPlayer.position} | ${state.currentPlayer.club}`
+              : "Admin needs to set a player"}
+          </p>
         </div>
 
-        {/* Stats row */}
         <div className="mt-6 grid gap-4 sm:grid-cols-3">
           <div className="rounded-2xl bg-slate-900 p-4">
             <p className="text-xs text-slate-400">Timer</p>
@@ -292,13 +328,23 @@ export function AuctionRoom({ roomId, user }: Props) {
           </div>
           <div className="rounded-2xl bg-slate-900 p-4">
             <p className="text-xs text-slate-400">Leading</p>
-            <p className="mt-2 text-2xl font-black">
-              {state.highestBidderName ?? "—"}
-            </p>
+            <p className="mt-2 text-2xl font-black">{state.highestBidderName ?? "-"}</p>
           </div>
         </div>
 
-        {/* Bid panel */}
+        <div className="mt-4 rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+          <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Auction State</p>
+          <p className="mt-2 text-lg font-bold text-white">
+            {state.status === "live"
+              ? "Bidding Live"
+              : state.status === "paused"
+                ? "Paused"
+                : state.status === "sold"
+                  ? "Sold"
+                  : "Waiting"}
+          </p>
+        </div>
+
         <div className="mt-6">
           <BidPanel
             bidAmount={bidAmount}
@@ -309,9 +355,7 @@ export function AuctionRoom({ roomId, user }: Props) {
             disabled={!isLive || !state.currentPlayer || hasOptedOut}
           />
           {hasOptedOut ? (
-            <p className="mt-2 text-sm text-amber-300">
-              You opted out for this player.
-            </p>
+            <p className="mt-2 text-sm text-amber-300">You opted out for this player.</p>
           ) : null}
         </div>
 
@@ -328,8 +372,7 @@ export function AuctionRoom({ roomId, user }: Props) {
           </div>
         ) : null}
 
-        {/* Admin controls */}
-        {user.role === "admin" && (
+        {user.role === "admin" ? (
           <div className="mt-6 rounded-2xl border border-white/10 bg-slate-900 p-4">
             <p className="mb-3 text-sm font-semibold text-slate-300">Admin Controls</p>
             <div className="flex flex-wrap gap-3">
@@ -342,7 +385,7 @@ export function AuctionRoom({ roomId, user }: Props) {
                 <option value="">Select a player...</option>
                 {players.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name} ({p.position}, {p.rating} OVR) — {p.price} coins
+                    {p.name} ({p.position}, {p.rating} OVR) - {p.price} coins
                   </option>
                 ))}
               </select>
@@ -355,11 +398,27 @@ export function AuctionRoom({ roomId, user }: Props) {
               </Button>
               <Button
                 onClick={startAuction}
-                disabled={!state.currentPlayer || isLive}
+                disabled={!state.currentPlayer || state.status === "live"}
                 variant="outline"
                 className="border-white/20 bg-transparent text-white hover:bg-white/10"
               >
-                Start
+                {state.status === "paused" ? "Resume" : "Start"}
+              </Button>
+              <Button
+                onClick={pauseAuction}
+                disabled={state.status !== "live"}
+                variant="outline"
+                className="border-amber-500/30 bg-transparent text-amber-300 hover:bg-amber-500/10"
+              >
+                Pause
+              </Button>
+              <Button
+                onClick={soldNow}
+                disabled={state.status !== "live" || !state.highestBidderId}
+                variant="outline"
+                className="border-emerald-500/30 bg-transparent text-emerald-300 hover:bg-emerald-500/10"
+              >
+                Sold Now
               </Button>
               <Button
                 onClick={skipPlayer}
@@ -371,11 +430,12 @@ export function AuctionRoom({ roomId, user }: Props) {
               </Button>
             </div>
           </div>
-        )}
+        ) : null}
       </div>
 
-      {/* Live feed */}
-      <LiveFeed bidHistory={state.bidHistory} activityLog={activityLog} />
+      <div className="xl:col-span-3">
+        <LiveFeed bidHistory={state.bidHistory} activityLog={activityLog} soldPlayers={soldPlayers} />
+      </div>
     </div>
   );
 }

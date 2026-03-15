@@ -3,10 +3,29 @@ export type AuctionPlayer = {
   name: string;
   rating: number;
   position: string;
+  altPositions?: string[];
   club: string;
+  league?: string;
   nation: string;
+  age?: number;
+  preferredFoot?: "Left" | "Right";
+  weakFoot?: number;
+  skillMoves?: number;
+  height?: string;
+  weight?: string;
   image: string;
   basePrice: number;
+  pace?: number;
+  shooting?: number;
+  passing?: number;
+  dribbling?: number;
+  defending?: number;
+  physicality?: number;
+  playstyles?: Array<{
+    name: string;
+    description: string;
+    plus?: boolean;
+  }>;
 };
 
 export type BidEntry = {
