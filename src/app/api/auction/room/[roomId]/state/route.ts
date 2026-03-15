@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/mongodb";
 
+const ROUND_TIME_SECONDS = 120;
+
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ roomId: string }> }
@@ -25,7 +27,7 @@ export async function GET(
     room: {
       roomId: room.roomId,
       status: room.status,
-      timer: room.timer,
+      timer: Math.max(Number(room.timer ?? ROUND_TIME_SECONDS), ROUND_TIME_SECONDS),
       currentPlayer: room.currentPlayer,
       currentBid: room.currentBid,
       highestBidderId: room.highestBidderId,

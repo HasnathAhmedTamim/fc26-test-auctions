@@ -1,9 +1,27 @@
+"use client";
+
+import { useMemo, useState } from "react";
 import { Container } from "@/components/layout/container";
 import { PlayerFilterSidebar } from "@/components/players/player-filter-sidebar";
 import { PlayerCard } from "@/components/players/player-card";
 import { players } from "@/data/players";
 
 export default function PlayersPage() {
+  const [position, setPosition] = useState("All");
+  const [minRating, setMinRating] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+
+  const filtered = useMemo(
+    () =>
+      players.filter((p) => {
+        if (position !== "All" && p.position !== position) return false;
+        if (minRating && p.rating < Number(minRating)) return false;
+        if (maxPrice && p.price > Number(maxPrice)) return false;
+        return true;
+      }),
+    [position, minRating, maxPrice]
+  );
+
   return (
     <section className="py-10">
       <Container>
@@ -15,12 +33,21 @@ export default function PlayersPage() {
         </div>
 
         <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
-          <PlayerFilterSidebar />
+          <PlayerFilterSidebar
+            position={position}
+            setPosition={setPosition}
+            minRating={minRating}
+            setMinRating={setMinRating}
+            maxPrice={maxPrice}
+            setMaxPrice={setMaxPrice}
+          />
 
           <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-            {players.map((player) => (
-              <PlayerCard key={player.id} player={player} />
-            ))}
+            {filtered.length === 0 ? (
+              <p className="col-span-full text-slate-400">No players match the current filters.</p>
+            ) : (
+              filtered.map((player) => <PlayerCard key={player.id} player={player} />)
+            )}
           </div>
         </div>
       </Container>
