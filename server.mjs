@@ -66,13 +66,94 @@ app.prepare().then(async () => {
   }
 
   function removeSocketFromRooms(socketId) {
-    for (const [, managers] of roomConnectedManagers.entries()) {
+    const affectedRooms = [];
+    for (const [roomId, managers] of roomConnectedManagers.entries()) {
       for (const [userId, info] of managers.entries()) {
         if (info.socketId === socketId) {
           managers.delete(userId);
+          affectedRooms.push(roomId);
         }
       }
     }
+    return affectedRooms;
+  }
+
+  async function getManagerRoomSnapshot(roomId, userId) {
+    const stats = await db.collection("managerStats").findOne({ userId, roomId });
+    const playersBought = Array.isArray(stats?.playersBought) ? stats.playersBought : [];
+
+    return {
+      budgetSpent: Number(stats?.budgetSpent ?? 0),
+      playersBoughtCount: playersBought.length,
+    };
+  }
+
+  async function validateManagerEligibility(room, userId, amount) {
+    if (!room?.roomId || !userId) {
+      return { ok: false, message: "Missing room or bidder information." };
+    }
+
+    const budgetLimit = Number(room.budget ?? 2000);
+    const maxPlayers = Number(room.maxPlayers ?? 24);
+    const { budgetSpent, playersBoughtCount } = await getManagerRoomSnapshot(room.roomId, userId);
+    const remainingBudget = Math.max(0, budgetLimit - budgetSpent);
+    const squadSlotsLeft = Math.max(0, maxPlayers - playersBoughtCount);
+
+    if (playersBoughtCount >= maxPlayers) {
+      return {
+        ok: false,
+        message: `Squad limit reached. You already have ${playersBoughtCount}/${maxPlayers} players in this room.`,
+      };
+    }
+
+    if (Number(amount) > remainingBudget) {
+      return {
+        ok: false,
+        message: `Bid exceeds your remaining budget. You have ${remainingBudget} coins left in this room.`,
+      };
+    }
+
+    return {
+      ok: true,
+      remainingBudget,
+      squadSlotsLeft,
+    };
+  }
+
+  async function awardPlayerToWinner(room) {
+    const winnerId = room.highestBidderId;
+    const winnerName = room.highestBidderName ?? "Unknown";
+    const amount = Number(room.currentBid ?? 0);
+    const player = room.currentPlayer;
+
+    await db.collection("managerStats").updateOne(
+      { userId: winnerId, roomId: room.roomId },
+      {
+        $inc: { budgetSpent: amount },
+        $push: { playersBought: { playerId: player.id, playerName: player.name, amount } },
+        $setOnInsert: { userName: winnerName },
+      },
+      { upsert: true }
+    );
+
+    await db.collection("auctionRooms").updateOne(
+      { roomId: room.roomId },
+      { $set: { status: "sold", updatedAt: new Date() } }
+    );
+
+    await db.collection("soldPlayers").insertOne({
+      roomId: room.roomId,
+      playerId: player.id,
+      playerName: player.name,
+      winnerId,
+      winnerName,
+      amount,
+      createdAt: new Date().toISOString(),
+    });
+
+    clearRoomTimer(room.roomId);
+    clearRoomOptOuts(room.roomId);
+    io.to(room.roomId).emit("auction:sold", { player, winnerId, winnerName, amount });
   }
 
   async function checkAllOptedOut(roomId) {
@@ -130,25 +211,25 @@ app.prepare().then(async () => {
         const room = await db.collection("auctionRooms").findOne({ roomId });
 
         if (room?.highestBidderId && room?.currentPlayer) {
-          // Player sold to highest bidder
-          const { highestBidderId: winnerId, highestBidderName: winnerName, currentBid: amount, currentPlayer: player } = room;
-
-          await db.collection("managerStats").updateOne(
-            { userId: winnerId, roomId },
-            {
-              $inc: { budgetSpent: amount },
-              $push: { playersBought: { playerId: player.id, playerName: player.name, amount } },
-              $setOnInsert: { userName: winnerName },
-            },
-            { upsert: true }
+          const saleCheck = await validateManagerEligibility(
+            room,
+            room.highestBidderId,
+            Number(room.currentBid ?? 0)
           );
 
-          await db.collection("auctionRooms").updateOne(
-            { roomId },
-            { $set: { status: "sold", updatedAt: new Date() } }
-          );
+          if (!saleCheck.ok) {
+            await db.collection("auctionRooms").updateOne(
+              { roomId },
+              { $set: { status: "paused", timer: 0, updatedAt: new Date() } }
+            );
+            io.to(roomId).emit("auction:paused", { status: "paused", timer: 0 });
+            io.to(roomId).emit("auction:error", {
+              message: `Auto-sell blocked. ${saleCheck.message} Admin action is required.`,
+            });
+            return;
+          }
 
-          io.to(roomId).emit("auction:sold", { player, winnerId, winnerName, amount });
+          await awardPlayerToWinner(room);
         } else {
           // No bids — reset the player slot
           await db.collection("auctionRooms").updateOne(
@@ -194,26 +275,14 @@ app.prepare().then(async () => {
     const winnerId = room.highestBidderId;
     const winnerName = room.highestBidderName ?? "Unknown";
     const amount = room.currentBid ?? 0;
-    const player = room.currentPlayer;
+    const saleCheck = await validateManagerEligibility(room, winnerId, amount);
 
-    await db.collection("managerStats").updateOne(
-      { userId: winnerId, roomId },
-      {
-        $inc: { budgetSpent: amount },
-        $push: { playersBought: { playerId: player.id, playerName: player.name, amount } },
-        $setOnInsert: { userName: winnerName },
-      },
-      { upsert: true }
-    );
+    if (!saleCheck.ok) {
+      sourceSocket.emit("auction:error", { message: saleCheck.message });
+      return;
+    }
 
-    await db.collection("auctionRooms").updateOne(
-      { roomId },
-      { $set: { status: "sold", updatedAt: new Date() } }
-    );
-
-    clearRoomTimer(roomId);
-    clearRoomOptOuts(roomId);
-    io.to(roomId).emit("auction:sold", { player, winnerId, winnerName, amount });
+    await awardPlayerToWinner(room);
   }
 
   io.on("connection", (socket) => {
@@ -233,9 +302,10 @@ app.prepare().then(async () => {
         .limit(10)
         .toArray();
 
+      const persistedTimer = Math.max(0, Number(room?.timer ?? ROUND_TIME_SECONDS));
       const timerForClient = room?.status === "live"
-        ? (roomTimeLeft.get(roomId) ?? ROUND_TIME_SECONDS)
-        : ROUND_TIME_SECONDS;
+        ? (roomTimeLeft.get(roomId) ?? persistedTimer)
+        : persistedTimer;
 
       socket.emit("auction:state", {
         roomId,
@@ -283,6 +353,12 @@ app.prepare().then(async () => {
 
       if (typeof amount !== "number" || amount <= (room.currentBid ?? 0)) {
         socket.emit("auction:error", { message: "Bid must be higher than current bid" });
+        return;
+      }
+
+      const bidCheck = await validateManagerEligibility(room, userId, amount);
+      if (!bidCheck.ok) {
+        socket.emit("auction:error", { message: bidCheck.message });
         return;
       }
 
@@ -454,7 +530,10 @@ app.prepare().then(async () => {
     });
 
     socket.on("disconnect", () => {
-      removeSocketFromRooms(socket.id);
+      const affectedRooms = removeSocketFromRooms(socket.id);
+      for (const roomId of affectedRooms) {
+        checkAllOptedOut(roomId);
+      }
     });
 
     socket.on("auction:skip", async ({ roomId }) => {

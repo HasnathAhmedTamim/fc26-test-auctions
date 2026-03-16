@@ -9,10 +9,17 @@ export default async function DashboardPage() {
   if (!session?.user) redirect("/login");
 
   const db = await getDb();
-  const [stats, activeRoom] = await Promise.all([
-    db.collection("managerStats").findOne({ userId: session.user.id }),
-    db.collection("auctionRooms").findOne({ status: { $in: ["live", "waiting", "sold"] } }),
-  ]);
+  const activeRoom = await db.collection("auctionRooms").findOne(
+    { status: { $in: ["live", "waiting", "sold", "paused"] } },
+    { sort: { createdAt: -1 } }
+  );
+
+  const stats = activeRoom
+    ? await db.collection("managerStats").findOne({
+        userId: session.user.id,
+        roomId: activeRoom.roomId,
+      })
+    : null;
 
   const budgetLimit = activeRoom?.budget ?? 2000;
   const budgetSpent = stats?.budgetSpent ?? 0;

@@ -16,11 +16,34 @@ type Props = {
     amount: number;
     timestamp: string;
   }>;
+  auditEntries?: Array<{
+    id: string;
+    message: string;
+    timestamp: string;
+  }>;
 };
 
-export function LiveFeed({ bidHistory, activityLog, soldPlayers }: Props) {
+export function LiveFeed({ bidHistory, activityLog, soldPlayers, auditEntries = [] }: Props) {
   return (
     <div className="space-y-6">
+      <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+        <h2 className="text-xl font-black">Admin Updates</h2>
+        <div className="mt-4 max-h-56 space-y-3 overflow-y-auto pr-1">
+          {auditEntries.length === 0 ? (
+            <p className="text-slate-400">No admin corrections yet.</p>
+          ) : (
+            auditEntries.map((item) => (
+              <div key={item.id} className="rounded-2xl bg-slate-900 p-4">
+                <p className="font-semibold text-slate-100">{item.message}</p>
+                <p className="mt-1 text-xs text-slate-400">
+                  {new Date(item.timestamp).toLocaleTimeString()}
+                </p>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
       <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
         <h2 className="text-xl font-black">Live Auction Events</h2>
         <div className="mt-4 max-h-55 space-y-3 overflow-y-auto pr-1">

@@ -27,6 +27,20 @@ type ActivityItem = {
   timestamp: string;
 };
 
+type ManagerRoomState = {
+  budgetLimit: number;
+  budgetSpent: number;
+  budgetLeft: number;
+  maxPlayers: number;
+  playersBought: number;
+  squadSlotsLeft: number;
+  auditEntries: Array<{
+    id: string;
+    message: string;
+    timestamp: string;
+  }>;
+};
+
 const initialState: AuctionRoomState = {
   roomId: "",
   status: "waiting",
@@ -61,6 +75,7 @@ export function AuctionRoom({ roomId, user }: Props) {
   const [selectedPlayerId, setSelectedPlayerId] = useState("");
   const [playerPool, setPlayerPool] = useState<Player[]>([]);
   const [hasOptedOut, setHasOptedOut] = useState(false);
+  const [playerSearch, setPlayerSearch] = useState("");
   const [activityLog, setActivityLog] = useState<ActivityItem[]>([]);
   const [soldPlayers, setSoldPlayers] = useState<
     Array<{ playerName: string; winnerName: string; amount: number; timestamp: string }>
@@ -69,9 +84,18 @@ export function AuctionRoom({ roomId, user }: Props) {
     leadingBidder: string;
     amount: number;
   } | null>(null);
+  const [managerRoomState, setManagerRoomState] = useState<ManagerRoomState | null>(null);
 
   const isLive = state.status === "live";
   const minNextBid = useMemo(() => state.currentBid + 10, [state.currentBid]);
+  const filteredPlayerPool = useMemo(() => {
+    if (!playerSearch.trim()) return playerPool;
+    const q = playerSearch.toLowerCase();
+    return playerPool.filter(
+      (p) => p.name.toLowerCase().includes(q) || p.position?.toLowerCase().includes(q)
+    );
+  }, [playerPool, playerSearch]);
+  const maxAllowedBid = user.role === "manager" ? Math.max(0, managerRoomState?.budgetLeft ?? 0) : null;
 
   function showNotification(msg: string, duration = 5000) {
     setNotification(msg);
@@ -90,6 +114,34 @@ export function AuctionRoom({ roomId, user }: Props) {
     ]);
   }
 
+  async function loadManagerRoomState() {
+    if (user.role !== "manager") return;
+
+    const res = await fetch(`/api/auction/room/${encodeURIComponent(roomId)}/manager-state`, {
+      cache: "no-store",
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      return;
+    }
+
+    setManagerRoomState(data);
+  }
+
+  async function loadRoomHistory() {
+    const res = await fetch(`/api/auction/room/${encodeURIComponent(roomId)}/state`, {
+      cache: "no-store",
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      return;
+    }
+
+    setSoldPlayers(data.soldPlayers ?? []);
+  }
+
   useEffect(() => {
     let cancelled = false;
 
@@ -102,11 +154,23 @@ export function AuctionRoom({ roomId, user }: Props) {
     }
 
     loadPlayers();
+    loadManagerRoomState();
+    loadRoomHistory();
 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [roomId, user.role]);
+
+  useEffect(() => {
+    if (user.role !== "manager") return;
+
+    const interval = window.setInterval(() => {
+      loadManagerRoomState();
+    }, 4000);
+
+    return () => window.clearInterval(interval);
+  }, [roomId, user.role]);
 
   useEffect(() => {
     socket = io(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000");
@@ -119,10 +183,13 @@ export function AuctionRoom({ roomId, user }: Props) {
     socket.on("auction:state", (payload: AuctionRoomState) => {
       setState(payload);
       setBidAmount(String((payload.currentBid ?? 0) + 10));
+      loadRoomHistory();
+      loadManagerRoomState();
     });
 
     socket.on("auction:new-bid", (bid: BidEntry) => {
       setState((prev) => ({ ...prev, bidHistory: [...prev.bidHistory, bid] }));
+      loadManagerRoomState();
     });
 
     socket.on("auction:bid-updated", (payload) => {
@@ -133,16 +200,19 @@ export function AuctionRoom({ roomId, user }: Props) {
         highestBidderName: payload.highestBidderName,
       }));
       setBidAmount(String(payload.currentBid + 10));
+      loadManagerRoomState();
     });
 
     socket.on("auction:started", (payload) => {
       setState((prev) => ({ ...prev, status: payload.status, timer: payload.timer }));
       pushActivity("Auction is live.");
+      loadManagerRoomState();
     });
 
     socket.on("auction:paused", (payload) => {
       setState((prev) => ({ ...prev, status: payload.status, timer: payload.timer }));
       pushActivity("Auction paused by admin.", "warn");
+      loadManagerRoomState();
     });
 
     socket.on("auction:timer-tick", ({ timer }: { timer: number }) => {
@@ -163,13 +233,14 @@ export function AuctionRoom({ roomId, user }: Props) {
       setHasOptedOut(false);
       setBidAmount(String(currentBid + 10));
       pushActivity(`${player.name} is up for auction. Starting bid: ${currentBid + 10} coins.`);
-        setAutoPauseAlert(null);
+      setAutoPauseAlert(null);
+      loadManagerRoomState();
       showNotification(`${player.name} is up for auction — set a bid and start!`);
     });
 
     socket.on("auction:sold", ({ player, winnerName, amount }) => {
       setState((prev) => ({ ...prev, status: "sold" }));
-        setAutoPauseAlert(null);
+      setAutoPauseAlert(null);
       setHasOptedOut(false);
       setSoldPlayers((prev) => [
         ...prev,
@@ -181,6 +252,8 @@ export function AuctionRoom({ roomId, user }: Props) {
         },
       ]);
       pushActivity(`${winnerName} won ${player.name} for ${amount} coins.`, "success");
+      loadManagerRoomState();
+      loadRoomHistory();
       showNotification(
         `${player.name} sold to ${winnerName} for ${amount} coins!`,
         8000
@@ -188,7 +261,7 @@ export function AuctionRoom({ roomId, user }: Props) {
     });
 
     socket.on("auction:no-bid", ({ message }: { message: string }) => {
-        setAutoPauseAlert(null);
+      setAutoPauseAlert(null);
       setState((prev) => ({
         ...prev,
         status: "waiting",
@@ -197,11 +270,12 @@ export function AuctionRoom({ roomId, user }: Props) {
       }));
       setHasOptedOut(false);
       pushActivity("No one bid for this player. Player skipped.", "warn");
+      loadManagerRoomState();
       showNotification(message);
     });
 
     socket.on("auction:skipped", () => {
-        setAutoPauseAlert(null);
+      setAutoPauseAlert(null);
       setState((prev) => ({
         ...prev,
         status: "waiting",
@@ -210,6 +284,7 @@ export function AuctionRoom({ roomId, user }: Props) {
       }));
       setHasOptedOut(false);
       pushActivity("Admin skipped the current player.", "warn");
+      loadManagerRoomState();
       showNotification("Player skipped.");
     });
 
@@ -229,6 +304,7 @@ export function AuctionRoom({ roomId, user }: Props) {
         `All managers passed! ${payload.leadingBidder} leads at ${payload.amount} coins. Admin: sell now.`,
         "success"
       );
+      loadManagerRoomState();
       if (user.role !== "admin") {
         showNotification(
           `All managers are out — ${payload.leadingBidder} is the only bidder. Waiting for admin to confirm.`,
@@ -374,6 +450,30 @@ export function AuctionRoom({ roomId, user }: Props) {
           </div>
         </div>
 
+        {user.role === "manager" && managerRoomState ? (
+          <div className="mt-4 grid gap-4 sm:grid-cols-3">
+            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-emerald-300">Budget Left</p>
+              <p className="mt-2 text-2xl font-black text-white">{managerRoomState.budgetLeft}</p>
+              <p className="mt-1 text-xs text-emerald-100/80">
+                {managerRoomState.budgetSpent} spent of {managerRoomState.budgetLimit}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-900 p-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Squad Slots</p>
+              <p className="mt-2 text-2xl font-black text-white">{managerRoomState.squadSlotsLeft}</p>
+              <p className="mt-1 text-xs text-slate-400">
+                {managerRoomState.playersBought} used of {managerRoomState.maxPlayers}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-900 p-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Max Allowed Bid</p>
+              <p className="mt-2 text-2xl font-black text-white">{maxAllowedBid}</p>
+              <p className="mt-1 text-xs text-slate-400">Based on your remaining room budget</p>
+            </div>
+          </div>
+        ) : null}
+
         <div className="mt-4 rounded-2xl border border-white/10 bg-slate-900/70 p-4">
           <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Auction State</p>
           <p className="mt-2 text-lg font-bold text-white">
@@ -384,21 +484,21 @@ export function AuctionRoom({ roomId, user }: Props) {
                 : state.status === "sold"
                   ? "Sold"
                   : "Waiting"}
-
-                  {user.role === "admin" && autoPauseAlert ? (
-                    <div className="mt-4 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-4">
-                      <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-300">
-                        Auto Paused
-                      </p>
-                      <p className="mt-2 text-lg font-bold text-white">
-                        {autoPauseAlert.leadingBidder} is the last bidder standing.
-                      </p>
-                      <p className="mt-1 text-sm text-emerald-100/80">
-                        All other managers are out. Use Sold Now to award the player for {autoPauseAlert.amount} coins.
-                      </p>
-                    </div>
-                  ) : null}
           </p>
+
+          {user.role === "admin" && autoPauseAlert ? (
+            <div className="mt-4 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-300">
+                Auto Paused
+              </p>
+              <p className="mt-2 text-lg font-bold text-white">
+                {autoPauseAlert.leadingBidder} is the last bidder standing.
+              </p>
+              <p className="mt-1 text-sm text-emerald-100/80">
+                All other managers are out. Use Sold Now to award the player for {autoPauseAlert.amount} coins.
+              </p>
+            </div>
+          ) : null}
         </div>
 
         <div className="mt-6">
@@ -408,10 +508,25 @@ export function AuctionRoom({ roomId, user }: Props) {
             minNextBid={minNextBid}
             onBid={submitBid}
             error={error}
-            disabled={!isLive || !state.currentPlayer || hasOptedOut}
+            disabled={
+              !isLive ||
+              !state.currentPlayer ||
+              hasOptedOut ||
+              (user.role === "manager" && (managerRoomState?.squadSlotsLeft ?? 0) <= 0)
+            }
           />
+          {user.role === "manager" && managerRoomState ? (
+            <p className="mt-2 text-sm text-slate-400">
+              Minimum next bid: {minNextBid} coins. Maximum you can bid right now: {maxAllowedBid} coins.
+            </p>
+          ) : null}
           {hasOptedOut ? (
             <p className="mt-2 text-sm text-amber-300">You opted out for this player.</p>
+          ) : null}
+          {user.role === "manager" && managerRoomState && managerRoomState.squadSlotsLeft <= 0 ? (
+            <p className="mt-2 text-sm text-amber-300">
+              Your squad is full for this room. You cannot place more bids.
+            </p>
           ) : null}
         </div>
 
@@ -432,19 +547,30 @@ export function AuctionRoom({ roomId, user }: Props) {
           <div className="mt-6 rounded-2xl border border-white/10 bg-slate-900 p-4">
             <p className="mb-3 text-sm font-semibold text-slate-300">Admin Controls</p>
             <div className="flex flex-wrap gap-3">
-              <select
-                value={selectedPlayerId}
-                onChange={(e) => setSelectedPlayerId(e.target.value)}
-                aria-label="Select player for auction"
-                className="min-w-50 flex-1 rounded-xl border border-white/10 bg-slate-800 px-3 py-2 text-sm outline-none"
-              >
-                <option value="">Select a player...</option>
-                {playerPool.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} ({p.position}, {p.rating} OVR) - {p.price} coins
+              <div className="flex min-w-60 flex-1 flex-col gap-1">
+                <input
+                  type="text"
+                  value={playerSearch}
+                  onChange={(e) => setPlayerSearch(e.target.value)}
+                  placeholder="Search player by name or position…"
+                  className="rounded-xl border border-white/10 bg-slate-800 px-3 py-2 text-sm outline-none placeholder:text-slate-500"
+                />
+                <select
+                  value={selectedPlayerId}
+                  onChange={(e) => setSelectedPlayerId(e.target.value)}
+                  aria-label="Select player for auction"
+                  className="rounded-xl border border-white/10 bg-slate-800 px-3 py-2 text-sm outline-none"
+                >
+                  <option value="">
+                    {filteredPlayerPool.length === 0 ? "No matches" : `Select a player… (${filteredPlayerPool.length})`}
                   </option>
-                ))}
-              </select>
+                  {filteredPlayerPool.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} ({p.position}, {p.rating} OVR) - {p.price} coins
+                    </option>
+                  ))}
+                </select>
+              </div>
               <Button
                 onClick={setPlayer}
                 disabled={!selectedPlayerId}
@@ -490,7 +616,12 @@ export function AuctionRoom({ roomId, user }: Props) {
       </div>
 
       <div className="xl:col-span-3">
-        <LiveFeed bidHistory={state.bidHistory} activityLog={activityLog} soldPlayers={soldPlayers} />
+        <LiveFeed
+          bidHistory={state.bidHistory}
+          activityLog={activityLog}
+          soldPlayers={soldPlayers}
+          auditEntries={managerRoomState?.auditEntries}
+        />
       </div>
     </div>
   );

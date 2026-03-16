@@ -55,13 +55,23 @@ export function AdminPanel() {
   const [selectedManagerId, setSelectedManagerId] = useState("");
   const [selectedPlayerId, setSelectedPlayerId] = useState("");
   const [transferAmount, setTransferAmount] = useState("");
+  const [budgetManagerId, setBudgetManagerId] = useState("");
+  const [budgetAdjustment, setBudgetAdjustment] = useState("");
   const [loading, setLoading] = useState(false);
   const [rosterLoading, setRosterLoading] = useState(false);
   const [assigning, setAssigning] = useState(false);
+  const [adjustingBudget, setAdjustingBudget] = useState(false);
+  const [endingRoom, setEndingRoom] = useState("");
   const [removingKey, setRemovingKey] = useState("");
   const [error, setError] = useState("");
   const [rosterError, setRosterError] = useState("");
   const [adminMessage, setAdminMessage] = useState("");
+
+  const roomStats = useMemo(() => {
+    const totalSpent = managers.reduce((sum, m) => sum + m.budgetSpent, 0);
+    const totalPlayers = managers.reduce((sum, m) => sum + m.playersBought.length, 0);
+    return { totalSpent, totalPlayers };
+  }, [managers]);
 
   const selectedPlayer = useMemo(
     () => players.find((player) => player.id === selectedPlayerId) ?? null,
@@ -138,6 +148,50 @@ export function AdminPanel() {
       setTransferAmount(String(selectedPlayer.price ?? 0));
     }
   }, [selectedPlayer]);
+
+  async function endRoom(roomId: string, action: "end" | "reset") {
+    setEndingRoom(roomId + action);
+    setAdminMessage("");
+    const res = await fetch("/api/admin/manager-stats", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ roomId, action }),
+    });
+    const data = await res.json();
+    setEndingRoom("");
+    if (!res.ok) {
+      setError(data.error ?? "Failed to update room");
+      return;
+    }
+    setAdminMessage(data.message ?? "Done.");
+    fetchRooms();
+  }
+
+  async function adjustBudget() {
+    if (!selectedRoomId || !budgetManagerId || budgetAdjustment === "") return;
+    setAdjustingBudget(true);
+    setRosterError("");
+    setAdminMessage("");
+    const res = await fetch("/api/admin/manager-stats", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        roomId: selectedRoomId,
+        userId: budgetManagerId,
+        action: "adjust-budget",
+        adjustment: Number(budgetAdjustment),
+      }),
+    });
+    const data = await res.json();
+    setAdjustingBudget(false);
+    if (!res.ok) {
+      setRosterError(data.error ?? "Failed to adjust budget");
+      return;
+    }
+    setAdminMessage(data.message ?? "Budget adjusted.");
+    setBudgetAdjustment("");
+    await fetchManagerRoster(selectedRoomId);
+  }
 
   async function createRoom(e: React.FormEvent) {
     e.preventDefault();
@@ -316,6 +370,29 @@ export function AdminPanel() {
                       >
                         Manage Roster
                       </Button>
+                      {room.status !== "ended" ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="border-amber-500/30 bg-transparent text-amber-300 hover:bg-amber-500/10"
+                          disabled={endingRoom === room.roomId + "end"}
+                          onClick={() => endRoom(room.roomId, "end")}
+                        >
+                          {endingRoom === room.roomId + "end" ? "Ending…" : "End Room"}
+                        </Button>
+                      ) : (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="border-slate-500/30 bg-transparent text-slate-400 hover:bg-slate-500/10"
+                          disabled={endingRoom === room.roomId + "reset"}
+                          onClick={() => endRoom(room.roomId, "reset")}
+                        >
+                          {endingRoom === room.roomId + "reset" ? "Resetting…" : "Reset"}
+                        </Button>
+                      )}
                       <Link href={`/auction/${room.roomId}`}>
                         <Button
                           size="sm"
@@ -436,6 +513,44 @@ export function AdminPanel() {
               {assigning ? "Assigning..." : "Add Player To Manager"}
             </Button>
           </div>
+
+          <div className="mt-6 border-t border-white/10 pt-6">
+            <h3 className="text-sm font-semibold text-slate-300">Adjust Budget</h3>
+            <p className="mt-1 text-xs text-slate-500">
+              Positive = add coins back, negative = deduct. Applies to spent budget.
+            </p>
+            <div className="mt-3 space-y-3">
+              <select
+                aria-label="Select manager to adjust budget"
+                value={budgetManagerId}
+                onChange={(e) => setBudgetManagerId(e.target.value)}
+                className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-2 text-sm outline-none"
+                disabled={!selectedRoomId || managers.length === 0}
+              >
+                <option value="">Select a manager…</option>
+                {managers.map((m) => (
+                  <option key={m.userId} value={m.userId}>
+                    {m.userName} (spent: {m.budgetSpent})
+                  </option>
+                ))}
+              </select>
+              <input
+                type="number"
+                value={budgetAdjustment}
+                onChange={(e) => setBudgetAdjustment(e.target.value)}
+                placeholder="e.g. -50 or 100"
+                className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-2 text-sm outline-none"
+              />
+              <Button
+                type="button"
+                disabled={adjustingBudget || !selectedRoomId || !budgetManagerId || budgetAdjustment === ""}
+                className="w-full bg-amber-500 text-black hover:bg-amber-400"
+                onClick={adjustBudget}
+              >
+                {adjustingBudget ? "Adjusting…" : "Apply Budget Adjustment"}
+              </Button>
+            </div>
+          </div>
         </div>
 
         <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
@@ -443,6 +558,23 @@ export function AdminPanel() {
           <p className="mt-1 text-sm text-slate-400">
             Remove any player directly from a user if an auction result needs manual correction.
           </p>
+
+          {selectedRoomId && managers.length > 0 ? (
+            <div className="mt-4 flex flex-wrap gap-3">
+              <div className="rounded-xl border border-white/10 bg-black/30 px-4 py-3">
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Total Spent</p>
+                <p className="mt-1 text-lg font-black text-white">{roomStats.totalSpent} <span className="text-xs font-normal text-slate-400">coins</span></p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-black/30 px-4 py-3">
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Players Sold</p>
+                <p className="mt-1 text-lg font-black text-white">{roomStats.totalPlayers}</p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-black/30 px-4 py-3">
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Managers</p>
+                <p className="mt-1 text-lg font-black text-white">{managers.length}</p>
+              </div>
+            </div>
+          ) : null}
 
           {!selectedRoomId ? (
             <p className="mt-4 text-slate-400">Select a room to manage its users.</p>

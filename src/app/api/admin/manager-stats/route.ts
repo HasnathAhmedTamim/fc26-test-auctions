@@ -10,6 +10,26 @@ type ManagerPlayer = {
   amount: number;
 };
 
+async function createAuditEntry(
+  db: Awaited<ReturnType<typeof getDb>>,
+  input: {
+    roomId: string;
+    userId: string;
+    userName: string;
+    action: "add" | "remove" | "adjust-budget" | "room-end" | "room-reset";
+    message: string;
+  }
+) {
+  await db.collection("adminAuditLog").insertOne({
+    roomId: input.roomId,
+    userId: input.userId,
+    userName: input.userName,
+    action: input.action,
+    message: input.message,
+    createdAt: new Date().toISOString(),
+  });
+}
+
 function toObjectId(value: string) {
   try {
     return new ObjectId(value);
@@ -103,11 +123,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "roomId and userId are required" }, { status: 400 });
   }
 
-  if (action !== "add" && action !== "remove") {
+  if (action !== "add" && action !== "remove" && action !== "adjust-budget") {
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   }
 
-  if (!playerId) {
+  if (action !== "adjust-budget" && !playerId) {
     return NextResponse.json({ error: "playerId is required" }, { status: 400 });
   }
 
@@ -177,9 +197,55 @@ export async function POST(request: NextRequest) {
       { upsert: true }
     );
 
+    await createAuditEntry(db, {
+      roomId,
+      userId,
+      userName,
+      action: "add",
+      message: `Admin added ${player.name} to your squad for ${amount} coins.`,
+    });
+
     return NextResponse.json({
       ok: true,
       message: `${player.name} added to ${userName}`,
+    });
+  }
+
+  if (action === "adjust-budget") {
+    const adjustment = Number(body.adjustment ?? 0);
+    if (!Number.isFinite(adjustment)) {
+      return NextResponse.json({ error: "Invalid adjustment value" }, { status: 400 });
+    }
+    const currentSpent = Number(existingStat?.budgetSpent ?? 0);
+    const newBudgetSpent = Math.max(0, currentSpent + adjustment);
+
+    await statsCollection.updateOne(
+      { roomId, userId },
+      {
+        $set: {
+          roomId,
+          userId,
+          userName,
+          budgetSpent: newBudgetSpent,
+          updatedAt: new Date(),
+        },
+        $setOnInsert: { createdAt: new Date() },
+      },
+      { upsert: true }
+    );
+
+    const direction = adjustment >= 0 ? `+${adjustment}` : String(adjustment);
+    await createAuditEntry(db, {
+      roomId,
+      userId,
+      userName,
+      action: "adjust-budget",
+      message: `Admin adjusted your spent budget by ${direction} coins. New spent total: ${newBudgetSpent}.`,
+    });
+
+    return NextResponse.json({
+      ok: true,
+      message: `Budget adjusted (${direction}) → ${newBudgetSpent} spent for ${userName}`,
     });
   }
 
@@ -215,8 +281,78 @@ export async function POST(request: NextRequest) {
     }
   );
 
+  await createAuditEntry(db, {
+    roomId,
+    userId,
+    userName,
+    action: "remove",
+    message: `Admin removed ${removedPlayer.playerName} from your squad and refunded ${Number(removedPlayer?.amount ?? 0)} coins from spent budget.`,
+  });
+
   return NextResponse.json({
     ok: true,
     message: `${removedPlayer.playerName} removed from ${userName}`,
   });
+}
+
+export async function PATCH(request: NextRequest) {
+  const access = await requireAdmin();
+  if (!access.ok) return access.response;
+
+  const body = await request.json();
+  const action = String(body.action ?? "").trim();
+  const roomId = String(body.roomId ?? "").trim();
+
+  if (!roomId) {
+    return NextResponse.json({ error: "roomId is required" }, { status: 400 });
+  }
+
+  const db = await getDb();
+  const room = await db.collection("auctionRooms").findOne({ roomId });
+  if (!room) {
+    return NextResponse.json({ error: "Room not found" }, { status: 404 });
+  }
+
+  if (action === "end") {
+    await db.collection("auctionRooms").updateOne(
+      { roomId },
+      { $set: { status: "ended", updatedAt: new Date() } }
+    );
+    await db.collection("adminAuditLog").insertOne({
+      roomId,
+      userId: "room",
+      userName: "Room",
+      action: "room-end",
+      message: `Admin ended room ${room.name ?? roomId}.`,
+      createdAt: new Date().toISOString(),
+    });
+    return NextResponse.json({ ok: true, message: "Room ended" });
+  }
+
+  if (action === "reset") {
+    await db.collection("auctionRooms").updateOne(
+      { roomId },
+      {
+        $set: {
+          status: "waiting",
+          currentPlayer: null,
+          currentBid: 0,
+          highestBidderId: null,
+          highestBidderName: null,
+          updatedAt: new Date(),
+        },
+      }
+    );
+    await db.collection("adminAuditLog").insertOne({
+      roomId,
+      userId: "room",
+      userName: "Room",
+      action: "room-reset",
+      message: `Admin reset room ${room.name ?? roomId} back to waiting.`,
+      createdAt: new Date().toISOString(),
+    });
+    return NextResponse.json({ ok: true, message: "Room reset to waiting" });
+  }
+
+  return NextResponse.json({ error: "Invalid action" }, { status: 400 });
 }

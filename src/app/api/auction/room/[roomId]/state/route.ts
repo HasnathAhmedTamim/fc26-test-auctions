@@ -22,12 +22,18 @@ export async function GET(
     .sort({ createdAt: -1 })
     .limit(10)
     .toArray();
+  const soldPlayers = await db
+    .collection("soldPlayers")
+    .find({ roomId })
+    .sort({ createdAt: -1 })
+    .limit(20)
+    .toArray();
 
   return NextResponse.json({
     room: {
       roomId: room.roomId,
       status: room.status,
-      timer: Math.max(Number(room.timer ?? ROUND_TIME_SECONDS), ROUND_TIME_SECONDS),
+      timer: Math.max(0, Number(room.timer ?? ROUND_TIME_SECONDS)),
       currentPlayer: room.currentPlayer,
       currentBid: room.currentBid,
       highestBidderId: room.highestBidderId,
@@ -38,6 +44,12 @@ export async function GET(
       userName: bid.userName,
       amount: bid.amount,
       timestamp: bid.createdAt,
+    })),
+    soldPlayers: soldPlayers.map((item) => ({
+      playerName: item.playerName,
+      winnerName: item.winnerName,
+      amount: Number(item.amount ?? 0),
+      timestamp: item.createdAt,
     })),
   });
 }
