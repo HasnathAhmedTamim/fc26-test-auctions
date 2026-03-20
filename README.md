@@ -6,8 +6,8 @@ Real-time football player auction platform built with Next.js App Router, NextAu
 
 - Credentials-based authentication (register/login)
 - Role-aware access:
-	- `manager`: dashboard + live auction bidding
-	- `admin`: room creation + live auction controls
+	- `manager`: dashboard + live auction bidding.
+	- `admin`: room creation + live auction controls.
 - Real-time auction room updates via Socket.IO:
 	- room join/state sync
 	- live bidding
