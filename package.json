@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "cross-env NODE_ENV=production node server.mjs",
     "lint": "eslint",
+    "test": "vitest run --config vitest.config.mts",
     "import:players": "node -r dotenv/config scripts/import-fc-players.mjs",
     "players:version": "node -r dotenv/config scripts/set-active-edition.mjs"
   },
@@ -40,6 +41,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^2.1.9"
   }
 }

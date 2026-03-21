@@ -6,6 +6,13 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const queryEdition = url.searchParams.get("edition")?.toLowerCase();
   const search = url.searchParams.get("search")?.trim();
+  const pageParam = Number(url.searchParams.get("page") ?? "1");
+  const limitParam = Number(url.searchParams.get("limit") ?? "120");
+  const page = Number.isInteger(pageParam) && pageParam > 0 ? pageParam : 1;
+  const limit = Number.isInteger(limitParam)
+    ? Math.max(1, Math.min(limitParam, 200))
+    : 120;
+  const skip = (page - 1) * limit;
 
   const db = await getDb();
   const activeEdition = await getActivePlayerEdition(db);
@@ -25,7 +32,11 @@ export async function GET(req: Request) {
     .collection("players")
     .find(filter)
     .sort({ rating: -1, name: 1 })
+    .skip(skip)
+    .limit(limit)
     .toArray();
+
+  const total = await db.collection("players").countDocuments(filter);
 
   const players = docs.map((doc) => ({
     id: doc.playerId,
@@ -55,6 +66,10 @@ export async function GET(req: Request) {
   return NextResponse.json({
     edition,
     activeEdition,
+    page,
+    limit,
+    total,
+    hasMore: skip + players.length < total,
     count: players.length,
     players,
   });

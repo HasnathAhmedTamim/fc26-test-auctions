@@ -31,11 +31,18 @@ export function RegisterForm() {
         return;
       }
 
-      await signIn("credentials", {
+      const signInResult = await signIn("credentials", {
         email,
         password,
         redirect: false,
       });
+
+      if (signInResult?.error) {
+        setError("Account created, but sign in failed. Please login manually.");
+        router.push("/login");
+        router.refresh();
+        return;
+      }
 
       router.push("/dashboard");
       router.refresh();

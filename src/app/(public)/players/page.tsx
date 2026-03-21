@@ -74,9 +74,14 @@ function mapFc24ToPlayer(item: Fc24RawPlayer, idx: number): Player {
 }
 
 export default function PlayersPage() {
+  const pageSize = 120;
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [source, setSource] = useState<"db" | "json" | "none">("none");
+  const [isTruncated, setIsTruncated] = useState(false);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
   const [position, setPosition] = useState("All");
   const [minRating, setMinRating] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
@@ -87,13 +92,18 @@ export default function PlayersPage() {
     async function loadPlayers() {
       setLoading(true);
       try {
-        const res = await fetch("/api/players", { cache: "no-store" });
+        const res = await fetch(`/api/players?page=${page}&limit=${pageSize}`, {
+          cache: "no-store",
+        });
         if (res.ok) {
           const data = await res.json();
           const dbPlayers = Array.isArray(data.players) ? data.players : [];
           if (!cancelled && dbPlayers.length > 0) {
             setPlayers(dbPlayers);
             setSource("db");
+            setIsTruncated(Boolean(data.hasMore));
+            setHasMore(Boolean(data.hasMore));
+            setTotal(Number(data.total ?? 0));
             return;
           }
         }
@@ -110,11 +120,17 @@ export default function PlayersPage() {
         if (!cancelled) {
           setPlayers(mapped);
           setSource(mapped.length > 0 ? "json" : "none");
+          setIsTruncated(false);
+          setHasMore(false);
+          setTotal(mapped.length);
         }
       } catch {
         if (!cancelled) {
           setPlayers([]);
           setSource("none");
+          setIsTruncated(false);
+          setHasMore(false);
+          setTotal(0);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -125,7 +141,7 @@ export default function PlayersPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [page]);
 
   const filtered = useMemo(
     () =>
@@ -167,6 +183,11 @@ export default function PlayersPage() {
               Showing fallback data from public JSON file.
             </p>
           ) : null}
+          {source === "db" && isTruncated ? (
+            <p className="mt-2 text-sm text-slate-400">
+              Showing page {page} of players.
+            </p>
+          ) : null}
         </div>
 
         <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
@@ -194,6 +215,32 @@ export default function PlayersPage() {
               filtered.map((player) => <PlayerCard key={player.id} player={player} />)
             )}
           </div>
+
+          {source === "db" ? (
+            <div className="mt-6 flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-4">
+              <p className="text-sm text-slate-300">
+                Page {page} • Showing {players.length} players{total > 0 ? ` of ${total}` : ""}
+              </p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                  disabled={loading || page <= 1}
+                  className="rounded-lg border border-white/15 px-3 py-1 text-sm text-white disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPage((prev) => prev + 1)}
+                  disabled={loading || !hasMore}
+                  className="rounded-lg border border-emerald-400/40 bg-emerald-500/15 px-3 py-1 text-sm text-emerald-300 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          ) : null}
         </div>
       </Container>
     </section>

@@ -40,6 +40,23 @@ type Fc24RawPlayer = {
   strength?: number;
 };
 
+let fallbackPlayersCache: Promise<Fc24RawPlayer[]> | null = null;
+
+function getFallbackPlayers() {
+  if (!fallbackPlayersCache) {
+    const jsonPath = path.join(process.cwd(), "public", "fifa24-player-list.json");
+    fallbackPlayersCache = fs
+      .readFile(jsonPath, "utf8")
+      .then((raw) => {
+        const arr = JSON.parse(raw) as Fc24RawPlayer[];
+        return Array.isArray(arr) ? arr : [];
+      })
+      .catch(() => []);
+  }
+
+  return fallbackPlayersCache;
+}
+
 function normalizeSlug(value: string) {
   return String(value)
     .normalize("NFKD")
@@ -158,10 +175,8 @@ export default async function PlayerDetailsPage({
     : null;
 
   if (!player) {
-    const jsonPath = path.join(process.cwd(), "public", "fifa24-player-list.json");
     try {
-      const raw = await fs.readFile(jsonPath, "utf8");
-      const arr = JSON.parse(raw) as Fc24RawPlayer[];
+      const arr = await getFallbackPlayers();
       const fallback = Array.isArray(arr)
         ? arr
             .map((item) => mapJsonPlayer(item, decodedId))

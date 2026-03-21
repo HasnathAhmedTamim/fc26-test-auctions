@@ -1,7 +1,14 @@
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 import { Container } from "@/components/layout/container";
 import { LoginForm } from "@/components/auth/login-form";
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const session = await auth();
+  if (session?.user) {
+    redirect(session.user.role === "admin" ? "/admin" : "/dashboard");
+  }
+
   return (
     <section className="py-16">
       <Container className="max-w-md">
