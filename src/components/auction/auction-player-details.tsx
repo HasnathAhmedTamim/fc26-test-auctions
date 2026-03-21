@@ -168,6 +168,8 @@ export function AuctionPlayerDetails({ player }: Props) {
   const groups = deriveAttributeGroups(player);
   const playstyles = derivePlaystyles(player);
   const league = player.league ?? LEAGUE_BY_CLUB[player.club] ?? "FC Club League";
+  const cardImageSrc = player.cardImage || player.image;
+  const isRemoteCardImage = /^https?:\/\//i.test(cardImageSrc);
 
   return (
     <div className="space-y-5">
@@ -176,11 +178,12 @@ export function AuctionPlayerDetails({ player }: Props) {
           {/* FC Card image displayed at proper aspect ratio */}
           <div className="relative h-44 w-32 shrink-0 overflow-hidden rounded-2xl shadow-2xl shadow-black/80">
             <Image
-              src={player.cardImage || player.image}
+              src={cardImageSrc}
               alt={player.name}
               fill
               className="object-contain"
               sizes="128px"
+              unoptimized={isRemoteCardImage}
             />
           </div>
           {/* Player info */}

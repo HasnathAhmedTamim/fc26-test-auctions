@@ -4,6 +4,7 @@ import { Player } from "@/types/player";
 
 export function PlayerCard({ player }: { player: Player }) {
   const imageSrc = player.image?.trim() ? player.image : "/player-placeholder.svg";
+  const isRemoteImage = /^https?:\/\//i.test(imageSrc);
 
   return (
     <Link
@@ -16,6 +17,7 @@ export function PlayerCard({ player }: { player: Player }) {
           alt={player.name}
           fill
           className="object-cover transition duration-500 group-hover:scale-105"
+          unoptimized={isRemoteImage}
         />
       </div>
       <div className="p-5">

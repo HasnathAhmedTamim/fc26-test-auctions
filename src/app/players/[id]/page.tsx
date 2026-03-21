@@ -40,6 +40,16 @@ type Fc24RawPlayer = {
   strength?: number;
 };
 
+function normalizeSlug(value: string) {
+  return String(value)
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
 function star(value?: number) {
   return `${value ?? 4}★`;
 }
@@ -100,9 +110,21 @@ export default async function PlayerDetailsPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const decodedId = decodeURIComponent(id);
+  const normalizedId = normalizeSlug(decodedId);
   const db = await getDb();
   const edition = await getActivePlayerEdition(db);
-  const doc = await db.collection("players").findOne({ playerId: id, edition });
+  const playersCollection = db.collection("players");
+
+  const doc =
+    (await playersCollection.findOne({ playerId: decodedId, edition })) ??
+    (await playersCollection.findOne({ playerId: decodedId.normalize("NFC"), edition })) ??
+    (await playersCollection.findOne({ playerId: decodedId.normalize("NFD"), edition })) ??
+    (await playersCollection.findOne({ playerId: normalizedId, edition })) ??
+    (await playersCollection.findOne(
+      { playerId: decodedId, edition },
+      { collation: { locale: "en", strength: 1 } }
+    ));
 
   let player = doc
     ? {
@@ -141,7 +163,17 @@ export default async function PlayerDetailsPage({
       const raw = await fs.readFile(jsonPath, "utf8");
       const arr = JSON.parse(raw) as Fc24RawPlayer[];
       const fallback = Array.isArray(arr)
-        ? arr.map((item) => mapJsonPlayer(item, id)).find(Boolean)
+        ? arr
+            .map((item) => mapJsonPlayer(item, decodedId))
+            .find(Boolean) ??
+          arr
+            .map((item) => {
+              const slug = String(item.slug ?? "");
+              return normalizeSlug(slug) === normalizedId
+                ? mapJsonPlayer(item, slug)
+                : null;
+            })
+            .find(Boolean)
         : null;
       if (fallback) player = fallback;
     } catch {
