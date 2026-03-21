@@ -36,6 +36,21 @@ type PlayerOption = {
   club: string;
 };
 
+type AdminUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: "admin" | "manager";
+  createdAt: string | null;
+};
+
+type UserDraft = {
+  name: string;
+  email: string;
+  role: "admin" | "manager";
+  password: string;
+};
+
 const STATUS_STYLES: Record<string, string> = {
   live: "bg-emerald-500 text-black",
   sold: "bg-yellow-500 text-black",
@@ -45,6 +60,18 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 export function AdminPanel() {
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [userDrafts, setUserDrafts] = useState<Record<string, UserDraft>>({});
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [usersError, setUsersError] = useState("");
+  const [creatingUser, setCreatingUser] = useState(false);
+  const [updatingUserId, setUpdatingUserId] = useState("");
+  const [deletingUserId, setDeletingUserId] = useState("");
+  const [newUserName, setNewUserName] = useState("");
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserPassword, setNewUserPassword] = useState("");
+  const [newUserRole, setNewUserRole] = useState<"admin" | "manager">("manager");
+
   const [rooms, setRooms] = useState<AuctionRoom[]>([]);
   const [players, setPlayers] = useState<PlayerOption[]>([]);
   const [managers, setManagers] = useState<ManagerRoster[]>([]);
@@ -103,6 +130,37 @@ export function AdminPanel() {
     });
   }
 
+  async function fetchUsers() {
+    setUsersLoading(true);
+    setUsersError("");
+
+    const res = await fetch("/api/admin/users", { cache: "no-store" });
+    const data = await res.json();
+
+    setUsersLoading(false);
+
+    if (!res.ok) {
+      setUsersError(data.error ?? "Failed to load users");
+      return;
+    }
+
+    const nextUsers: AdminUser[] = data.users ?? [];
+    setUsers(nextUsers);
+    setUserDrafts(
+      Object.fromEntries(
+        nextUsers.map((user) => [
+          user.id,
+          {
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            password: "",
+          },
+        ])
+      )
+    );
+  }
+
   async function fetchManagerRoster(roomId: string) {
     if (!roomId) {
       setManagers([]);
@@ -138,6 +196,7 @@ export function AdminPanel() {
     const timeoutId = window.setTimeout(() => {
       void fetchRooms();
       void fetchPlayers();
+      void fetchUsers();
     }, 0);
 
     return () => window.clearTimeout(timeoutId);
@@ -157,6 +216,107 @@ export function AdminPanel() {
     if (player) {
       setTransferAmount(String(player.price ?? 0));
     }
+  }
+
+  function updateUserDraft(userId: string, patch: Partial<UserDraft>) {
+    setUserDrafts((prev) => ({
+      ...prev,
+      [userId]: {
+        name: patch.name ?? prev[userId]?.name ?? "",
+        email: patch.email ?? prev[userId]?.email ?? "",
+        role: patch.role ?? prev[userId]?.role ?? "manager",
+        password: patch.password ?? prev[userId]?.password ?? "",
+      },
+    }));
+  }
+
+  async function createUser() {
+    if (!newUserName.trim() || !newUserEmail.trim() || !newUserPassword.trim()) return;
+
+    setCreatingUser(true);
+    setUsersError("");
+    setAdminMessage("");
+
+    const res = await fetch("/api/admin/users", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: newUserName,
+        email: newUserEmail,
+        password: newUserPassword,
+        role: newUserRole,
+      }),
+    });
+
+    const data = await res.json();
+    setCreatingUser(false);
+
+    if (!res.ok) {
+      setUsersError(data.error ?? "Failed to create user");
+      return;
+    }
+
+    setAdminMessage(data.message ?? "User created");
+    setNewUserName("");
+    setNewUserEmail("");
+    setNewUserPassword("");
+    setNewUserRole("manager");
+    await fetchUsers();
+  }
+
+  async function saveUser(userId: string) {
+    const draft = userDrafts[userId];
+    if (!draft) return;
+
+    setUpdatingUserId(userId);
+    setUsersError("");
+    setAdminMessage("");
+
+    const res = await fetch("/api/admin/users", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId,
+        name: draft.name,
+        email: draft.email,
+        role: draft.role,
+        password: draft.password,
+      }),
+    });
+
+    const data = await res.json();
+    setUpdatingUserId("");
+
+    if (!res.ok) {
+      setUsersError(data.error ?? "Failed to update user");
+      return;
+    }
+
+    setAdminMessage(data.message ?? "User updated");
+    await fetchUsers();
+  }
+
+  async function deleteUser(userId: string) {
+    setDeletingUserId(userId);
+    setUsersError("");
+    setAdminMessage("");
+
+    const res = await fetch("/api/admin/users", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId }),
+    });
+
+    const data = await res.json();
+    setDeletingUserId("");
+
+    if (!res.ok) {
+      setUsersError(data.error ?? "Failed to delete user");
+      return;
+    }
+
+    setAdminMessage(data.message ?? "User deleted");
+    await fetchUsers();
   }
 
   async function endRoom(roomId: string, action: "end" | "reset") {
@@ -650,6 +810,157 @@ export function AdminPanel() {
               ))}
             </div>
           )}
+        </div>
+      </div>
+
+      <div className="mt-10 rounded-3xl border border-white/10 bg-white/5 p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-bold">User Management</h2>
+            <p className="mt-1 text-sm text-slate-400">
+              View registered users, create accounts, edit roles, and remove users.
+            </p>
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="border-white/20 bg-transparent text-white hover:bg-white/10"
+            onClick={() => fetchUsers()}
+            disabled={usersLoading}
+          >
+            {usersLoading ? "Refreshing…" : "Refresh Users"}
+          </Button>
+        </div>
+
+        <div className="mt-6 grid gap-8 lg:grid-cols-[340px_1fr]">
+          <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-5">
+            <h3 className="text-lg font-bold">Add User</h3>
+            <div className="mt-4 space-y-3">
+              <input
+                type="text"
+                placeholder="Full name"
+                value={newUserName}
+                onChange={(e) => setNewUserName(e.target.value)}
+                className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-2 text-sm outline-none"
+              />
+              <input
+                type="email"
+                placeholder="Email"
+                value={newUserEmail}
+                onChange={(e) => setNewUserEmail(e.target.value)}
+                className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-2 text-sm outline-none"
+              />
+              <input
+                type="password"
+                placeholder="Password"
+                value={newUserPassword}
+                onChange={(e) => setNewUserPassword(e.target.value)}
+                className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-2 text-sm outline-none"
+              />
+              <select
+                aria-label="Select role for new user"
+                value={newUserRole}
+                onChange={(e) => setNewUserRole((e.target.value === "admin" ? "admin" : "manager"))}
+                className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-2 text-sm outline-none"
+              >
+                <option value="manager">Manager</option>
+                <option value="admin">Admin</option>
+              </select>
+              <Button
+                type="button"
+                disabled={creatingUser || !newUserName || !newUserEmail || !newUserPassword}
+                className="w-full bg-emerald-500 text-black hover:bg-emerald-400"
+                onClick={createUser}
+              >
+                {creatingUser ? "Creating…" : "Create User"}
+              </Button>
+            </div>
+          </div>
+
+          <div>
+            {usersError ? <p className="mb-3 text-sm text-red-400">{usersError}</p> : null}
+            {users.length === 0 ? (
+              <p className="text-slate-400">No users found.</p>
+            ) : (
+              <div className="space-y-3">
+                {users.map((user) => {
+                  const draft = userDrafts[user.id] ?? {
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                    password: "",
+                  };
+
+                  return (
+                    <div
+                      key={user.id}
+                      className="rounded-2xl border border-white/10 bg-slate-950/60 p-4"
+                    >
+                      <div className="grid gap-3 lg:grid-cols-[1fr_1fr_180px_180px]">
+                        <input
+                          aria-label={`Edit name for ${user.email}`}
+                          type="text"
+                          value={draft.name}
+                          onChange={(e) => updateUserDraft(user.id, { name: e.target.value })}
+                          className="rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-sm outline-none"
+                        />
+                        <input
+                          aria-label={`Edit email for ${user.name}`}
+                          type="email"
+                          value={draft.email}
+                          onChange={(e) => updateUserDraft(user.id, { email: e.target.value })}
+                          className="rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-sm outline-none"
+                        />
+                        <select
+                          aria-label={`Edit role for ${user.email}`}
+                          value={draft.role}
+                          onChange={(e) => updateUserDraft(user.id, { role: e.target.value === "admin" ? "admin" : "manager" })}
+                          className="rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-sm outline-none"
+                        >
+                          <option value="manager">Manager</option>
+                          <option value="admin">Admin</option>
+                        </select>
+                        <input
+                          type="password"
+                          placeholder="New password (optional)"
+                          value={draft.password}
+                          onChange={(e) => updateUserDraft(user.id, { password: e.target.value })}
+                          className="rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-sm outline-none"
+                        />
+                      </div>
+                      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                        <p className="text-xs text-slate-500">
+                          User ID: {user.id}
+                        </p>
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            className="bg-blue-500 text-white hover:bg-blue-400"
+                            onClick={() => saveUser(user.id)}
+                            disabled={updatingUserId === user.id}
+                          >
+                            {updatingUserId === user.id ? "Saving…" : "Save"}
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="border-red-500/30 bg-transparent text-red-300 hover:bg-red-500/10"
+                            onClick={() => deleteUser(user.id)}
+                            disabled={deletingUserId === user.id}
+                          >
+                            {deletingUserId === user.id ? "Deleting…" : "Delete"}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </Container>
