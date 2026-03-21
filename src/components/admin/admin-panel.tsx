@@ -135,19 +135,29 @@ export function AdminPanel() {
   }
 
   useEffect(() => {
-    fetchRooms();
-    fetchPlayers();
+    const timeoutId = window.setTimeout(() => {
+      void fetchRooms();
+      void fetchPlayers();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, []);
 
   useEffect(() => {
-    fetchManagerRoster(selectedRoomId);
+    const timeoutId = window.setTimeout(() => {
+      void fetchManagerRoster(selectedRoomId);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [selectedRoomId]);
 
-  useEffect(() => {
-    if (selectedPlayer) {
-      setTransferAmount(String(selectedPlayer.price ?? 0));
+  function handlePlayerChange(playerId: string) {
+    setSelectedPlayerId(playerId);
+    const player = players.find((entry) => entry.id === playerId);
+    if (player) {
+      setTransferAmount(String(player.price ?? 0));
     }
-  }, [selectedPlayer]);
+  }
 
   async function endRoom(roomId: string, action: "end" | "reset") {
     setEndingRoom(roomId + action);
@@ -472,7 +482,7 @@ export function AdminPanel() {
               <select
                 aria-label="Select player to assign"
                 value={selectedPlayerId}
-                onChange={(e) => setSelectedPlayerId(e.target.value)}
+                onChange={(e) => handlePlayerChange(e.target.value)}
                 className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-2 text-sm outline-none"
                 disabled={players.length === 0}
               >

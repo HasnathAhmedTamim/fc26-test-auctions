@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import { Button } from "@/components/ui/button";
 import { AuctionRoomState, BidEntry } from "@/types/auction";
@@ -114,7 +114,7 @@ export function AuctionRoom({ roomId, user }: Props) {
     ]);
   }
 
-  async function loadManagerRoomState() {
+  const loadManagerRoomState = useCallback(async () => {
     if (user.role !== "manager") return;
 
     const res = await fetch(`/api/auction/room/${encodeURIComponent(roomId)}/manager-state`, {
@@ -127,9 +127,9 @@ export function AuctionRoom({ roomId, user }: Props) {
     }
 
     setManagerRoomState(data);
-  }
+  }, [roomId, user.role]);
 
-  async function loadRoomHistory() {
+  const loadRoomHistory = useCallback(async () => {
     const res = await fetch(`/api/auction/room/${encodeURIComponent(roomId)}/state`, {
       cache: "no-store",
     });
@@ -140,7 +140,7 @@ export function AuctionRoom({ roomId, user }: Props) {
     }
 
     setSoldPlayers(data.soldPlayers ?? []);
-  }
+  }, [roomId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -153,24 +153,27 @@ export function AuctionRoom({ roomId, user }: Props) {
       }
     }
 
-    loadPlayers();
-    loadManagerRoomState();
-    loadRoomHistory();
+    const timeoutId = window.setTimeout(() => {
+      void loadPlayers();
+      void loadManagerRoomState();
+      void loadRoomHistory();
+    }, 0);
 
     return () => {
       cancelled = true;
+      window.clearTimeout(timeoutId);
     };
-  }, [roomId, user.role]);
+  }, [roomId, user.role, loadManagerRoomState, loadRoomHistory]);
 
   useEffect(() => {
     if (user.role !== "manager") return;
 
     const interval = window.setInterval(() => {
-      loadManagerRoomState();
+      void loadManagerRoomState();
     }, 4000);
 
     return () => window.clearInterval(interval);
-  }, [roomId, user.role]);
+  }, [roomId, user.role, loadManagerRoomState]);
 
   useEffect(() => {
     socket = io(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000");
@@ -322,7 +325,7 @@ export function AuctionRoom({ roomId, user }: Props) {
       socket?.disconnect();
       socket = null;
     };
-  }, [roomId, user.id, user.name, user.role]);
+  }, [roomId, user.id, user.name, user.role, loadManagerRoomState, loadRoomHistory]);
 
   function submitBid() {
     setError("");

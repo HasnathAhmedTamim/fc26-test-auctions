@@ -15,10 +15,12 @@ export async function POST(req: Request) {
       );
     }
 
+    const normalizedEmail = parsed.data.email.trim().toLowerCase();
+
     const db = await getDb();
     const users = db.collection("users");
 
-    const existing = await users.findOne({ email: parsed.data.email });
+    const existing = await users.findOne({ email: normalizedEmail });
 
     if (existing) {
       return NextResponse.json({ error: "User already exists" }, { status: 409 });
@@ -27,8 +29,8 @@ export async function POST(req: Request) {
     const passwordHash = await bcrypt.hash(parsed.data.password, 10);
 
     const result = await users.insertOne({
-      name: parsed.data.name,
-      email: parsed.data.email,
+      name: parsed.data.name.trim(),
+      email: normalizedEmail,
       passwordHash,
       role: "manager",
       createdAt: new Date(),

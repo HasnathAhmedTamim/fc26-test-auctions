@@ -29,9 +29,19 @@ export async function POST(req: Request) {
 
   const body = await req.json();
   const { name, budget, maxPlayers } = body;
+  const parsedBudget = Number(budget);
+  const parsedMaxPlayers = Number(maxPlayers);
 
   if (!name || typeof name !== "string" || name.trim().length < 2) {
     return NextResponse.json({ error: "Room name must be at least 2 characters" }, { status: 400 });
+  }
+
+  if (!Number.isFinite(parsedBudget) || parsedBudget <= 0) {
+    return NextResponse.json({ error: "Budget must be a positive number" }, { status: 400 });
+  }
+
+  if (!Number.isInteger(parsedMaxPlayers) || parsedMaxPlayers <= 0) {
+    return NextResponse.json({ error: "maxPlayers must be a positive integer" }, { status: 400 });
   }
 
   const roomId = randomUUID().slice(0, 8);
@@ -46,8 +56,8 @@ export async function POST(req: Request) {
     currentBid: 0,
     highestBidderId: null,
     highestBidderName: null,
-    budget: Number(budget) || 2000,
-    maxPlayers: Number(maxPlayers) || 24,
+    budget: parsedBudget,
+    maxPlayers: parsedMaxPlayers,
     createdAt: new Date(),
     updatedAt: new Date(),
   });

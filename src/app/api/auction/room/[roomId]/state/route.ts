@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { getDb } from "@/lib/mongodb";
 
 const ROUND_TIME_SECONDS = 120;
@@ -7,6 +8,11 @@ export async function GET(
   _req: Request,
   { params }: { params: Promise<{ roomId: string }> }
 ) {
+  const session = await auth();
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { roomId } = await params;
   const db = await getDb();
 

@@ -26,7 +26,7 @@ export async function GET() {
   const budgetSpent = stats?.budgetSpent ?? 0;
 
   return NextResponse.json({
-    budgetLeft: budgetLimit - budgetSpent,
+    budgetLeft: Math.max(0, budgetLimit - budgetSpent),
     budgetSpent,
     budgetLimit,
     playersBought: stats?.playersBought?.length ?? 0,

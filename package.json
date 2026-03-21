@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "node server.mjs",
     "build": "next build",
-    "start": "NODE_ENV=production node server.mjs",
+    "start": "cross-env NODE_ENV=production node server.mjs",
     "lint": "eslint",
     "import:players": "node -r dotenv/config scripts/import-fc-players.mjs",
     "players:version": "node -r dotenv/config scripts/set-active-edition.mjs"
@@ -16,6 +16,7 @@
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "cross-env": "^7.0.3",
     "dotenv": "^17.2.3",
     "lucide-react": "^0.577.0",
     "mongodb": "^6.20.0",

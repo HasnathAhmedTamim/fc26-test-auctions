@@ -23,7 +23,7 @@ export default async function DashboardPage() {
 
   const budgetLimit = activeRoom?.budget ?? 2000;
   const budgetSpent = stats?.budgetSpent ?? 0;
-  const budgetLeft = budgetLimit - budgetSpent;
+  const budgetLeft = Math.max(0, budgetLimit - budgetSpent);
   const playersBought: { playerName: string; amount: number }[] = stats?.playersBought ?? [];
 
   return (

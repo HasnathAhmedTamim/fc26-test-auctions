@@ -6,8 +6,6 @@ import { MongoClient } from "mongodb";
 
 dotenv.config({ path: ".env.local" });
 
-console.log("ENV CHECK:", process.env.MONGODB_URI);
-
 const dev = process.env.NODE_ENV !== "production";
 const hostname = "localhost";
 const port = 3000;
@@ -273,7 +271,6 @@ app.prepare().then(async () => {
     }
 
     const winnerId = room.highestBidderId;
-    const winnerName = room.highestBidderName ?? "Unknown";
     const amount = room.currentBid ?? 0;
     const saleCheck = await validateManagerEligibility(room, winnerId, amount);
 
