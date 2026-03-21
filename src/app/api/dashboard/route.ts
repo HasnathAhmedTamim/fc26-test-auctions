@@ -9,20 +9,36 @@ export async function GET() {
   }
 
   const db = await getDb();
+  const roomsCollection = db.collection("auctionRooms");
+  const statsCollection = db.collection("managerStats");
 
-  const activeRoom = await db.collection("auctionRooms").findOne(
+  const activeRoom = await roomsCollection.findOne(
     { status: { $in: ["live", "waiting", "sold", "paused"] } },
     { sort: { createdAt: -1 } }
   );
 
-  const stats = activeRoom
-    ? await db.collection("managerStats").findOne({
+  let dashboardRoom = activeRoom;
+  let stats = activeRoom
+    ? await statsCollection.findOne({
         userId: session.user.id,
         roomId: activeRoom.roomId,
       })
     : null;
 
-  const budgetLimit = activeRoom?.budget ?? 2000;
+  if (!stats) {
+    const latestStats = await statsCollection.find({ userId: session.user.id })
+      .sort({ updatedAt: -1, createdAt: -1 })
+      .limit(1)
+      .next();
+
+    if (latestStats) {
+      const statsRoom = await roomsCollection.findOne({ roomId: latestStats.roomId });
+      dashboardRoom = statsRoom ?? dashboardRoom;
+      stats = latestStats;
+    }
+  }
+
+  const budgetLimit = dashboardRoom?.budget ?? 2000;
   const budgetSpent = stats?.budgetSpent ?? 0;
 
   return NextResponse.json({
@@ -31,7 +47,7 @@ export async function GET() {
     budgetLimit,
     playersBought: stats?.playersBought?.length ?? 0,
     playersList: stats?.playersBought ?? [],
-    tournamentStatus: activeRoom ? activeRoom.status : "No active room",
-    activeRoomId: activeRoom?.roomId ?? null,
+    tournamentStatus: dashboardRoom ? dashboardRoom.status : "No active room",
+    activeRoomId: dashboardRoom?.roomId ?? null,
   });
 }

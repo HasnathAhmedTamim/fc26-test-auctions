@@ -9,19 +9,36 @@ export default async function DashboardPage() {
   if (!session?.user) redirect("/login");
 
   const db = await getDb();
-  const activeRoom = await db.collection("auctionRooms").findOne(
+  const roomsCollection = db.collection("auctionRooms");
+  const statsCollection = db.collection("managerStats");
+
+  const activeRoom = await roomsCollection.findOne(
     { status: { $in: ["live", "waiting", "sold", "paused"] } },
     { sort: { createdAt: -1 } }
   );
 
-  const stats = activeRoom
-    ? await db.collection("managerStats").findOne({
+  let dashboardRoom = activeRoom;
+  let stats = activeRoom
+    ? await statsCollection.findOne({
         userId: session.user.id,
         roomId: activeRoom.roomId,
       })
     : null;
 
-  const budgetLimit = activeRoom?.budget ?? 2000;
+  if (!stats) {
+    const latestStats = await statsCollection.find({ userId: session.user.id })
+      .sort({ updatedAt: -1, createdAt: -1 })
+      .limit(1)
+      .next();
+
+    if (latestStats) {
+      const statsRoom = await roomsCollection.findOne({ roomId: latestStats.roomId });
+      dashboardRoom = statsRoom ?? dashboardRoom;
+      stats = latestStats;
+    }
+  }
+
+  const budgetLimit = dashboardRoom?.budget ?? 2000;
   const budgetSpent = stats?.budgetSpent ?? 0;
   const budgetLeft = Math.max(0, budgetLimit - budgetSpent);
   const playersBought: { playerName: string; amount: number }[] = stats?.playersBought ?? [];
@@ -42,12 +59,12 @@ export default async function DashboardPage() {
           <p className="mt-2 text-3xl font-black">{playersBought.length}</p>
         </div>
         <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-          <p className="text-sm text-slate-400">Active Room</p>
+          <p className="text-sm text-slate-400">Current Room</p>
           <p className="mt-2 text-xl font-black">
-            {activeRoom ? activeRoom.status.toUpperCase() : "None"}
+            {dashboardRoom ? dashboardRoom.status.toUpperCase() : "None"}
           </p>
-          {activeRoom && (
-            <Link href={`/auction/${activeRoom.roomId}`}>
+          {dashboardRoom && (
+            <Link href={`/auction/${dashboardRoom.roomId}`}>
               <Button size="sm" className="mt-3 bg-emerald-500 text-black hover:bg-emerald-400">
                 Join Auction
               </Button>
