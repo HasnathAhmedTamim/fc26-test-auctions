@@ -10,11 +10,15 @@ export default async function RegisterPage() {
   }
 
   return (
-    <section className="py-16">
-      <Container className="max-w-md">
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-8">
+    <section className="relative py-16">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_0%,rgba(45,212,191,0.14),transparent_40%),radial-gradient(circle_at_10%_100%,rgba(245,158,11,0.07),transparent_35%)]" />
+      <Container className="relative max-w-md">
+        <div className="panel-glass rounded-3xl p-8">
           <h1 className="text-3xl font-black">Register</h1>
           <p className="mt-2 text-slate-400">Create your manager account.</p>
+          <p className="mt-2 text-sm text-slate-500">
+            New accounts are created as manager roles by default.
+          </p>
           <RegisterForm />
         </div>
       </Container>

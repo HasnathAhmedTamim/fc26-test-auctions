@@ -6,7 +6,7 @@ export function HeroSection() {
   return (
     <section className="relative overflow-hidden py-24 sm:py-32">
       <Container className="relative z-10 grid gap-10 lg:grid-cols-2 lg:items-center">
-        <div>
+        <div className="stagger-rise">
           <p className="mb-4 inline-block rounded-full border border-emerald-400/30 bg-emerald-400/10 px-4 py-1 text-sm text-emerald-300">
             FC26 Tournament Auction Platform
           </p>
@@ -26,7 +26,7 @@ export function HeroSection() {
           </div>
         </div>
 
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl backdrop-blur">
+        <div className="panel-glass stagger-rise rounded-3xl p-6 shadow-2xl" style={{ animationDelay: "120ms" }}>
           <div className="space-y-4">
             <div className="rounded-2xl bg-slate-900 p-5">
               <p className="text-sm text-slate-400">Live Auction</p>

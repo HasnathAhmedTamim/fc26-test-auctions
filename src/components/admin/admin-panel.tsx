@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/container";
+import { showConfirmAlert, showErrorAlert, showSuccessAlert } from "@/lib/alerts";
 
 type AuctionRoom = {
   roomId: string;
@@ -252,11 +253,15 @@ export function AdminPanel() {
     setCreatingUser(false);
 
     if (!res.ok) {
-      setUsersError(data.error ?? "Failed to create user");
+      const message = data.error ?? "Failed to create user";
+      setUsersError(message);
+      await showErrorAlert("Create user failed", message);
       return;
     }
 
-    setAdminMessage(data.message ?? "User created");
+    const message = data.message ?? "User created";
+    setAdminMessage(message);
+    await showSuccessAlert("User created", message);
     setNewUserName("");
     setNewUserEmail("");
     setNewUserPassword("");
@@ -288,15 +293,27 @@ export function AdminPanel() {
     setUpdatingUserId("");
 
     if (!res.ok) {
-      setUsersError(data.error ?? "Failed to update user");
+      const message = data.error ?? "Failed to update user";
+      setUsersError(message);
+      await showErrorAlert("Update user failed", message);
       return;
     }
 
-    setAdminMessage(data.message ?? "User updated");
+    const message = data.message ?? "User updated";
+    setAdminMessage(message);
+    await showSuccessAlert("User updated", message);
     await fetchUsers();
   }
 
   async function deleteUser(userId: string) {
+    const targetUser = users.find((u) => u.id === userId);
+    const confirmed = await showConfirmAlert(
+      "Delete this user?",
+      `This will permanently remove ${targetUser?.name ?? "this user"} and cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
     setDeletingUserId(userId);
     setUsersError("");
     setAdminMessage("");
@@ -311,15 +328,29 @@ export function AdminPanel() {
     setDeletingUserId("");
 
     if (!res.ok) {
-      setUsersError(data.error ?? "Failed to delete user");
+      const message = data.error ?? "Failed to delete user";
+      setUsersError(message);
+      await showErrorAlert("Delete failed", message);
       return;
     }
 
-    setAdminMessage(data.message ?? "User deleted");
+    const message = data.message ?? "User deleted";
+    setAdminMessage(message);
+    await showSuccessAlert("User deleted", message);
     await fetchUsers();
   }
 
   async function endRoom(roomId: string, action: "end" | "reset") {
+    const room = rooms.find((r) => r.roomId === roomId);
+    const confirmed = await showConfirmAlert(
+      action === "end" ? "End this room?" : "Reset this room?",
+      action === "end"
+        ? `Room ${room?.name ?? roomId} will be marked ended.`
+        : `Room ${room?.name ?? roomId} will be reset to waiting state.`
+    );
+
+    if (!confirmed) return;
+
     setEndingRoom(roomId + action);
     setAdminMessage("");
     const res = await fetch("/api/admin/manager-stats", {
@@ -330,15 +361,29 @@ export function AdminPanel() {
     const data = await res.json();
     setEndingRoom("");
     if (!res.ok) {
-      setError(data.error ?? "Failed to update room");
+      const message = data.error ?? "Failed to update room";
+      setError(message);
+      await showErrorAlert("Room update failed", message);
       return;
     }
-    setAdminMessage(data.message ?? "Done.");
-    fetchRooms();
+
+    const message = data.message ?? "Done.";
+    setAdminMessage(message);
+    await showSuccessAlert(action === "end" ? "Room ended" : "Room reset", message);
+    await fetchRooms();
   }
 
   async function adjustBudget() {
     if (!selectedRoomId || !budgetManagerId || budgetAdjustment === "") return;
+
+    const manager = managers.find((m) => m.userId === budgetManagerId);
+    const confirmed = await showConfirmAlert(
+      "Apply budget adjustment?",
+      `Apply ${budgetAdjustment} coins adjustment for ${manager?.userName ?? "selected manager"}?`
+    );
+
+    if (!confirmed) return;
+
     setAdjustingBudget(true);
     setRosterError("");
     setAdminMessage("");
@@ -355,10 +400,15 @@ export function AdminPanel() {
     const data = await res.json();
     setAdjustingBudget(false);
     if (!res.ok) {
-      setRosterError(data.error ?? "Failed to adjust budget");
+      const message = data.error ?? "Failed to adjust budget";
+      setRosterError(message);
+      await showErrorAlert("Budget adjustment failed", message);
       return;
     }
-    setAdminMessage(data.message ?? "Budget adjusted.");
+
+    const message = data.message ?? "Budget adjusted.";
+    setAdminMessage(message);
+    await showSuccessAlert("Budget updated", message);
     setBudgetAdjustment("");
     await fetchManagerRoster(selectedRoomId);
   }
@@ -382,17 +432,29 @@ export function AdminPanel() {
 
     if (!res.ok) {
       const data = await res.json();
-      setError(data.error ?? "Failed to create room");
+      const message = data.error ?? "Failed to create room";
+      setError(message);
+      await showErrorAlert("Create room failed", message);
       return;
     }
 
+    await showSuccessAlert("Room created", "Auction room is ready.");
     setName("");
     setAdminMessage("Room created successfully.");
-    fetchRooms();
+    await fetchRooms();
   }
 
   async function assignPlayerToManager() {
     if (!selectedRoomId || !selectedManagerId || !selectedPlayerId) return;
+
+    const manager = managers.find((m) => m.userId === selectedManagerId);
+    const player = players.find((p) => p.id === selectedPlayerId);
+    const confirmed = await showConfirmAlert(
+      "Assign player to manager?",
+      `Assign ${player?.name ?? "selected player"} to ${manager?.userName ?? "selected manager"} for ${transferAmount || player?.price || 0} coins?`
+    );
+
+    if (!confirmed) return;
 
     setAssigning(true);
     setRosterError("");
@@ -414,15 +476,28 @@ export function AdminPanel() {
     setAssigning(false);
 
     if (!res.ok) {
-      setRosterError(data.error ?? "Failed to assign player");
+      const message = data.error ?? "Failed to assign player";
+      setRosterError(message);
+      await showErrorAlert("Assign failed", message);
       return;
     }
 
-    setAdminMessage(data.message ?? "Player assigned successfully.");
+    const message = data.message ?? "Player assigned successfully.";
+    setAdminMessage(message);
+    await showSuccessAlert("Player assigned", message);
     await fetchManagerRoster(selectedRoomId);
   }
 
   async function removePlayerFromManager(userId: string, playerId: string) {
+    const manager = managers.find((m) => m.userId === userId);
+    const player = manager?.playersBought.find((p) => p.playerId === playerId);
+    const confirmed = await showConfirmAlert(
+      "Remove player from manager?",
+      `Remove ${player?.playerName ?? "this player"} from ${manager?.userName ?? "this manager"}?`
+    );
+
+    if (!confirmed) return;
+
     setRemovingKey(`${userId}:${playerId}`);
     setRosterError("");
     setAdminMessage("");
@@ -442,11 +517,15 @@ export function AdminPanel() {
     setRemovingKey("");
 
     if (!res.ok) {
-      setRosterError(data.error ?? "Failed to remove player");
+      const message = data.error ?? "Failed to remove player";
+      setRosterError(message);
+      await showErrorAlert("Remove failed", message);
       return;
     }
 
-    setAdminMessage(data.message ?? "Player removed successfully.");
+    const message = data.message ?? "Player removed successfully.";
+    setAdminMessage(message);
+    await showSuccessAlert("Player removed", message);
     await fetchManagerRoster(selectedRoomId);
   }
 

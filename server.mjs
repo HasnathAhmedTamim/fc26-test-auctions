@@ -3,6 +3,17 @@ import { createServer } from "node:http";
 import next from "next";
 import { Server } from "socket.io";
 import { MongoClient } from "mongodb";
+import { getToken } from "next-auth/jwt";
+import {
+  BID_COOLDOWN_MS,
+  buildAtomicBidFilter,
+  canPlaceBid,
+  getBidCooldownState,
+  isAdminUser,
+  isBidIdentitySpoofAttempt,
+  resolveSocketIdentity,
+  validateBidAmount,
+} from "./src/lib/auction-realtime-guards.mjs";
 
 dotenv.config({ path: ".env.local" });
 
@@ -40,9 +51,24 @@ app.prepare().then(async () => {
   const roomTimeLeft = new Map();
   // Users who opted out for the current player in each room
   const roomOptOuts = new Map();
+  // Per-room last bid timestamps: roomId -> Map<userId, epochMs>
+  const roomBidCooldowns = new Map();
 
   // Connected managers per room: roomId -> Map<userId, { role, userName, socketId }>
   const roomConnectedManagers = new Map();
+
+  function getSocketUser(socket) {
+    return socket.data?.user ?? null;
+  }
+
+  function requireSocketAdmin(socket) {
+    const user = getSocketUser(socket);
+    if (!isAdminUser(user)) {
+      socket.emit("auction:error", { message: "Admin permissions required." });
+      return false;
+    }
+    return true;
+  }
 
   function clearRoomTimer(roomId) {
     if (roomTimers.has(roomId)) {
@@ -54,6 +80,10 @@ app.prepare().then(async () => {
 
   function clearRoomOptOuts(roomId) {
     roomOptOuts.delete(roomId);
+  }
+
+  function clearRoomBidCooldowns(roomId) {
+    roomBidCooldowns.delete(roomId);
   }
 
   function addManagerToRoom(roomId, userId, userName, role, socketId) {
@@ -123,6 +153,25 @@ app.prepare().then(async () => {
     const winnerName = room.highestBidderName ?? "Unknown";
     const amount = Number(room.currentBid ?? 0);
     const player = room.currentPlayer;
+
+    const existingWinnerStats = await db.collection("managerStats").findOne({
+      userId: winnerId,
+      roomId: room.roomId,
+    });
+    const alreadyOwned = Array.isArray(existingWinnerStats?.playersBought)
+      ? existingWinnerStats.playersBought.some((item) => String(item?.playerId ?? "") === String(player.id))
+      : false;
+
+    if (alreadyOwned) {
+      await db.collection("auctionRooms").updateOne(
+        { roomId: room.roomId },
+        { $set: { status: "paused", updatedAt: new Date() } }
+      );
+      io.to(room.roomId).emit("auction:error", {
+        message: `Auto-sell blocked. ${winnerName} already owns ${player.name} in this room.`,
+      });
+      return;
+    }
 
     await db.collection("managerStats").updateOne(
       { userId: winnerId, roomId: room.roomId },
@@ -283,15 +332,32 @@ app.prepare().then(async () => {
   }
 
   io.on("connection", (socket) => {
-    socket.on("auction:join", async ({ roomId, user }) => {
+    socket.on("auction:join", async ({ roomId }) => {
+      if (!roomId) {
+        socket.emit("auction:error", { message: "roomId is required" });
+        return;
+      }
+
+      const socketUser = getSocketUser(socket);
+      if (!socketUser) {
+        socket.emit("auction:error", { message: "Unauthorized socket connection." });
+        socket.disconnect(true);
+        return;
+      }
+
       socket.join(roomId);
 
       // Track this user so we can detect when all others opt out
-      if (user?.id) {
-        addManagerToRoom(roomId, user.id, user.name ?? "Unknown", user.role ?? "manager", socket.id);
+      if (socketUser.id) {
+        addManagerToRoom(roomId, socketUser.id, socketUser.name ?? "Unknown", socketUser.role ?? "manager", socket.id);
       }
 
       const room = await db.collection("auctionRooms").findOne({ roomId });
+      if (!room) {
+        socket.emit("auction:error", { message: "Room not found" });
+        return;
+      }
+
       const recentBids = await db
         .collection("bids")
         .find({ roomId })
@@ -321,12 +387,51 @@ app.prepare().then(async () => {
       });
 
       io.to(roomId).emit("auction:user-joined", {
-        userName: user?.name ?? "Unknown",
+        userName: socketUser.name ?? "Unknown",
       });
     });
 
     socket.on("auction:bid", async (payload) => {
-      const { roomId, userId, userName, amount } = payload;
+      if (!payload?.roomId) {
+        socket.emit("auction:error", { message: "roomId is required" });
+        return;
+      }
+
+      const socketUser = getSocketUser(socket);
+      if (!socketUser) {
+        socket.emit("auction:error", { message: "Unauthorized socket connection." });
+        socket.disconnect(true);
+        return;
+      }
+
+      if (!canPlaceBid(socketUser)) {
+        socket.emit("auction:error", { message: "Only managers can place bids." });
+        return;
+      }
+
+      if (isBidIdentitySpoofAttempt(socketUser, payload)) {
+        socket.emit("auction:error", { message: "Identity mismatch detected in bid payload." });
+        return;
+      }
+
+      const { roomId, amount } = payload;
+      const identity = resolveSocketIdentity(socketUser);
+      if (!identity) {
+        socket.emit("auction:error", { message: "Unauthorized socket identity." });
+        return;
+      }
+
+      const userId = identity.userId;
+      const userName = identity.userName;
+
+      const roomCooldowns = roomBidCooldowns.get(roomId) ?? new Map();
+      const cooldownState = getBidCooldownState(roomCooldowns.get(userId), Date.now(), BID_COOLDOWN_MS);
+      if (cooldownState.limited) {
+        socket.emit("auction:error", {
+          message: `Bid rate limited. Try again in ${Math.ceil(cooldownState.retryAfterMs / 1000)}s.`,
+        });
+        return;
+      }
 
       const optedOutUsers = roomOptOuts.get(roomId);
       if (optedOutUsers?.has(userId)) {
@@ -348,14 +453,35 @@ app.prepare().then(async () => {
         return;
       }
 
-      if (typeof amount !== "number" || amount <= (room.currentBid ?? 0)) {
-        socket.emit("auction:error", { message: "Bid must be higher than current bid" });
+      const bidAmountCheck = validateBidAmount(amount, room.currentBid);
+      if (!bidAmountCheck.ok) {
+        socket.emit("auction:error", { message: bidAmountCheck.message });
         return;
       }
+      const expectedCurrentBid = bidAmountCheck.expectedCurrentBid;
 
       const bidCheck = await validateManagerEligibility(room, userId, amount);
       if (!bidCheck.ok) {
         socket.emit("auction:error", { message: bidCheck.message });
+        return;
+      }
+
+      const roomUpdateResult = await db.collection("auctionRooms").updateOne(
+        buildAtomicBidFilter(roomId, expectedCurrentBid),
+        {
+          $set: {
+            currentBid: amount,
+            highestBidderId: userId,
+            highestBidderName: userName,
+            updatedAt: new Date(),
+          },
+        },
+      );
+
+      if (!roomUpdateResult.modifiedCount) {
+        socket.emit("auction:error", {
+          message: "Bid rejected because auction state changed. Please bid again.",
+        });
         return;
       }
 
@@ -370,17 +496,8 @@ app.prepare().then(async () => {
 
       await db.collection("bids").insertOne(bidDoc);
 
-      await db.collection("auctionRooms").updateOne(
-        { roomId },
-        {
-          $set: {
-            currentBid: amount,
-            highestBidderId: userId,
-            highestBidderName: userName,
-            updatedAt: new Date(),
-          },
-        }
-      );
+      roomCooldowns.set(userId, Date.now());
+      roomBidCooldowns.set(roomId, roomCooldowns);
 
       io.to(roomId).emit("auction:new-bid", {
         userId,
@@ -397,7 +514,19 @@ app.prepare().then(async () => {
     });
 
     socket.on("auction:start", async ({ roomId }) => {
+      if (!requireSocketAdmin(socket)) return;
+
+      if (!roomId) {
+        socket.emit("auction:error", { message: "roomId is required" });
+        return;
+      }
+
       const room = await db.collection("auctionRooms").findOne({ roomId });
+      if (!room) {
+        socket.emit("auction:error", { message: "Room not found" });
+        return;
+      }
+
       if (!room?.currentPlayer) {
         socket.emit("auction:error", { message: "Set a player before starting the auction" });
         return;
@@ -422,6 +551,13 @@ app.prepare().then(async () => {
     });
 
     socket.on("auction:pause", async ({ roomId }) => {
+      if (!requireSocketAdmin(socket)) return;
+
+      if (!roomId) {
+        socket.emit("auction:error", { message: "roomId is required" });
+        return;
+      }
+
       const room = await db.collection("auctionRooms").findOne({ roomId });
       if (!room || room.status !== "live") {
         socket.emit("auction:error", { message: "Auction is not live" });
@@ -443,13 +579,66 @@ app.prepare().then(async () => {
     });
 
     socket.on("auction:sold-now", async ({ roomId }) => {
+      if (!requireSocketAdmin(socket)) return;
+
+      if (!roomId) {
+        socket.emit("auction:error", { message: "roomId is required" });
+        return;
+      }
+
+      const room = await db.collection("auctionRooms").findOne({ roomId });
+      if (!room) {
+        socket.emit("auction:error", { message: "Room not found" });
+        return;
+      }
+
+      if (room.status === "ended") {
+        socket.emit("auction:error", { message: "Room has ended. Reset room before selling." });
+        return;
+      }
+
       await finalizeCurrentPlayerAsSold(roomId, socket);
     });
 
     socket.on("auction:set-player", async ({ roomId, player }) => {
+      if (!requireSocketAdmin(socket)) return;
+      if (!roomId) {
+        socket.emit("auction:error", { message: "roomId is required" });
+        return;
+      }
       if (!player?.id || !player?.name) return;
+
+      const room = await db.collection("auctionRooms").findOne({ roomId });
+      if (!room) {
+        socket.emit("auction:error", { message: "Room not found" });
+        return;
+      }
+
+      if (room.status === "ended") {
+        socket.emit("auction:error", { message: "Room has ended. Reset room before setting player." });
+        return;
+      }
+
+      if (room.status === "live") {
+        socket.emit("auction:error", { message: "Pause the auction before changing player." });
+        return;
+      }
+
+      const alreadySold = await db.collection("soldPlayers").findOne({
+        roomId,
+        playerId: String(player.id),
+      });
+
+      if (alreadySold) {
+        socket.emit("auction:error", {
+          message: `${player.name} has already been sold in this room.`,
+        });
+        return;
+      }
+
       clearRoomTimer(roomId);
       clearRoomOptOuts(roomId);
+      clearRoomBidCooldowns(roomId);
 
       const basePrice = Number(player.basePrice) || 10;
 
@@ -509,8 +698,22 @@ app.prepare().then(async () => {
       });
     });
 
-    socket.on("auction:opt-out", ({ roomId, userId, userName }) => {
-      if (!roomId || !userId) return;
+    socket.on("auction:opt-out", ({ roomId }) => {
+      if (!roomId) {
+        socket.emit("auction:error", { message: "roomId is required" });
+        return;
+      }
+
+      const socketUser = getSocketUser(socket);
+      if (!socketUser || !roomId) return;
+
+      if (!canPlaceBid(socketUser)) {
+        socket.emit("auction:error", { message: "Only managers can opt out." });
+        return;
+      }
+
+      const userId = socketUser.id;
+      const userName = socketUser.name ?? "Unknown";
 
       const optedOutUsers = roomOptOuts.get(roomId) ?? new Set();
       optedOutUsers.add(userId);
@@ -534,8 +737,32 @@ app.prepare().then(async () => {
     });
 
     socket.on("auction:skip", async ({ roomId }) => {
+      if (!requireSocketAdmin(socket)) return;
+
+      if (!roomId) {
+        socket.emit("auction:error", { message: "roomId is required" });
+        return;
+      }
+
+      const room = await db.collection("auctionRooms").findOne({ roomId });
+      if (!room) {
+        socket.emit("auction:error", { message: "Room not found" });
+        return;
+      }
+
+      if (room.status === "ended") {
+        socket.emit("auction:error", { message: "Room has ended. Reset room before skipping." });
+        return;
+      }
+
+      if (!room.currentPlayer) {
+        socket.emit("auction:error", { message: "No active player to skip." });
+        return;
+      }
+
       clearRoomTimer(roomId);
       clearRoomOptOuts(roomId);
+      clearRoomBidCooldowns(roomId);
 
       await db.collection("auctionRooms").updateOne(
         { roomId },
@@ -554,6 +781,34 @@ app.prepare().then(async () => {
 
       io.to(roomId).emit("auction:skipped", {});
     });
+  });
+
+  io.use(async (socket, nextAuthDone) => {
+    try {
+      const token = await getToken({
+        req: {
+          headers: {
+            cookie: socket.handshake.headers?.cookie ?? "",
+          },
+        },
+        secret: process.env.AUTH_SECRET,
+      });
+
+      if (!token?.sub) {
+        return nextAuthDone(new Error("Unauthorized"));
+      }
+
+      const role = token.role === "admin" ? "admin" : "manager";
+      socket.data.user = {
+        id: String(token.sub),
+        role,
+        name: String(token.name ?? "Unknown"),
+      };
+
+      return nextAuthDone();
+    } catch {
+      return nextAuthDone(new Error("Unauthorized"));
+    }
   });
 
   httpServer.listen(port, () => {

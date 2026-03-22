@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
+import { showErrorAlert, showInfoAlert, showSuccessAlert } from "@/lib/alerts";
 
 export function RegisterForm() {
   const [name, setName] = useState("");
@@ -28,6 +29,7 @@ export function RegisterForm() {
 
       if (!res.ok) {
         setError(data.error ?? "Registration failed");
+        await showErrorAlert("Registration failed", data.error ?? "Please review your details and try again.");
         return;
       }
 
@@ -39,10 +41,16 @@ export function RegisterForm() {
 
       if (signInResult?.error) {
         setError("Account created, but sign in failed. Please login manually.");
+        await showInfoAlert(
+          "Account created",
+          "Please login manually. Automatic sign-in could not be completed."
+        );
         router.push("/login");
         router.refresh();
         return;
       }
+
+      await showSuccessAlert("Account ready", "Welcome to FC26 Auction.");
 
       router.push("/dashboard");
       router.refresh();
@@ -51,27 +59,44 @@ export function RegisterForm() {
 
   return (
     <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-      <input
-        type="text"
-        placeholder="Username"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 outline-none"
-      />
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 outline-none"
-      />
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 outline-none"
-      />
+      <label className="block">
+        <span className="mb-1 block text-sm text-slate-300">Manager Name</span>
+        <input
+          type="text"
+          required
+          minLength={3}
+          autoComplete="name"
+          placeholder="Your team manager name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 outline-none focus:border-emerald-400/60"
+        />
+      </label>
+      <label className="block">
+        <span className="mb-1 block text-sm text-slate-300">Email</span>
+        <input
+          type="email"
+          required
+          autoComplete="email"
+          placeholder="manager@example.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 outline-none focus:border-emerald-400/60"
+        />
+      </label>
+      <label className="block">
+        <span className="mb-1 block text-sm text-slate-300">Password</span>
+        <input
+          type="password"
+          required
+          minLength={6}
+          autoComplete="new-password"
+          placeholder="At least 6 characters"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 outline-none focus:border-emerald-400/60"
+        />
+      </label>
 
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
 

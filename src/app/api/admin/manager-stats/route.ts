@@ -169,6 +169,19 @@ export async function POST(request: NextRequest) {
     const amount = Number.isFinite(amountValue) && amountValue >= 0
       ? amountValue
       : Number(player.price ?? 0);
+    const budgetLimit = Number(room.budget ?? 0);
+    const maxPlayers = Number(room.maxPlayers ?? 0);
+    const currentPlayersBought = Array.isArray(existingStat?.playersBought)
+      ? existingStat.playersBought.length
+      : 0;
+
+    if (maxPlayers > 0 && currentPlayersBought >= maxPlayers) {
+      return NextResponse.json(
+        { error: `${userName} already reached the room squad limit (${maxPlayers}).` },
+        { status: 409 }
+      );
+    }
+
     const nextPlayersBought = [
       ...((Array.isArray(existingStat?.playersBought) ? existingStat.playersBought : []) as ManagerPlayer[]),
       {
@@ -178,6 +191,15 @@ export async function POST(request: NextRequest) {
       },
     ];
     const nextBudgetSpent = Number(existingStat?.budgetSpent ?? 0) + amount;
+
+    if (budgetLimit > 0 && nextBudgetSpent > budgetLimit) {
+      return NextResponse.json(
+        {
+          error: `Cannot add ${player.name}. ${userName} would exceed room budget (${budgetLimit}).`,
+        },
+        { status: 409 }
+      );
+    }
 
     await statsCollection.updateOne(
       { roomId, userId },
@@ -217,7 +239,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid adjustment value" }, { status: 400 });
     }
     const currentSpent = Number(existingStat?.budgetSpent ?? 0);
+    const budgetLimit = Number(room.budget ?? 0);
     const newBudgetSpent = Math.max(0, currentSpent + adjustment);
+
+    if (budgetLimit > 0 && newBudgetSpent > budgetLimit) {
+      return NextResponse.json(
+        { error: `Adjusted spent budget cannot exceed room budget (${budgetLimit}).` },
+        { status: 409 }
+      );
+    }
 
     await statsCollection.updateOne(
       { roomId, userId },

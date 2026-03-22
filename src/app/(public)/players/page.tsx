@@ -74,17 +74,26 @@ function mapFc24ToPlayer(item: Fc24RawPlayer, idx: number): Player {
 }
 
 export default function PlayersPage() {
-  const pageSize = 120;
+  const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [pageSize, setPageSize] = useState(24);
+  const [currentPage, setCurrentPage] = useState(1);
+
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [source, setSource] = useState<"db" | "json" | "none">("none");
-  const [isTruncated, setIsTruncated] = useState(false);
-  const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
-  const [hasMore, setHasMore] = useState(false);
   const [position, setPosition] = useState("All");
   const [minRating, setMinRating] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedQuery(query.trim());
+    }, 320);
+
+    return () => window.clearTimeout(timer);
+  }, [query]);
 
   useEffect(() => {
     let cancelled = false;
@@ -92,20 +101,39 @@ export default function PlayersPage() {
     async function loadPlayers() {
       setLoading(true);
       try {
-        const res = await fetch(`/api/players?page=${page}&limit=${pageSize}`, {
-          cache: "no-store",
-        });
-        if (res.ok) {
-          const data = await res.json();
-          const dbPlayers = Array.isArray(data.players) ? data.players : [];
-          if (!cancelled && dbPlayers.length > 0) {
-            setPlayers(dbPlayers);
-            setSource("db");
-            setIsTruncated(Boolean(data.hasMore));
-            setHasMore(Boolean(data.hasMore));
-            setTotal(Number(data.total ?? 0));
-            return;
+        const allDbPlayers: Player[] = [];
+        let hasMore = true;
+        let page = 1;
+
+        while (hasMore) {
+          const q = debouncedQuery ? `&search=${encodeURIComponent(debouncedQuery)}` : "";
+          const res = await fetch(`/api/players?page=${page}&limit=200${q}`, {
+            cache: "no-store",
+          });
+
+          if (!res.ok) {
+            hasMore = false;
+            break;
           }
+
+          const data = await res.json();
+          const batch = Array.isArray(data.players) ? data.players : [];
+          allDbPlayers.push(...batch);
+          hasMore = Boolean(data.hasMore);
+          page += 1;
+
+          // Safety break to avoid accidental endless pagination loops.
+          if (page > 25) {
+            hasMore = false;
+          }
+        }
+
+        if (!cancelled && allDbPlayers.length > 0) {
+          setPlayers(allDbPlayers);
+          setSource("db");
+          setTotal(allDbPlayers.length);
+          setCurrentPage(1);
+          return;
         }
 
         const fallbackRes = await fetch("/fifa24-player-list.json", {
@@ -116,21 +144,30 @@ export default function PlayersPage() {
         }
         const raw = (await fallbackRes.json()) as Fc24RawPlayer[];
         const mapped = Array.isArray(raw) ? raw.map(mapFc24ToPlayer) : [];
+        const fallbackFiltered = debouncedQuery
+          ? mapped.filter((p) => {
+              const q = debouncedQuery.toLowerCase();
+              return (
+                p.name.toLowerCase().includes(q) ||
+                p.club.toLowerCase().includes(q) ||
+                p.nation.toLowerCase().includes(q) ||
+                p.position.toLowerCase().includes(q)
+              );
+            })
+          : mapped;
 
         if (!cancelled) {
-          setPlayers(mapped);
-          setSource(mapped.length > 0 ? "json" : "none");
-          setIsTruncated(false);
-          setHasMore(false);
-          setTotal(mapped.length);
+          setPlayers(fallbackFiltered);
+          setSource(fallbackFiltered.length > 0 ? "json" : "none");
+          setTotal(fallbackFiltered.length);
+          setCurrentPage(1);
         }
       } catch {
         if (!cancelled) {
           setPlayers([]);
           setSource("none");
-          setIsTruncated(false);
-          setHasMore(false);
           setTotal(0);
+          setCurrentPage(1);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -141,7 +178,11 @@ export default function PlayersPage() {
     return () => {
       cancelled = true;
     };
-  }, [page]);
+  }, [debouncedQuery]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [position, minRating, maxPrice, debouncedQuery, pageSize]);
 
   const filtered = useMemo(
     () =>
@@ -155,10 +196,33 @@ export default function PlayersPage() {
         if (selectedPos !== "ALL" && pos !== selectedPos) return false;
         if (minRating !== "" && Number.isFinite(min) && p.rating < min) return false;
         if (maxPrice !== "" && Number.isFinite(max) && p.price > max) return false;
+
+        if (debouncedQuery) {
+          const q = debouncedQuery.toLowerCase();
+          const searchable = `${p.name} ${p.club} ${p.nation} ${p.position}`.toLowerCase();
+          if (!searchable.includes(q)) return false;
+        }
+
         return true;
       }),
-    [players, position, minRating, maxPrice]
+    [players, position, minRating, maxPrice, debouncedQuery]
   );
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
+  const pageStart = (safePage - 1) * pageSize;
+  const pageEnd = pageStart + pageSize;
+  const paginatedPlayers = filtered.slice(pageStart, pageEnd);
+
+  const pageButtons = useMemo(() => {
+    const start = Math.max(1, safePage - 2);
+    const end = Math.min(totalPages, start + 4);
+    const pages = [];
+    for (let p = start; p <= end; p += 1) {
+      pages.push(p);
+    }
+    return pages;
+  }, [safePage, totalPages]);
 
   const positionOptions = useMemo(() => {
     const all = new Set<string>(["All"]);
@@ -178,14 +242,39 @@ export default function PlayersPage() {
           <p className="mt-2 text-slate-400">
             Explore your FC player pool before the auction begins.
           </p>
+
+          <div className="mt-5 grid gap-3 md:grid-cols-[1fr_auto]">
+            <label className="block">
+              <span className="mb-1 block text-xs uppercase tracking-[0.18em] text-slate-400">Search Player</span>
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search by name, club, nation, or position"
+                className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm outline-none focus:border-emerald-400/60"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-xs uppercase tracking-[0.18em] text-slate-400">Cards Per Page</span>
+              <select
+                value={String(pageSize)}
+                onChange={(e) => setPageSize(Number(e.target.value))}
+                className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm outline-none focus:border-emerald-400/60"
+              >
+                <option value="12">12</option>
+                <option value="24">24</option>
+                <option value="48">48</option>
+              </select>
+            </label>
+          </div>
+
+          <p className="mt-3 text-sm text-slate-400">
+            Showing {filtered.length} matched players{filtered.length ? ` • Page ${safePage} of ${totalPages}` : ""}
+          </p>
+
           {source === "json" ? (
             <p className="mt-2 text-sm text-amber-300">
               Showing fallback data from public JSON file.
-            </p>
-          ) : null}
-          {source === "db" && isTruncated ? (
-            <p className="mt-2 text-sm text-slate-400">
-              Showing page {page} of players.
             </p>
           ) : null}
         </div>
@@ -212,31 +301,61 @@ export default function PlayersPage() {
                 </p>
               </div>
             ) : (
-              filtered.map((player) => <PlayerCard key={player.id} player={player} />)
+              paginatedPlayers.map((player) => <PlayerCard key={player.id} player={player} />)
             )}
           </div>
 
-          {source === "db" ? (
-            <div className="mt-6 flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-4">
+          {filtered.length > 0 ? (
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/5 p-4">
               <p className="text-sm text-slate-300">
-                Page {page} • Showing {players.length} players{total > 0 ? ` of ${total}` : ""}
+                Showing {pageStart + 1}-{Math.min(pageEnd, filtered.length)} of {filtered.length}
+                {total > 0 ? ` loaded (${total} source)` : ""}
               </p>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-                  disabled={loading || page <= 1}
+                  onClick={() => setCurrentPage(1)}
+                  disabled={safePage <= 1}
+                  className="rounded-lg border border-white/15 px-3 py-1 text-sm text-white disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  First
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                  disabled={safePage <= 1}
                   className="rounded-lg border border-white/15 px-3 py-1 text-sm text-white disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Previous
                 </button>
+                {pageButtons.map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setCurrentPage(p)}
+                    className={`rounded-lg border px-3 py-1 text-sm ${p === safePage
+                      ? "border-emerald-400/60 bg-emerald-500/20 text-emerald-300"
+                      : "border-white/15 text-white hover:border-emerald-400/40"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
                 <button
                   type="button"
-                  onClick={() => setPage((prev) => prev + 1)}
-                  disabled={loading || !hasMore}
-                  className="rounded-lg border border-emerald-400/40 bg-emerald-500/15 px-3 py-1 text-sm text-emerald-300 disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                  disabled={safePage >= totalPages}
+                  className="rounded-lg border border-white/15 px-3 py-1 text-sm text-white disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Next
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={safePage >= totalPages}
+                  className="rounded-lg border border-white/15 px-3 py-1 text-sm text-white disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Last
                 </button>
               </div>
             </div>

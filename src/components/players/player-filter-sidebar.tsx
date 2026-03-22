@@ -38,9 +38,10 @@ export function PlayerFilterSidebar({
 }: Props) {
   const hasFilters = position !== "All" || minRating !== "" || maxPrice !== "";
   const options = positions && positions.length > 0 ? positions : DEFAULT_POSITIONS;
+  const quickPositions = options.filter((p) => p !== "All").slice(0, 8);
 
   return (
-    <aside className="rounded-3xl border border-white/10 bg-white/5 p-5">
+    <aside className="rounded-3xl border border-white/10 bg-white/5 p-5 lg:sticky lg:top-24 lg:h-fit">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold">Filters</h2>
         {hasFilters && (
@@ -50,11 +51,27 @@ export function PlayerFilterSidebar({
               setMinRating("");
               setMaxPrice("");
             }}
-            className="text-xs text-slate-400 hover:text-white"
+            className="text-xs text-emerald-300 hover:text-emerald-200"
           >
             Clear all
           </button>
         )}
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        {quickPositions.map((p) => (
+          <button
+            key={p}
+            type="button"
+            onClick={() => setPosition(p)}
+            className={`rounded-full border px-3 py-1 text-xs ${position === p
+              ? "border-emerald-400/60 bg-emerald-500/15 text-emerald-300"
+              : "border-white/10 text-slate-300 hover:border-emerald-400/40"
+            }`}
+          >
+            {p}
+          </button>
+        ))}
       </div>
 
       <div className="mt-5 space-y-5">

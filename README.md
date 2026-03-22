@@ -15,8 +15,24 @@ Real-time football player auction platform built with Next.js App Router, NextAu
 	- pause/resume
 	- sold/skip flow
 	- manager opt-out + auto-pause when all non-leading managers opt out
+- Realtime safety guardrails:
+	- socket identity bound to authenticated session token
+	- admin-only server checks for start/pause/set-player/sold/skip actions
+	- manager-only bidding and opt-out actions
+	- anti-spoof bid identity validation
+	- strict bid increment rules (+10 steps)
+	- bid cooldown protection to reduce spam
+	- race-safe bid updates via atomic room-state filter
+	- sold-player and duplicate-ownership protections
 - Player catalog API with active edition support (e.g. `fc24`, `fc26`)
+- Player explorer UX upgrades:
+	- debounced search
+	- clearer filtering workflow
+	- improved client-side pagination controls
+	- better result count visibility
+- Consistent in-app alert and confirmation UX with SweetAlert2
 - Manager dashboard with budget and purchased players
+- Admin roster management with confirmations for destructive actions
 
 ## Tech Stack
 
@@ -25,6 +41,7 @@ Real-time football player auction platform built with Next.js App Router, NextAu
 - NextAuth v5 (credentials provider)
 - MongoDB Node driver
 - Socket.IO
+- SweetAlert2
 - Tailwind CSS v4
 - TypeScript + Zod
 
@@ -129,6 +146,7 @@ db.users.updateOne(
 - `GET /api/auction/rooms` - List auction rooms
 - `POST /api/auction/rooms` - Create auction room (admin only)
 - `GET /api/auction/room/:roomId/state` - Room snapshot + recent bids
+- `GET /api/auction/room/:roomId/manager-state` - Manager budget/slot state + recent audit entries
 - `GET /api/admin` - Admin-protected test endpoint
 
 ## Database Collections (current usage)
@@ -139,9 +157,14 @@ db.users.updateOne(
 - `auctionRooms`
 - `bids`
 - `managerStats`
+- `soldPlayers`
+- `adminAuditLog`
 
 ## Development Notes
 
 - Authentication middleware protects `/dashboard`, `/admin`, and `/auction/*`.
+- Socket connections are validated against authenticated session token before realtime actions.
+- Realtime admin actions are enforced server-side (not only in UI).
+- Bid constraints are validated server-side (increment, budget/squad limits, cooldown, race safety).
 - The app DB name is `fc26-auction` (set in code).
 - Default round timer is `120` seconds.

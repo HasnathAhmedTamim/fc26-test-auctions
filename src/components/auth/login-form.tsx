@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { showErrorAlert, showSuccessAlert } from "@/lib/alerts";
 
 export function LoginForm() {
   const [email, setEmail] = useState("");
@@ -25,8 +26,11 @@ export function LoginForm() {
 
       if (result?.error) {
         setError("Invalid email or password");
+        await showErrorAlert("Login failed", "Invalid email or password.");
         return;
       }
+
+      await showSuccessAlert("Welcome back", "Redirecting to your dashboard...");
 
       router.push("/dashboard");
       router.refresh();
@@ -35,20 +39,30 @@ export function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 outline-none"
-      />
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 outline-none"
-      />
+      <label className="block">
+        <span className="mb-1 block text-sm text-slate-300">Email</span>
+        <input
+          type="email"
+          required
+          autoComplete="email"
+          placeholder="manager@example.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 outline-none focus:border-emerald-400/60"
+        />
+      </label>
+      <label className="block">
+        <span className="mb-1 block text-sm text-slate-300">Password</span>
+        <input
+          type="password"
+          required
+          autoComplete="current-password"
+          placeholder="Enter your password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 outline-none focus:border-emerald-400/60"
+        />
+      </label>
 
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
 
