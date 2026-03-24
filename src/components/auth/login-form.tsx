@@ -2,18 +2,19 @@
 
 import { useState, useTransition } from "react";
 import { signIn } from "next-auth/react";
-import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { showErrorAlert, showSuccessAlert } from "@/lib/alerts";
 
-export function LoginForm() {
+type LoginFormProps = {
+  callbackUrl?: string;
+};
+
+export function LoginForm({ callbackUrl }: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
-  const searchParams = useSearchParams();
-
-  const requestedCallbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
+  const requestedCallbackUrl = callbackUrl ?? "/dashboard";
   const safeCallbackUrl = requestedCallbackUrl.startsWith("/")
     && !requestedCallbackUrl.startsWith("//")
     ? requestedCallbackUrl

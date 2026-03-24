@@ -3,8 +3,14 @@ import { redirect } from "next/navigation";
 import { Container } from "@/components/layout/container";
 import { LoginForm } from "@/components/auth/login-form";
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ callbackUrl?: string }>;
+}) {
   const session = await auth();
+  const { callbackUrl } = await searchParams;
+
   if (session?.user) {
     redirect(session.user.role === "admin" ? "/admin" : "/dashboard");
   }
@@ -21,7 +27,7 @@ export default async function LoginPage() {
           <p className="mt-2 text-sm text-slate-500">
             Use your manager credentials. Admin accounts will be redirected to the control panel.
           </p>
-          <LoginForm />
+          <LoginForm callbackUrl={callbackUrl} />
         </div>
       </Container>
     </section>
