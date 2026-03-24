@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { showConfirmAlert } from "@/lib/alerts";
 export function Navbar() {
   const { data: session } = useSession();
   const pathname = usePathname();
+  const router = useRouter();
 
   const navLinks = [
     { href: "/players", label: "Players" },
@@ -32,7 +33,9 @@ export function Navbar() {
     );
 
     if (!confirmed) return;
-    await signOut({ callbackUrl: "/" });
+    await signOut({ redirect: false, callbackUrl: "/" });
+    router.push("/");
+    router.refresh();
   }
 
   return (
