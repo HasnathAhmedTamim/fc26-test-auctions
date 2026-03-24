@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { showErrorAlert, showSuccessAlert } from "@/lib/alerts";
 
@@ -11,7 +11,6 @@ export function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const requestedCallbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
@@ -41,11 +40,10 @@ export function LoginForm() {
       await showSuccessAlert("Welcome back", "Redirecting to your dashboard...");
 
       const destination = result?.url
-        ? new URL(result.url, window.location.origin).pathname
+        ? new URL(result.url, window.location.origin).toString()
         : safeCallbackUrl;
 
-      router.push(destination);
-      router.refresh();
+      window.location.assign(destination);
     });
   }
 

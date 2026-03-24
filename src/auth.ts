@@ -63,12 +63,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       const vercelUrl = process.env.VERCEL_URL
         ? `https://${process.env.VERCEL_URL}`
         : undefined;
-      const appUrl =
+      const rawAppUrl =
         process.env.AUTH_URL
         ?? process.env.NEXTAUTH_URL
         ?? process.env.NEXT_PUBLIC_APP_URL
         ?? vercelUrl
         ?? baseUrl;
+      const appUrl = rawAppUrl.replace(/\/$/, "");
 
       if (url.startsWith("/")) {
         return `${appUrl}${url}`;
