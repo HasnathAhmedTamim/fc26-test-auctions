@@ -1130,7 +1130,7 @@ export function AdminPanel() {
               variant="outline"
               className="border-white/20 bg-transparent text-white hover:bg-white/10"
               onClick={() => fetchAchievements(achievementUserId)}
-              disabled={!achievementUserId || achievementsLoading}
+              disabled={achievementsLoading}
             >
               {achievementsLoading ? "Refreshing..." : "Refresh"}
             </Button>
@@ -1138,10 +1138,16 @@ export function AdminPanel() {
 
           {!achievementUserId ? (
             <p className="mt-4 text-slate-400">Showing badge history for all managers.</p>
-          ) : achievementsLoading ? (
+          ) : null}
+
+          {achievementsLoading ? (
             <p className="mt-4 text-slate-400">Loading badges...</p>
           ) : achievements.length === 0 ? (
-            <p className="mt-4 text-slate-400">No badges awarded for this manager yet.</p>
+            <p className="mt-4 text-slate-400">
+              {achievementUserId
+                ? "No badges awarded for this manager yet."
+                : "No badges awarded yet."}
+            </p>
           ) : (
             <div className="mt-5 space-y-3">
               {achievements.map((achievement) => (
