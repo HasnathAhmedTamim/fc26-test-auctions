@@ -11,7 +11,17 @@ export const loginSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
-const lineupFormationSchema = z.enum(["4-3-3", "4-4-2", "3-5-2"]);
+function isValidFormationPattern(value: string) {
+  if (!/^\d(?:-\d){1,4}$/.test(value)) return false;
+  const lines = value.split("-").map((part) => Number(part));
+  if (lines.some((line) => !Number.isFinite(line) || line < 1 || line > 6)) return false;
+  const totalOutfieldPlayers = lines.reduce((sum, line) => sum + line, 0);
+  return totalOutfieldPlayers === 10;
+}
+
+const lineupFormationSchema = z.string().refine(isValidFormationPattern, {
+  message: "Formation must be a valid pattern like 4-3-3, 4-2-3-1, or 3-4-3",
+});
 
 export const lineupStarterSchema = z.object({
   slotId: z.string().min(1),

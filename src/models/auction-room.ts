@@ -37,7 +37,7 @@ export type ManagerStatDoc = {
 export type UserLineupDoc = {
   userId: string;
   roomId: string;
-  formation: "4-3-3" | "4-4-2" | "3-5-2";
+  formation: string;
   starters: {
     slotId: string;
     playerId: string;

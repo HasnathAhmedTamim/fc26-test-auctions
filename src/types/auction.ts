@@ -47,31 +47,20 @@ export type AuctionRoomState = {
   bidHistory: BidEntry[];
 };
 
-export const LINEUP_FORMATIONS = ["4-3-3", "4-4-2", "3-5-2"] as const;
+export const LINEUP_FORMATIONS = [
+  "4-3-3",
+  "4-4-2",
+  "4-2-3-1",
+  "3-5-2",
+  "3-4-3",
+  "5-3-2",
+  "4-1-2-1-2",
+  "4-5-1",
+] as const;
 
-export type LineupFormation = (typeof LINEUP_FORMATIONS)[number];
+export type LineupFormation = string;
 
-export type LineupSlotId =
-  | "gk"
-  | "lb"
-  | "lcb"
-  | "cb"
-  | "rcb"
-  | "rb"
-  | "lwb"
-  | "rwb"
-  | "cdm"
-  | "lcm"
-  | "cm"
-  | "rcm"
-  | "cam"
-  | "lw"
-  | "rw"
-  | "lf"
-  | "rf"
-  | "st"
-  | "ls"
-  | "rs";
+export type LineupSlotId = string;
 
 export type LineupStarter = {
   slotId: LineupSlotId;

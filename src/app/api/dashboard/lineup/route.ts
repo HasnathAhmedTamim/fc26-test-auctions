@@ -4,11 +4,27 @@ import { getDb } from "@/lib/mongodb";
 import { saveLineupSchema } from "@/lib/validations";
 import type { LineupFormation, LineupSlotId } from "@/types/auction";
 
-const FORMATION_SLOTS: Record<LineupFormation, LineupSlotId[]> = {
-  "4-3-3": ["gk", "lb", "lcb", "rcb", "rb", "lcm", "cm", "rcm", "lw", "st", "rw"],
-  "4-4-2": ["gk", "lb", "lcb", "rcb", "rb", "lcm", "rcm", "lw", "rw", "ls", "rs"],
-  "3-5-2": ["gk", "lcb", "cb", "rcb", "lwb", "cdm", "cm", "cam", "rwb", "ls", "rs"],
-};
+const DEFAULT_FORMATION = "4-3-3";
+
+function getFormationSlots(formationInput: string): LineupSlotId[] {
+  const isValidPattern = /^\d(?:-\d){1,4}$/.test(formationInput);
+  const parsedLines = isValidPattern
+    ? formationInput.split("-").map((part) => Number(part))
+    : [];
+  const totalOutfieldPlayers = parsedLines.reduce((sum, line) => sum + line, 0);
+  const isValid = isValidPattern && totalOutfieldPlayers === 10;
+  const formation = isValid ? formationInput : DEFAULT_FORMATION;
+  const lines = formation.split("-").map((part) => Number(part));
+  const slots: LineupSlotId[] = ["gk"];
+
+  lines.forEach((count, lineIndex) => {
+    for (let playerIndex = 1; playerIndex <= count; playerIndex += 1) {
+      slots.push(`line${lineIndex + 1}-p${playerIndex}`);
+    }
+  });
+
+  return slots;
+}
 
 type BoughtPlayer = {
   playerId: string;
@@ -69,7 +85,7 @@ export async function GET() {
   if (!roomId) {
     return NextResponse.json({
       roomId: null,
-      formation: "4-3-3",
+      formation: DEFAULT_FORMATION,
       starters: [],
       bench: [],
       availablePlayers: [],
@@ -81,9 +97,8 @@ export async function GET() {
   const lineupsCollection = db.collection("lineups");
   const existing = await lineupsCollection.findOne({ userId: session.user.id, roomId });
 
-  const defaultFormation: LineupFormation = "4-3-3";
-  const formation = (existing?.formation as LineupFormation | undefined) ?? defaultFormation;
-  const slots = FORMATION_SLOTS[formation] ?? FORMATION_SLOTS[defaultFormation];
+  const formation = (existing?.formation as LineupFormation | undefined) ?? DEFAULT_FORMATION;
+  const slots = getFormationSlots(formation);
 
   const ownedSet = new Set(playersBought.map((p) => p.playerId));
   const persistedStarters = Array.isArray(existing?.starters)
@@ -114,7 +129,7 @@ export async function GET() {
     for (const player of playersBought) {
       if (normalizedStarters.length >= 11) break;
       if (seen.has(player.playerId)) continue;
-      const slotId = slots[normalizedStarters.length];
+      const slotId = slots[normalizedStarters.length] as LineupSlotId;
       normalizedStarters.push({ slotId, playerId: player.playerId });
       seen.add(player.playerId);
     }
@@ -147,7 +162,7 @@ export async function PUT(request: NextRequest) {
   }
 
   const { roomId, formation, starters } = parsed.data;
-  const slots = FORMATION_SLOTS[formation];
+  const slots = getFormationSlots(formation);
 
   const slotSet = new Set(starters.map((entry) => entry.slotId));
   if (slotSet.size !== starters.length || starters.some((entry) => !slots.includes(entry.slotId as LineupSlotId))) {
