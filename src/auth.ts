@@ -1,8 +1,17 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
+import { ObjectId } from "mongodb";
 import { getDb } from "@/lib/mongodb";
 import { loginSchema } from "@/lib/validations";
+
+function toObjectId(value: string) {
+  try {
+    return new ObjectId(value);
+  } catch {
+    return null;
+  }
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   session: {
@@ -49,7 +58,25 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.role = incomingRole === "admin" || incomingRole === "manager"
           ? incomingRole
           : "manager";
+        return token;
       }
+
+      // Keep role in sync with DB so manual role changes are reflected in live sessions.
+      if (token.sub) {
+        const db = await getDb();
+        const users = db.collection("users");
+        const userObjectId = toObjectId(token.sub);
+
+        if (userObjectId) {
+          const persistedUser = await users.findOne(
+            { _id: userObjectId },
+            { projection: { role: 1 } }
+          );
+
+          token.role = persistedUser?.role === "admin" ? "admin" : "manager";
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {
