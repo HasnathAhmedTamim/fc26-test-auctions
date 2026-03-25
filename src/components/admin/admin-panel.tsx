@@ -56,6 +56,8 @@ type UserDraft = {
 type AdminAchievement = {
   id: string;
   userId: string;
+  userName: string;
+  userEmail: string;
   tournamentId: string;
   tournamentName: string;
   badgeType: "Champion" | "RunnerUp" | "SemiFinalist";
@@ -200,14 +202,11 @@ export function AdminPanel() {
 
   const fetchAchievements = useCallback(async (userId?: string) => {
     const targetUserId = (userId ?? achievementUserId).trim();
-    if (!targetUserId) {
-      setAchievements([]);
-      return;
-    }
 
     setAchievementsLoading(true);
 
-    const res = await fetch(`/api/admin/achievements?userId=${encodeURIComponent(targetUserId)}`, {
+    const query = targetUserId ? `?userId=${encodeURIComponent(targetUserId)}` : "";
+    const res = await fetch(`/api/admin/achievements${query}`, {
       cache: "no-store",
     });
     const data = await res.json();
@@ -1057,7 +1056,7 @@ export function AdminPanel() {
                 onChange={(event) => setAchievementUserId(event.target.value)}
                 className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-2 text-sm outline-none"
               >
-                <option value="">Select manager...</option>
+                <option value="">All managers (history)</option>
                 {managerUsers.map((user) => (
                   <option key={user.id} value={user.id}>
                     {user.name} ({user.email})
@@ -1138,7 +1137,7 @@ export function AdminPanel() {
           </div>
 
           {!achievementUserId ? (
-            <p className="mt-4 text-slate-400">Select a manager to view badges.</p>
+            <p className="mt-4 text-slate-400">Showing badge history for all managers.</p>
           ) : achievementsLoading ? (
             <p className="mt-4 text-slate-400">Loading badges...</p>
           ) : achievements.length === 0 ? (
@@ -1154,6 +1153,10 @@ export function AdminPanel() {
                     <p className="font-semibold text-white">{achievement.tournamentName}</p>
                     <p className="text-xs text-slate-400">
                       {achievement.badgeType} • {new Date(achievement.awardedAt).toLocaleDateString()}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      Awarded to: {achievement.userName}
+                      {achievement.userEmail ? ` (${achievement.userEmail})` : ""}
                     </p>
                   </div>
                   <Button

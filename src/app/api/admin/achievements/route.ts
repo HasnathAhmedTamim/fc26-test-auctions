@@ -12,6 +12,20 @@ function toObjectId(value: string) {
   }
 }
 
+function buildUserIdQuery(userId: string) {
+  const objectId = toObjectId(userId);
+  if (!objectId) {
+    return { userId };
+  }
+
+  return {
+    $or: [
+      { userId },
+      { userId: objectId },
+    ],
+  };
+}
+
 export async function GET(request: NextRequest) {
   const access = await requireAdmin();
   if (!access.ok) return access.response;
@@ -19,16 +33,28 @@ export async function GET(request: NextRequest) {
   const userId = request.nextUrl.searchParams.get("userId")?.trim();
 
   const db = await getDb();
-  const query = userId ? { userId } : {};
+  const query = userId ? buildUserIdQuery(userId) : {};
   const achievements = await db.collection("userAchievements")
     .find(query)
     .sort({ awardedAt: -1, createdAt: -1 })
     .toArray();
 
+  const userIds = [...new Set(achievements.map((item) => String(item.userId ?? "")).filter(Boolean))];
+  const objectIds = userIds.map((id) => toObjectId(id)).filter((id): id is ObjectId => Boolean(id));
+  const users = objectIds.length
+    ? await db
+        .collection("users")
+        .find({ _id: { $in: objectIds } }, { projection: { name: 1, email: 1 } })
+        .toArray()
+    : [];
+  const usersById = new Map(users.map((user) => [String(user._id), user]));
+
   return NextResponse.json({
     achievements: achievements.map((item) => ({
       id: String(item._id),
       userId: String(item.userId ?? ""),
+      userName: String(item.userName ?? usersById.get(String(item.userId ?? ""))?.name ?? "Unknown Manager"),
+      userEmail: String(item.userEmail ?? usersById.get(String(item.userId ?? ""))?.email ?? ""),
       tournamentId: String(item.tournamentId ?? ""),
       tournamentName: String(item.tournamentName ?? "Unknown Tournament"),
       badgeType: String(item.badgeType ?? "Champion"),
@@ -65,7 +91,7 @@ export async function POST(request: NextRequest) {
   }
 
   const existing = await db.collection("userAchievements").findOne({
-    userId,
+    ...buildUserIdQuery(userId),
     tournamentId,
     badgeType,
   });
@@ -78,6 +104,8 @@ export async function POST(request: NextRequest) {
 
   await db.collection("userAchievements").insertOne({
     userId,
+    userName: String(user.name ?? "Unknown Manager"),
+    userEmail: String(user.email ?? ""),
     tournamentId,
     tournamentName,
     badgeType,

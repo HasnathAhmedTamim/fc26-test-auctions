@@ -1,6 +1,29 @@
 import { NextResponse } from "next/server";
+import { ObjectId } from "mongodb";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/mongodb";
+
+function toObjectId(value: string) {
+  try {
+    return new ObjectId(value);
+  } catch {
+    return null;
+  }
+}
+
+function buildUserIdQuery(userId: string) {
+  const objectId = toObjectId(userId);
+  if (!objectId) {
+    return { userId };
+  }
+
+  return {
+    $or: [
+      { userId },
+      { userId: objectId },
+    ],
+  };
+}
 
 export async function GET() {
   const session = await auth();
@@ -10,7 +33,7 @@ export async function GET() {
 
   const db = await getDb();
   const achievements = await db.collection("userAchievements")
-    .find({ userId: session.user.id })
+    .find(buildUserIdQuery(session.user.id))
     .sort({ awardedAt: -1, createdAt: -1 })
     .toArray();
 
