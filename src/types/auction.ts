@@ -46,3 +46,49 @@ export type AuctionRoomState = {
   highestBidderName: string | null;
   bidHistory: BidEntry[];
 };
+
+export const LINEUP_FORMATIONS = ["4-3-3", "4-4-2", "3-5-2"] as const;
+
+export type LineupFormation = (typeof LINEUP_FORMATIONS)[number];
+
+export type LineupSlotId =
+  | "gk"
+  | "lb"
+  | "lcb"
+  | "cb"
+  | "rcb"
+  | "rb"
+  | "lwb"
+  | "rwb"
+  | "cdm"
+  | "lcm"
+  | "cm"
+  | "rcm"
+  | "cam"
+  | "lw"
+  | "rw"
+  | "lf"
+  | "rf"
+  | "st"
+  | "ls"
+  | "rs";
+
+export type LineupStarter = {
+  slotId: LineupSlotId;
+  playerId: string;
+};
+
+export type LineupPlayer = {
+  playerId: string;
+  playerName: string;
+  amount: number;
+};
+
+export type UserLineupState = {
+  roomId: string;
+  formation: LineupFormation;
+  starters: LineupStarter[];
+  bench: LineupPlayer[];
+  availablePlayers: LineupPlayer[];
+  updatedAt?: string;
+};

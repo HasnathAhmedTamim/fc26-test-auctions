@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/container";
 import { showConfirmAlert, showErrorAlert, showSuccessAlert } from "@/lib/alerts";
+import { tournaments } from "@/data/tournaments";
 
 type AuctionRoom = {
   roomId: string;
@@ -52,6 +53,15 @@ type UserDraft = {
   password: string;
 };
 
+type AdminAchievement = {
+  id: string;
+  userId: string;
+  tournamentId: string;
+  tournamentName: string;
+  badgeType: "Champion" | "RunnerUp" | "SemiFinalist";
+  awardedAt: string;
+};
+
 const STATUS_STYLES: Record<string, string> = {
   live: "bg-emerald-500 text-black",
   sold: "bg-yellow-500 text-black",
@@ -94,6 +104,20 @@ export function AdminPanel() {
   const [error, setError] = useState("");
   const [rosterError, setRosterError] = useState("");
   const [adminMessage, setAdminMessage] = useState("");
+  const [achievements, setAchievements] = useState<AdminAchievement[]>([]);
+  const [achievementsLoading, setAchievementsLoading] = useState(false);
+  const [achievementUserId, setAchievementUserId] = useState("");
+  const [achievementTournamentId, setAchievementTournamentId] = useState(
+    tournaments[0]?.id ?? ""
+  );
+  const [achievementTournamentName, setAchievementTournamentName] = useState(
+    tournaments[0]?.name ?? ""
+  );
+  const [achievementBadgeType, setAchievementBadgeType] = useState<
+    "Champion" | "RunnerUp" | "SemiFinalist"
+  >("Champion");
+  const [awardingBadge, setAwardingBadge] = useState(false);
+  const [revokingBadgeId, setRevokingBadgeId] = useState("");
 
   const roomStats = useMemo(() => {
     const totalSpent = managers.reduce((sum, m) => sum + m.budgetSpent, 0);
@@ -104,6 +128,11 @@ export function AdminPanel() {
   const selectedPlayer = useMemo(
     () => players.find((player) => player.id === selectedPlayerId) ?? null,
     [players, selectedPlayerId]
+  );
+
+  const managerUsers = useMemo(
+    () => users.filter((user) => user.role === "manager"),
+    [users]
   );
 
   async function fetchRooms() {
@@ -160,7 +189,38 @@ export function AdminPanel() {
         ])
       )
     );
+
+    setAchievementUserId((prev) => {
+      if (prev && nextUsers.some((user) => user.id === prev && user.role === "manager")) {
+        return prev;
+      }
+      return nextUsers.find((user) => user.role === "manager")?.id ?? "";
+    });
   }
+
+  const fetchAchievements = useCallback(async (userId?: string) => {
+    const targetUserId = (userId ?? achievementUserId).trim();
+    if (!targetUserId) {
+      setAchievements([]);
+      return;
+    }
+
+    setAchievementsLoading(true);
+
+    const res = await fetch(`/api/admin/achievements?userId=${encodeURIComponent(targetUserId)}`, {
+      cache: "no-store",
+    });
+    const data = await res.json();
+
+    setAchievementsLoading(false);
+
+    if (!res.ok) {
+      setRosterError(data.error ?? "Failed to load achievements");
+      return;
+    }
+
+    setAchievements((data.achievements ?? []) as AdminAchievement[]);
+  }, [achievementUserId]);
 
   async function fetchManagerRoster(roomId: string) {
     if (!roomId) {
@@ -210,6 +270,14 @@ export function AdminPanel() {
 
     return () => window.clearTimeout(timeoutId);
   }, [selectedRoomId]);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void fetchAchievements(achievementUserId);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [achievementUserId, fetchAchievements]);
 
   function handlePlayerChange(playerId: string) {
     setSelectedPlayerId(playerId);
@@ -527,6 +595,87 @@ export function AdminPanel() {
     setAdminMessage(message);
     await showSuccessAlert("Player removed", message);
     await fetchManagerRoster(selectedRoomId);
+  }
+
+  function handleTournamentChange(value: string) {
+    setAchievementTournamentId(value);
+    const picked = tournaments.find((item) => item.id === value);
+    setAchievementTournamentName(picked?.name ?? "Custom Tournament");
+  }
+
+  async function awardBadgeToUser() {
+    if (!achievementUserId || !achievementTournamentId || !achievementTournamentName) return;
+
+    const target = managerUsers.find((user) => user.id === achievementUserId);
+    const confirmed = await showConfirmAlert(
+      "Award tournament badge?",
+      `Award ${achievementBadgeType} badge to ${target?.name ?? "selected manager"} for ${achievementTournamentName}?`
+    );
+
+    if (!confirmed) return;
+
+    setAwardingBadge(true);
+    setRosterError("");
+    setAdminMessage("");
+
+    const res = await fetch("/api/admin/achievements", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: achievementUserId,
+        tournamentId: achievementTournamentId,
+        tournamentName: achievementTournamentName,
+        badgeType: achievementBadgeType,
+      }),
+    });
+
+    const data = await res.json();
+    setAwardingBadge(false);
+
+    if (!res.ok) {
+      const message = data.error ?? "Failed to award badge";
+      setRosterError(message);
+      await showErrorAlert("Badge award failed", message);
+      return;
+    }
+
+    const message = data.message ?? "Badge awarded";
+    setAdminMessage(message);
+    await showSuccessAlert("Badge awarded", message);
+    await fetchAchievements(achievementUserId);
+  }
+
+  async function revokeBadge(achievementId: string) {
+    const confirmed = await showConfirmAlert(
+      "Revoke this badge?",
+      "This will remove the selected achievement from the manager profile."
+    );
+
+    if (!confirmed) return;
+
+    setRevokingBadgeId(achievementId);
+    setRosterError("");
+
+    const res = await fetch("/api/admin/achievements", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ achievementId }),
+    });
+
+    const data = await res.json();
+    setRevokingBadgeId("");
+
+    if (!res.ok) {
+      const message = data.error ?? "Failed to revoke badge";
+      setRosterError(message);
+      await showErrorAlert("Badge revoke failed", message);
+      return;
+    }
+
+    const message = data.message ?? "Badge revoked";
+    setAdminMessage(message);
+    await showSuccessAlert("Badge revoked", message);
+    await fetchAchievements(achievementUserId);
   }
 
   return (
@@ -885,6 +1034,138 @@ export function AdminPanel() {
                       })}
                     </div>
                   )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-10 grid gap-8 xl:grid-cols-[420px_1fr]">
+        <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+          <h2 className="text-xl font-bold">Tournament Badges</h2>
+          <p className="mt-1 text-sm text-slate-400">
+            Award achievement badges to managers who win tournaments.
+          </p>
+
+          <div className="mt-5 space-y-4">
+            <div>
+              <label className="mb-1 block text-sm text-slate-300">Manager</label>
+              <select
+                aria-label="Select manager for badge award"
+                value={achievementUserId}
+                onChange={(event) => setAchievementUserId(event.target.value)}
+                className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-2 text-sm outline-none"
+              >
+                <option value="">Select manager...</option>
+                {managerUsers.map((user) => (
+                  <option key={user.id} value={user.id}>
+                    {user.name} ({user.email})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-sm text-slate-300">Tournament</label>
+              <select
+                aria-label="Select tournament for badge award"
+                value={achievementTournamentId}
+                onChange={(event) => handleTournamentChange(event.target.value)}
+                className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-2 text-sm outline-none"
+              >
+                {tournaments.map((tournament) => (
+                  <option key={tournament.id} value={tournament.id}>
+                    {tournament.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-sm text-slate-300">Tournament Name</label>
+              <input
+                aria-label="Tournament name for badge award"
+                value={achievementTournamentName}
+                onChange={(event) => setAchievementTournamentName(event.target.value)}
+                className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-2 text-sm outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1 block text-sm text-slate-300">Badge Type</label>
+              <select
+                aria-label="Select badge type"
+                value={achievementBadgeType}
+                onChange={(event) => setAchievementBadgeType(event.target.value as "Champion" | "RunnerUp" | "SemiFinalist")}
+                className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-2 text-sm outline-none"
+              >
+                <option value="Champion">Champion</option>
+                <option value="RunnerUp">Runner-up</option>
+                <option value="SemiFinalist">Semi-finalist</option>
+              </select>
+            </div>
+
+            <Button
+              type="button"
+              onClick={awardBadgeToUser}
+              disabled={awardingBadge || !achievementUserId}
+              className="w-full bg-amber-500 text-black hover:bg-amber-400"
+            >
+              {awardingBadge ? "Awarding..." : "Award Badge"}
+            </Button>
+          </div>
+        </div>
+
+        <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-bold">Awarded Badges</h2>
+              <p className="mt-1 text-sm text-slate-400">
+                Track and revoke badges given to the selected manager.
+              </p>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="border-white/20 bg-transparent text-white hover:bg-white/10"
+              onClick={() => fetchAchievements(achievementUserId)}
+              disabled={!achievementUserId || achievementsLoading}
+            >
+              {achievementsLoading ? "Refreshing..." : "Refresh"}
+            </Button>
+          </div>
+
+          {!achievementUserId ? (
+            <p className="mt-4 text-slate-400">Select a manager to view badges.</p>
+          ) : achievementsLoading ? (
+            <p className="mt-4 text-slate-400">Loading badges...</p>
+          ) : achievements.length === 0 ? (
+            <p className="mt-4 text-slate-400">No badges awarded for this manager yet.</p>
+          ) : (
+            <div className="mt-5 space-y-3">
+              {achievements.map((achievement) => (
+                <div
+                  key={achievement.id}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-slate-950/60 px-4 py-3"
+                >
+                  <div>
+                    <p className="font-semibold text-white">{achievement.tournamentName}</p>
+                    <p className="text-xs text-slate-400">
+                      {achievement.badgeType} • {new Date(achievement.awardedAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="border-red-500/30 bg-transparent text-red-300 hover:bg-red-500/10"
+                    onClick={() => revokeBadge(achievement.id)}
+                    disabled={revokingBadgeId === achievement.id}
+                  >
+                    {revokingBadgeId === achievement.id ? "Revoking..." : "Revoke"}
+                  </Button>
                 </div>
               ))}
             </div>

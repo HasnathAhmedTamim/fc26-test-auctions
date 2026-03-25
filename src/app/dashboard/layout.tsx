@@ -13,6 +13,12 @@ export default function DashboardLayout({
           <Link href="/dashboard" className="block rounded-xl px-4 py-3 hover:bg-white/5">
             Overview
           </Link>
+          <Link href="/dashboard/lineup" className="block rounded-xl px-4 py-3 hover:bg-white/5">
+            Lineup
+          </Link>
+          <Link href="/dashboard/achievements" className="block rounded-xl px-4 py-3 hover:bg-white/5">
+            Achievements
+          </Link>
           <Link href="/players" className="block rounded-xl px-4 py-3 hover:bg-white/5">
             Players
           </Link>

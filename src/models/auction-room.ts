@@ -33,3 +33,26 @@ export type ManagerStatDoc = {
     amount: number;
   }[];
 };
+
+export type UserLineupDoc = {
+  userId: string;
+  roomId: string;
+  formation: "4-3-3" | "4-4-2" | "3-5-2";
+  starters: {
+    slotId: string;
+    playerId: string;
+  }[];
+  updatedAt: Date;
+  createdAt: Date;
+};
+
+export type UserAchievementDoc = {
+  userId: string;
+  tournamentId: string;
+  tournamentName: string;
+  badgeType: "Champion" | "RunnerUp" | "SemiFinalist";
+  awardedBy: string;
+  awardedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
