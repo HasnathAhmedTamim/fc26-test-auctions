@@ -29,6 +29,13 @@ type ManagerRoster = {
   playersBought: ManagerRosterPlayer[];
 };
 
+type RoomAccessManager = {
+  userId: string;
+  userName: string;
+  email: string;
+  canJoin: boolean;
+};
+
 type PlayerOption = {
   id: string;
   name: string;
@@ -102,6 +109,7 @@ export function AdminPanel() {
   const [assigning, setAssigning] = useState(false);
   const [adjustingBudget, setAdjustingBudget] = useState(false);
   const [endingRoom, setEndingRoom] = useState("");
+  const [deletingRoomId, setDeletingRoomId] = useState("");
   const [removingKey, setRemovingKey] = useState("");
   const [error, setError] = useState("");
   const [rosterError, setRosterError] = useState("");
@@ -120,6 +128,11 @@ export function AdminPanel() {
   >("Champion");
   const [awardingBadge, setAwardingBadge] = useState(false);
   const [revokingBadgeId, setRevokingBadgeId] = useState("");
+  const [roomAccessManagers, setRoomAccessManagers] = useState<RoomAccessManager[]>([]);
+  const [roomAccessLoading, setRoomAccessLoading] = useState(false);
+  const [roomAccessUpdating, setRoomAccessUpdating] = useState("");
+  const [roomAccessBulkUpdating, setRoomAccessBulkUpdating] = useState("");
+  const [activeAccessRoomId, setActiveAccessRoomId] = useState("");
 
   const roomStats = useMemo(() => {
     const totalSpent = managers.reduce((sum, m) => sum + m.budgetSpent, 0);
@@ -250,6 +263,27 @@ export function AdminPanel() {
       }
       return nextManagers[0]?.userId ?? "";
     });
+  }
+
+  async function fetchRoomAccess(roomId: string) {
+    if (!roomId) {
+      setRoomAccessManagers([]);
+      return;
+    }
+
+    setRoomAccessLoading(true);
+    const res = await fetch(`/api/admin/room-access?roomId=${encodeURIComponent(roomId)}`, {
+      cache: "no-store",
+    });
+    const data = await res.json();
+    setRoomAccessLoading(false);
+
+    if (!res.ok) {
+      setRosterError(data.error ?? "Failed to load room access permissions");
+      return;
+    }
+
+    setRoomAccessManagers((data.managers ?? []) as RoomAccessManager[]);
   }
 
   useEffect(() => {
@@ -596,6 +630,112 @@ export function AdminPanel() {
     await fetchManagerRoster(selectedRoomId);
   }
 
+  async function toggleRoomAccess(userId: string, canJoin: boolean, roomId?: string) {
+    const targetRoomId = (roomId ?? selectedRoomId).trim();
+    if (!targetRoomId) return;
+
+    setRoomAccessUpdating(`${targetRoomId}:${userId}`);
+    setRosterError("");
+
+    const res = await fetch("/api/admin/room-access", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        roomId: targetRoomId,
+        userId,
+        canJoin,
+      }),
+    });
+
+    const data = await res.json();
+    setRoomAccessUpdating("");
+
+    if (!res.ok) {
+      const message = data.error ?? "Failed to update room access";
+      setRosterError(message);
+      await showErrorAlert("Room access update failed", message);
+      return;
+    }
+
+    await fetchRoomAccess(targetRoomId);
+  }
+
+  async function bulkToggleRoomAccess(action: "grant-all" | "revoke-all", roomId?: string) {
+    const targetRoomId = (roomId ?? selectedRoomId).trim();
+    if (!targetRoomId) return;
+
+    const confirmed = await showConfirmAlert(
+      action === "grant-all" ? "Grant all managers?" : "Revoke all managers?",
+      action === "grant-all"
+        ? "This will allow every manager to join the selected room."
+        : "This will block every manager from joining the selected room until granted again."
+    );
+
+    if (!confirmed) return;
+
+    setRoomAccessBulkUpdating(`${targetRoomId}:${action}`);
+    setRosterError("");
+
+    const res = await fetch("/api/admin/room-access", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        roomId: targetRoomId,
+        action,
+      }),
+    });
+
+    const data = await res.json();
+    setRoomAccessBulkUpdating("");
+
+    if (!res.ok) {
+      const message = data.error ?? "Failed to update room access";
+      setRosterError(message);
+      await showErrorAlert("Room access bulk update failed", message);
+      return;
+    }
+
+    await fetchRoomAccess(targetRoomId);
+  }
+
+  async function deleteRoom(roomId: string) {
+    const room = rooms.find((entry) => entry.roomId === roomId);
+    const confirmed = await showConfirmAlert(
+      "Delete this room?",
+      `This will permanently delete ${room?.name ?? roomId} and all related bids, sold players, manager stats, and access permissions.`
+    );
+
+    if (!confirmed) return;
+
+    setDeletingRoomId(roomId);
+    setError("");
+
+    const res = await fetch("/api/auction/rooms", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ roomId }),
+    });
+
+    const data = await res.json();
+    setDeletingRoomId("");
+
+    if (!res.ok) {
+      const message = data.error ?? "Failed to delete room";
+      setError(message);
+      await showErrorAlert("Delete room failed", message);
+      return;
+    }
+
+    await showSuccessAlert("Room deleted", data.message ?? "Room deleted successfully.");
+    await fetchRooms();
+    setSelectedRoomId("");
+    if (activeAccessRoomId === roomId) {
+      setActiveAccessRoomId("");
+    }
+    setManagers([]);
+    setRoomAccessManagers([]);
+  }
+
   function handleTournamentChange(value: string) {
     setAchievementTournamentId(value);
     const picked = tournaments.find((item) => item.id === value);
@@ -767,6 +907,24 @@ export function AdminPanel() {
                       >
                         Manage Roster
                       </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="border-emerald-500/30 bg-transparent text-emerald-300 hover:bg-emerald-500/10"
+                        onClick={() => {
+                          if (activeAccessRoomId === room.roomId) {
+                            setActiveAccessRoomId("");
+                            setRoomAccessManagers([]);
+                            return;
+                          }
+
+                          setActiveAccessRoomId(room.roomId);
+                          void fetchRoomAccess(room.roomId);
+                        }}
+                      >
+                        {activeAccessRoomId === room.roomId ? "Hide Access" : "Room Access"}
+                      </Button>
                       {room.status !== "ended" ? (
                         <Button
                           type="button"
@@ -790,6 +948,16 @@ export function AdminPanel() {
                           {endingRoom === room.roomId + "reset" ? "Resetting…" : "Reset"}
                         </Button>
                       )}
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="border-red-500/30 bg-transparent text-red-300 hover:bg-red-500/10"
+                        onClick={() => deleteRoom(room.roomId)}
+                        disabled={deletingRoomId === room.roomId}
+                      >
+                        {deletingRoomId === room.roomId ? "Deleting..." : "Delete Room"}
+                      </Button>
                       <Link href={`/auction/${room.roomId}`}>
                         <Button
                           size="sm"
@@ -800,6 +968,72 @@ export function AdminPanel() {
                       </Link>
                     </div>
                   </div>
+
+                  {activeAccessRoomId === room.roomId ? (
+                    <div className="mt-4 rounded-xl border border-white/10 bg-black/25 p-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <h4 className="text-sm font-semibold text-slate-200">Room Access Permissions</h4>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="border-emerald-500/30 bg-transparent text-emerald-300 hover:bg-emerald-500/10"
+                            disabled={roomAccessBulkUpdating !== "" || roomAccessLoading}
+                            onClick={() => bulkToggleRoomAccess("grant-all", room.roomId)}
+                          >
+                            {roomAccessBulkUpdating === `${room.roomId}:grant-all` ? "Granting..." : "Grant All"}
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="border-amber-500/30 bg-transparent text-amber-300 hover:bg-amber-500/10"
+                            disabled={roomAccessBulkUpdating !== "" || roomAccessLoading}
+                            onClick={() => bulkToggleRoomAccess("revoke-all", room.roomId)}
+                          >
+                            {roomAccessBulkUpdating === `${room.roomId}:revoke-all` ? "Revoking..." : "Revoke All"}
+                          </Button>
+                        </div>
+                      </div>
+
+                      {roomAccessLoading ? (
+                        <p className="mt-3 text-xs text-slate-500">Loading access list...</p>
+                      ) : roomAccessManagers.length === 0 ? (
+                        <p className="mt-3 text-xs text-slate-500">No managers available.</p>
+                      ) : (
+                        <div className="mt-3 grid gap-2 md:grid-cols-2">
+                          {roomAccessManagers.map((manager) => (
+                            <div
+                              key={manager.userId}
+                              className="flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2"
+                            >
+                              <div>
+                                <p className="text-sm font-semibold text-white">{manager.userName}</p>
+                                <p className="text-xs text-slate-500">{manager.email || "No email"}</p>
+                              </div>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                className={manager.canJoin
+                                  ? "border-amber-500/30 bg-transparent text-amber-300 hover:bg-amber-500/10"
+                                  : "border-emerald-500/30 bg-transparent text-emerald-300 hover:bg-emerald-500/10"}
+                                disabled={roomAccessUpdating === `${room.roomId}:${manager.userId}`}
+                                onClick={() => toggleRoomAccess(manager.userId, !manager.canJoin, room.roomId)}
+                              >
+                                {roomAccessUpdating === `${room.roomId}:${manager.userId}`
+                                  ? "Updating..."
+                                  : manager.canJoin
+                                    ? "Revoke"
+                                    : "Grant"}
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
                 </div>
               ))}
             </div>
@@ -948,6 +1182,7 @@ export function AdminPanel() {
               </Button>
             </div>
           </div>
+
         </div>
 
         <div className="rounded-3xl border border-white/10 bg-white/5 p-6">

@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 import { createServer } from "node:http";
 import next from "next";
 import { Server } from "socket.io";
-import { MongoClient } from "mongodb";
+import { MongoClient, ObjectId } from "mongodb";
 import { getToken } from "next-auth/jwt";
 import {
   BID_COOLDOWN_MS,
@@ -32,6 +32,14 @@ if (!mongoUri) {
 }
 
 const client = new MongoClient(mongoUri);
+
+function toObjectId(value) {
+  try {
+    return new ObjectId(value);
+  } catch {
+    return null;
+  }
+}
 
 app.prepare().then(async () => {
   await client.connect();
@@ -343,6 +351,30 @@ app.prepare().then(async () => {
         socket.emit("auction:error", { message: "Unauthorized socket connection." });
         socket.disconnect(true);
         return;
+      }
+
+      if (socketUser.role !== "admin") {
+        const userObjectId = toObjectId(socketUser.id);
+        const accessQuery = userObjectId
+          ? {
+              roomId,
+              canJoin: true,
+              $or: [{ userId: socketUser.id }, { userId: userObjectId }],
+            }
+          : {
+              roomId,
+              userId: socketUser.id,
+              canJoin: true,
+            };
+
+        const roomAccess = await db.collection("roomAccess").findOne(accessQuery);
+
+        if (!roomAccess) {
+          socket.emit("auction:error", {
+            message: "You are not allowed to join this room. Ask admin for access.",
+          });
+          return;
+        }
       }
 
       socket.join(roomId);
