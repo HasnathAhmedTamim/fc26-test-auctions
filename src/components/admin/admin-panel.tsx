@@ -5,7 +5,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/container";
 import { showConfirmAlert, showErrorAlert, showSuccessAlert } from "@/lib/alerts";
-import { tournaments } from "@/data/tournaments";
+import { tournaments as seedTournaments } from "@/data/tournaments";
+import { Tournament, TournamentFixture, TournamentStanding } from "@/types/tournament";
 
 type AuctionRoom = {
   roomId: string;
@@ -71,6 +72,9 @@ type AdminAchievement = {
   awardedAt: string;
 };
 
+type TournamentStandingRow = TournamentStanding;
+type TournamentFixtureRow = TournamentFixture;
+
 const STATUS_STYLES: Record<string, string> = {
   live: "bg-emerald-500 text-black",
   sold: "bg-yellow-500 text-black",
@@ -118,10 +122,10 @@ export function AdminPanel() {
   const [achievementsLoading, setAchievementsLoading] = useState(false);
   const [achievementUserId, setAchievementUserId] = useState("");
   const [achievementTournamentId, setAchievementTournamentId] = useState(
-    tournaments[0]?.id ?? ""
+    seedTournaments[0]?.id ?? ""
   );
   const [achievementTournamentName, setAchievementTournamentName] = useState(
-    tournaments[0]?.name ?? ""
+    seedTournaments[0]?.name ?? ""
   );
   const [achievementBadgeType, setAchievementBadgeType] = useState<
     "Champion" | "RunnerUp" | "SemiFinalist"
@@ -133,6 +137,21 @@ export function AdminPanel() {
   const [roomAccessUpdating, setRoomAccessUpdating] = useState("");
   const [roomAccessBulkUpdating, setRoomAccessBulkUpdating] = useState("");
   const [activeAccessRoomId, setActiveAccessRoomId] = useState("");
+  const [managedTournaments, setManagedTournaments] = useState<Tournament[]>([]);
+  const [tournamentsLoading, setTournamentsLoading] = useState(false);
+  const [tournamentError, setTournamentError] = useState("");
+  const [savingTournament, setSavingTournament] = useState(false);
+  const [deletingTournamentId, setDeletingTournamentId] = useState("");
+  const [editingTournamentId, setEditingTournamentId] = useState("");
+  const [tournamentName, setTournamentName] = useState("");
+  const [tournamentStatus, setTournamentStatus] = useState<Tournament["status"]>("Upcoming");
+  const [tournamentBudget, setTournamentBudget] = useState("2000");
+  const [tournamentMaxPlayers, setTournamentMaxPlayers] = useState("24");
+  const [tournamentMinPlayers, setTournamentMinPlayers] = useState("15");
+  const [tournamentParticipants, setTournamentParticipants] = useState("0");
+  const [teamNamesInput, setTeamNamesInput] = useState("");
+  const [tournamentStandings, setTournamentStandings] = useState<TournamentStandingRow[]>([]);
+  const [tournamentFixtures, setTournamentFixtures] = useState<TournamentFixtureRow[]>([]);
 
   const roomStats = useMemo(() => {
     const totalSpent = managers.reduce((sum, m) => sum + m.budgetSpent, 0);
@@ -148,6 +167,11 @@ export function AdminPanel() {
   const managerUsers = useMemo(
     () => users.filter((user) => user.role === "manager"),
     [users]
+  );
+
+  const achievementTournamentOptions = useMemo(
+    () => (managedTournaments.length > 0 ? managedTournaments : seedTournaments),
+    [managedTournaments]
   );
 
   async function fetchRooms() {
@@ -212,6 +236,36 @@ export function AdminPanel() {
       return nextUsers.find((user) => user.role === "manager")?.id ?? "";
     });
   }
+
+  const fetchTournaments = useCallback(async () => {
+    setTournamentsLoading(true);
+    setTournamentError("");
+
+    const res = await fetch("/api/admin/tournaments", { cache: "no-store" });
+    const data = await res.json();
+
+    setTournamentsLoading(false);
+
+    if (!res.ok) {
+      setTournamentError(data.error ?? "Failed to load tournaments");
+      return;
+    }
+
+    const nextTournaments = (data.tournaments ?? []) as Tournament[];
+    setManagedTournaments(nextTournaments);
+
+    if (!nextTournaments.length) return;
+    setAchievementTournamentId((previousTournamentId) => {
+      const selectedTournamentId = nextTournaments.some((t) => t.id === previousTournamentId)
+        ? previousTournamentId
+        : nextTournaments[0].id;
+
+      const selectedTournament = nextTournaments.find((t) => t.id === selectedTournamentId);
+      setAchievementTournamentName(selectedTournament?.name ?? "");
+
+      return selectedTournamentId;
+    });
+  }, []);
 
   const fetchAchievements = useCallback(async (userId?: string) => {
     const targetUserId = (userId ?? achievementUserId).trim();
@@ -291,10 +345,11 @@ export function AdminPanel() {
       void fetchRooms();
       void fetchPlayers();
       void fetchUsers();
+      void fetchTournaments();
     }, 0);
 
     return () => window.clearTimeout(timeoutId);
-  }, []);
+  }, [fetchTournaments]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -738,8 +793,410 @@ export function AdminPanel() {
 
   function handleTournamentChange(value: string) {
     setAchievementTournamentId(value);
-    const picked = tournaments.find((item) => item.id === value);
+    const picked = achievementTournamentOptions.find((item) => item.id === value);
     setAchievementTournamentName(picked?.name ?? "Custom Tournament");
+  }
+
+  function resetTournamentForm() {
+    setEditingTournamentId("");
+    setTournamentName("");
+    setTournamentStatus("Upcoming");
+    setTournamentBudget("2000");
+    setTournamentMaxPlayers("24");
+    setTournamentMinPlayers("15");
+    setTournamentParticipants("0");
+    setTeamNamesInput("");
+    setTournamentStandings([]);
+    setTournamentFixtures([]);
+  }
+
+  function loadTournamentForEdit(tournament: Tournament) {
+    setEditingTournamentId(tournament.id);
+    setTournamentName(tournament.name);
+    setTournamentStatus(tournament.status);
+    setTournamentBudget(String(tournament.budget));
+    setTournamentMaxPlayers(String(tournament.maxPlayers));
+    setTournamentMinPlayers(String(tournament.minPlayers));
+    setTournamentParticipants(String(tournament.participants));
+    setTeamNamesInput((tournament.standings ?? []).map((entry) => entry.team).join("\n"));
+    setTournamentStandings(tournament.standings ?? []);
+    setTournamentFixtures(tournament.fixtures ?? []);
+  }
+
+  function normalizeTeamNames() {
+    const unique = new Set<string>();
+    const teamNames = teamNamesInput
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((name) => {
+        if (!name) return false;
+        const lowered = name.toLowerCase();
+        if (unique.has(lowered)) return false;
+        unique.add(lowered);
+        return true;
+      });
+
+    return teamNames;
+  }
+
+  function buildStandingsFromTeams() {
+    const teamNames = normalizeTeamNames();
+    if (teamNames.length < 2) {
+      setTournamentError("Enter at least 2 unique team names");
+      return;
+    }
+
+    setTournamentError("");
+    setTournamentParticipants(String(teamNames.length));
+    setTournamentStandings(
+      teamNames.map((team) => ({
+        team,
+        played: 0,
+        won: 0,
+        draw: 0,
+        lost: 0,
+        goalsFor: 0,
+        goalsAgainst: 0,
+        points: 0,
+      }))
+    );
+  }
+
+  function shuffleList<T>(items: T[]) {
+    const clone = [...items];
+    for (let index = clone.length - 1; index > 0; index -= 1) {
+      const swapIndex = Math.floor(Math.random() * (index + 1));
+      [clone[index], clone[swapIndex]] = [clone[swapIndex], clone[index]];
+    }
+    return clone;
+  }
+
+  function formatKickoff(baseDate: Date) {
+    const year = baseDate.getFullYear();
+    const month = String(baseDate.getMonth() + 1).padStart(2, "0");
+    const day = String(baseDate.getDate()).padStart(2, "0");
+    const hour = String(baseDate.getHours()).padStart(2, "0");
+    const minute = String(baseDate.getMinutes()).padStart(2, "0");
+    return `${year}-${month}-${day} ${hour}:${minute}`;
+  }
+
+  function generateRandomFixtures() {
+    const teamNames = normalizeTeamNames();
+    if (teamNames.length < 2) {
+      setTournamentError("Enter at least 2 unique team names before generating fixtures");
+      return;
+    }
+
+    const randomizedTeams = shuffleList(teamNames);
+    const pairs: Array<{ homeTeam: string; awayTeam: string }> = [];
+
+    for (let i = 0; i < randomizedTeams.length; i += 1) {
+      for (let j = i + 1; j < randomizedTeams.length; j += 1) {
+        const homeFirst = Math.random() > 0.5;
+        pairs.push(
+          homeFirst
+            ? { homeTeam: randomizedTeams[i], awayTeam: randomizedTeams[j] }
+            : { homeTeam: randomizedTeams[j], awayTeam: randomizedTeams[i] }
+        );
+      }
+    }
+
+    const randomizedPairs = shuffleList(pairs);
+    const kickoffBase = new Date();
+
+    const generatedFixtures: TournamentFixtureRow[] = randomizedPairs.map((pair, index) => {
+      const kickoffDate = new Date(kickoffBase.getTime() + index * 60 * 60 * 1000);
+      return {
+        id: `fx-${Date.now()}-${index + 1}`,
+        round: `Round ${Math.floor(index / Math.max(1, Math.floor(teamNames.length / 2))) + 1}`,
+        homeTeam: pair.homeTeam,
+        awayTeam: pair.awayTeam,
+        kickoff: formatKickoff(kickoffDate),
+        status: "Scheduled",
+      };
+    });
+
+    setTournamentError("");
+    setTournamentParticipants(String(teamNames.length));
+    setTournamentFixtures(generatedFixtures);
+
+    if (!tournamentStandings.length) {
+      setTournamentStandings(
+        teamNames.map((team) => ({
+          team,
+          played: 0,
+          won: 0,
+          draw: 0,
+          lost: 0,
+          goalsFor: 0,
+          goalsAgainst: 0,
+          points: 0,
+        }))
+      );
+    }
+  }
+
+  function updateStanding(index: number, field: keyof TournamentStandingRow, value: string) {
+    setTournamentStandings((previous) =>
+      previous.map((entry, rowIndex) => {
+        if (rowIndex !== index) return entry;
+        if (field === "team") return { ...entry, team: value };
+        return { ...entry, [field]: Math.max(0, Number(value) || 0) };
+      })
+    );
+  }
+
+  function addStandingRow() {
+    setTournamentStandings((previous) => [
+      ...previous,
+      {
+        team: `Team ${previous.length + 1}`,
+        played: 0,
+        won: 0,
+        draw: 0,
+        lost: 0,
+        goalsFor: 0,
+        goalsAgainst: 0,
+        points: 0,
+      },
+    ]);
+  }
+
+  function removeStandingRow(index: number) {
+    setTournamentStandings((previous) => previous.filter((_, rowIndex) => rowIndex !== index));
+  }
+
+  function recalculateStandingsFromFixtures() {
+    const finishedFixtures = tournamentFixtures.filter(
+      (fixture) =>
+        fixture.status === "Finished" &&
+        fixture.homeTeam.trim() &&
+        fixture.awayTeam.trim() &&
+        typeof fixture.homeScore === "number" &&
+        typeof fixture.awayScore === "number"
+    );
+
+    if (!finishedFixtures.length) {
+      setTournamentError("No finished fixtures with scores found to calculate table");
+      return;
+    }
+
+    const teamSeed = new Set<string>();
+
+    tournamentStandings.forEach((entry) => {
+      if (entry.team.trim()) teamSeed.add(entry.team.trim());
+    });
+
+    finishedFixtures.forEach((fixture) => {
+      teamSeed.add(fixture.homeTeam.trim());
+      teamSeed.add(fixture.awayTeam.trim());
+    });
+
+    const tableMap = new Map<string, TournamentStandingRow>();
+
+    teamSeed.forEach((team) => {
+      tableMap.set(team, {
+        team,
+        played: 0,
+        won: 0,
+        draw: 0,
+        lost: 0,
+        goalsFor: 0,
+        goalsAgainst: 0,
+        points: 0,
+      });
+    });
+
+    finishedFixtures.forEach((fixture) => {
+      const homeTeam = fixture.homeTeam.trim();
+      const awayTeam = fixture.awayTeam.trim();
+      const homeScore = Number(fixture.homeScore);
+      const awayScore = Number(fixture.awayScore);
+
+      const homeRow = tableMap.get(homeTeam);
+      const awayRow = tableMap.get(awayTeam);
+      if (!homeRow || !awayRow) return;
+
+      homeRow.played += 1;
+      awayRow.played += 1;
+      homeRow.goalsFor += homeScore;
+      homeRow.goalsAgainst += awayScore;
+      awayRow.goalsFor += awayScore;
+      awayRow.goalsAgainst += homeScore;
+
+      if (homeScore > awayScore) {
+        homeRow.won += 1;
+        awayRow.lost += 1;
+        homeRow.points += 3;
+      } else if (awayScore > homeScore) {
+        awayRow.won += 1;
+        homeRow.lost += 1;
+        awayRow.points += 3;
+      } else {
+        homeRow.draw += 1;
+        awayRow.draw += 1;
+        homeRow.points += 1;
+        awayRow.points += 1;
+      }
+    });
+
+    const sortedTable = [...tableMap.values()].sort((a, b) => {
+      if (b.points !== a.points) return b.points - a.points;
+      const goalDiffA = a.goalsFor - a.goalsAgainst;
+      const goalDiffB = b.goalsFor - b.goalsAgainst;
+      if (goalDiffB !== goalDiffA) return goalDiffB - goalDiffA;
+      if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor;
+      return a.team.localeCompare(b.team);
+    });
+
+    setTournamentError("");
+    setTournamentStandings(sortedTable);
+    setTeamNamesInput(sortedTable.map((entry) => entry.team).join("\n"));
+    setTournamentParticipants(String(sortedTable.length));
+  }
+
+  function updateFixture(index: number, field: keyof TournamentFixtureRow, value: string) {
+    setTournamentFixtures((previous) =>
+      previous.map((entry, rowIndex) => {
+        if (rowIndex !== index) return entry;
+        if (field === "homeScore" || field === "awayScore") {
+          if (value.trim() === "") {
+            const updatedEntry = { ...entry } as Record<string, unknown>;
+            delete updatedEntry[field];
+            return updatedEntry as TournamentFixtureRow;
+          }
+          return { ...entry, [field]: Math.max(0, Number(value) || 0) };
+        }
+        return { ...entry, [field]: value };
+      })
+    );
+  }
+
+  function addFixtureRow() {
+    setTournamentFixtures((previous) => [
+      ...previous,
+      {
+        id: `fx-${Date.now()}-${previous.length + 1}`,
+        round: `Round ${previous.length + 1}`,
+        homeTeam: "",
+        awayTeam: "",
+        kickoff: formatKickoff(new Date()),
+        status: "Scheduled",
+      },
+    ]);
+  }
+
+  function removeFixtureRow(index: number) {
+    setTournamentFixtures((previous) => previous.filter((_, rowIndex) => rowIndex !== index));
+  }
+
+  async function saveTournament() {
+    if (!tournamentName.trim()) {
+      setTournamentError("Tournament name is required");
+      return;
+    }
+
+    const sanitizedStandings = tournamentStandings
+      .map((entry) => ({
+        ...entry,
+        team: entry.team.trim(),
+      }))
+      .filter((entry) => entry.team);
+
+    const sanitizedFixtures = tournamentFixtures
+      .map((entry, index) => ({
+        ...entry,
+        id: entry.id.trim() || `fx-${index + 1}`,
+        round: entry.round.trim() || `Round ${index + 1}`,
+        homeTeam: entry.homeTeam.trim(),
+        awayTeam: entry.awayTeam.trim(),
+        kickoff: entry.kickoff.trim(),
+      }))
+      .filter((entry) => entry.homeTeam && entry.awayTeam && entry.kickoff);
+
+    if (!sanitizedStandings.length) {
+      setTournamentError("Add at least one team in standings table");
+      return;
+    }
+
+    if (!sanitizedFixtures.length) {
+      setTournamentError("Add at least one fixture or generate fixtures");
+      return;
+    }
+
+    setSavingTournament(true);
+    setTournamentError("");
+
+    const payload = {
+      id: editingTournamentId,
+      name: tournamentName.trim(),
+      status: tournamentStatus,
+      budget: Number(tournamentBudget),
+      maxPlayers: Number(tournamentMaxPlayers),
+      minPlayers: Number(tournamentMinPlayers),
+      participants: Number(tournamentParticipants),
+      standings: sanitizedStandings,
+      fixtures: sanitizedFixtures,
+    };
+
+    const isEdit = Boolean(editingTournamentId);
+    const res = await fetch("/api/admin/tournaments", {
+      method: isEdit ? "PATCH" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+    setSavingTournament(false);
+
+    if (!res.ok) {
+      const message = data.error ?? "Failed to save tournament";
+      setTournamentError(message);
+      await showErrorAlert("Tournament save failed", message);
+      return;
+    }
+
+    await showSuccessAlert(
+      isEdit ? "Tournament updated" : "Tournament created",
+      data.message ?? "Tournament saved"
+    );
+    resetTournamentForm();
+    await fetchTournaments();
+  }
+
+  async function deleteTournament(id: string) {
+    const target = managedTournaments.find((t) => t.id === id);
+    const confirmed = await showConfirmAlert(
+      "Delete this tournament?",
+      `This will permanently delete ${target?.name ?? "this tournament"}.`
+    );
+
+    if (!confirmed) return;
+
+    setDeletingTournamentId(id);
+    setTournamentError("");
+
+    const res = await fetch("/api/admin/tournaments", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+
+    const data = await res.json();
+    setDeletingTournamentId("");
+
+    if (!res.ok) {
+      const message = data.error ?? "Failed to delete tournament";
+      setTournamentError(message);
+      await showErrorAlert("Delete failed", message);
+      return;
+    }
+
+    await showSuccessAlert("Tournament deleted", data.message ?? "Tournament deleted");
+    if (editingTournamentId === id) {
+      resetTournamentForm();
+    }
+    await fetchTournaments();
   }
 
   async function awardBadgeToUser() {
@@ -1275,6 +1732,417 @@ export function AdminPanel() {
         </div>
       </div>
 
+      <div className="mt-10 grid gap-8 xl:grid-cols-[460px_1fr]">
+        <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+          <h2 className="text-xl font-bold">Tournament Management</h2>
+          <p className="mt-1 text-sm text-slate-400">
+            Create, customize, update, or delete a specific tournament.
+          </p>
+
+          <div className="mt-5 space-y-4">
+            <div>
+              <label className="mb-1 block text-sm text-slate-300">Tournament Name</label>
+              <input
+                value={tournamentName}
+                onChange={(event) => setTournamentName(event.target.value)}
+                className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-2 text-sm outline-none"
+                placeholder="e.g. Weekend Elite Cup"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-1 block text-sm text-slate-300">Status</label>
+                <select
+                  aria-label="Tournament status"
+                  value={tournamentStatus}
+                  onChange={(event) => setTournamentStatus(event.target.value as Tournament["status"])}
+                  className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-2 text-sm outline-none"
+                >
+                  <option value="Upcoming">Upcoming</option>
+                  <option value="Live">Live</option>
+                  <option value="Completed">Completed</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-sm text-slate-300">Participants</label>
+                <input
+                  type="number"
+                  aria-label="Tournament participants"
+                  value={tournamentParticipants}
+                  onChange={(event) => setTournamentParticipants(event.target.value)}
+                  className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-2 text-sm outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="mb-1 block text-sm text-slate-300">Budget</label>
+                <input
+                  type="number"
+                  aria-label="Tournament budget"
+                  value={tournamentBudget}
+                  onChange={(event) => setTournamentBudget(event.target.value)}
+                  className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-2 text-sm outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-sm text-slate-300">Max</label>
+                <input
+                  type="number"
+                  aria-label="Tournament max players"
+                  value={tournamentMaxPlayers}
+                  onChange={(event) => setTournamentMaxPlayers(event.target.value)}
+                  className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-2 text-sm outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-sm text-slate-300">Min</label>
+                <input
+                  type="number"
+                  aria-label="Tournament min players"
+                  value={tournamentMinPlayers}
+                  onChange={(event) => setTournamentMinPlayers(event.target.value)}
+                  className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-2 text-sm outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-cyan-400/20 bg-cyan-500/5 p-4">
+              <label className="mb-1 block text-sm text-slate-200">Team Names</label>
+              <p className="mb-2 text-xs text-slate-400">Add one team per line.</p>
+              <textarea
+                aria-label="Tournament team names"
+                value={teamNamesInput}
+                onChange={(event) => setTeamNamesInput(event.target.value)}
+                rows={6}
+                className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-2 text-sm outline-none"
+                placeholder={"Arsenal\nManchester City\nLiverpool\nChelsea"}
+              />
+
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-cyan-500/30 bg-transparent text-cyan-200 hover:bg-cyan-500/10"
+                  onClick={buildStandingsFromTeams}
+                >
+                  Build Table From Teams
+                </Button>
+                <Button
+                  type="button"
+                  className="bg-cyan-400 text-black hover:bg-cyan-300"
+                  onClick={generateRandomFixtures}
+                >
+                  Generate Random Fixtures
+                </Button>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <label className="text-sm font-semibold text-slate-200">Points Table</label>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="border-emerald-500/30 bg-transparent text-emerald-300 hover:bg-emerald-500/10"
+                    onClick={recalculateStandingsFromFixtures}
+                  >
+                    Recalculate Table
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="border-white/20 bg-transparent text-white hover:bg-white/10"
+                    onClick={addStandingRow}
+                  >
+                    Add Team Row
+                  </Button>
+                </div>
+              </div>
+
+              {tournamentStandings.length === 0 ? (
+                <p className="mt-3 text-xs text-slate-500">No teams yet. Add team names and build table.</p>
+              ) : (
+                <div className="mt-3 overflow-x-auto">
+                  <table className="min-w-[900px] w-full text-xs">
+                    <thead>
+                      <tr className="text-left text-slate-400">
+                        <th className="px-2 py-2">Team</th>
+                        <th className="px-2 py-2">P</th>
+                        <th className="px-2 py-2">W</th>
+                        <th className="px-2 py-2">D</th>
+                        <th className="px-2 py-2">L</th>
+                        <th className="px-2 py-2">GF</th>
+                        <th className="px-2 py-2">GA</th>
+                        <th className="px-2 py-2">Pts</th>
+                        <th className="px-2 py-2">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {tournamentStandings.map((row, index) => (
+                        <tr key={`standing-${index}`} className="border-t border-white/10">
+                          <td className="px-2 py-2">
+                            <input
+                              aria-label={`Standing team ${index + 1}`}
+                              value={row.team}
+                              onChange={(event) => updateStanding(index, "team", event.target.value)}
+                              className="w-full rounded-md border border-white/10 bg-slate-900 px-2 py-1 text-xs"
+                            />
+                          </td>
+                          {(["played", "won", "draw", "lost", "goalsFor", "goalsAgainst", "points"] as const).map((field) => (
+                            <td key={field} className="px-2 py-2">
+                              <input
+                                type="number"
+                                aria-label={`${field} for ${row.team || `team ${index + 1}`}`}
+                                value={row[field]}
+                                onChange={(event) => updateStanding(index, field, event.target.value)}
+                                className="w-16 rounded-md border border-white/10 bg-slate-900 px-2 py-1 text-xs"
+                              />
+                            </td>
+                          ))}
+                          <td className="px-2 py-2">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              className="border-red-500/30 bg-transparent text-red-300 hover:bg-red-500/10"
+                              onClick={() => removeStandingRow(index)}
+                            >
+                              Remove
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <label className="text-sm font-semibold text-slate-200">Fixtures</label>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="border-white/20 bg-transparent text-white hover:bg-white/10"
+                    onClick={addFixtureRow}
+                  >
+                    Add Fixture
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="border-amber-500/30 bg-transparent text-amber-300 hover:bg-amber-500/10"
+                    onClick={() => setTournamentFixtures([])}
+                  >
+                    Clear
+                  </Button>
+                </div>
+              </div>
+
+              {tournamentFixtures.length === 0 ? (
+                <p className="mt-3 text-xs text-slate-500">No fixtures yet. Generate or add fixtures manually.</p>
+              ) : (
+                <div className="mt-3 overflow-x-auto">
+                  <table className="min-w-[1180px] w-full text-xs">
+                    <thead>
+                      <tr className="text-left text-slate-400">
+                        <th className="px-2 py-2">Round</th>
+                        <th className="px-2 py-2">Home</th>
+                        <th className="px-2 py-2">Away</th>
+                        <th className="px-2 py-2">Kickoff</th>
+                        <th className="px-2 py-2">Status</th>
+                        <th className="px-2 py-2">Home Score</th>
+                        <th className="px-2 py-2">Away Score</th>
+                        <th className="px-2 py-2">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {tournamentFixtures.map((fixture, index) => (
+                        <tr key={fixture.id || `fixture-${index}`} className="border-t border-white/10">
+                          <td className="px-2 py-2">
+                            <input
+                              aria-label={`Round for fixture ${index + 1}`}
+                              value={fixture.round}
+                              onChange={(event) => updateFixture(index, "round", event.target.value)}
+                              className="w-28 rounded-md border border-white/10 bg-slate-900 px-2 py-1 text-xs"
+                            />
+                          </td>
+                          <td className="px-2 py-2">
+                            <input
+                              aria-label={`Home team for fixture ${index + 1}`}
+                              value={fixture.homeTeam}
+                              onChange={(event) => updateFixture(index, "homeTeam", event.target.value)}
+                              className="w-40 rounded-md border border-white/10 bg-slate-900 px-2 py-1 text-xs"
+                            />
+                          </td>
+                          <td className="px-2 py-2">
+                            <input
+                              aria-label={`Away team for fixture ${index + 1}`}
+                              value={fixture.awayTeam}
+                              onChange={(event) => updateFixture(index, "awayTeam", event.target.value)}
+                              className="w-40 rounded-md border border-white/10 bg-slate-900 px-2 py-1 text-xs"
+                            />
+                          </td>
+                          <td className="px-2 py-2">
+                            <input
+                              aria-label={`Kickoff for fixture ${index + 1}`}
+                              value={fixture.kickoff}
+                              onChange={(event) => updateFixture(index, "kickoff", event.target.value)}
+                              className="w-40 rounded-md border border-white/10 bg-slate-900 px-2 py-1 text-xs"
+                            />
+                          </td>
+                          <td className="px-2 py-2">
+                            <select
+                              aria-label={`Status for fixture ${index + 1}`}
+                              value={fixture.status}
+                              onChange={(event) => updateFixture(index, "status", event.target.value)}
+                              className="w-28 rounded-md border border-white/10 bg-slate-900 px-2 py-1 text-xs"
+                            >
+                              <option value="Scheduled">Scheduled</option>
+                              <option value="Live">Live</option>
+                              <option value="Finished">Finished</option>
+                            </select>
+                          </td>
+                          <td className="px-2 py-2">
+                            <input
+                              type="number"
+                              aria-label={`Home score for fixture ${index + 1}`}
+                              value={fixture.homeScore ?? ""}
+                              onChange={(event) => updateFixture(index, "homeScore", event.target.value)}
+                              className="w-24 rounded-md border border-white/10 bg-slate-900 px-2 py-1 text-xs"
+                            />
+                          </td>
+                          <td className="px-2 py-2">
+                            <input
+                              type="number"
+                              aria-label={`Away score for fixture ${index + 1}`}
+                              value={fixture.awayScore ?? ""}
+                              onChange={(event) => updateFixture(index, "awayScore", event.target.value)}
+                              className="w-24 rounded-md border border-white/10 bg-slate-900 px-2 py-1 text-xs"
+                            />
+                          </td>
+                          <td className="px-2 py-2">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              className="border-red-500/30 bg-transparent text-red-300 hover:bg-red-500/10"
+                              onClick={() => removeFixtureRow(index)}
+                            >
+                              Remove
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {tournamentError ? <p className="text-sm text-red-400">{tournamentError}</p> : null}
+
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                type="button"
+                disabled={savingTournament}
+                className="w-full bg-cyan-400 text-black hover:bg-cyan-300"
+                onClick={saveTournament}
+              >
+                {savingTournament ? "Saving..." : editingTournamentId ? "Update Tournament" : "Create Tournament"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full border-white/20 bg-transparent text-white hover:bg-white/10"
+                onClick={resetTournamentForm}
+              >
+                Reset Form
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-bold">Tournament List</h2>
+              <p className="mt-1 text-sm text-slate-400">
+                Select any tournament to customize or delete.
+              </p>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="border-white/20 bg-transparent text-white hover:bg-white/10"
+              onClick={() => fetchTournaments()}
+              disabled={tournamentsLoading}
+            >
+              {tournamentsLoading ? "Refreshing..." : "Refresh"}
+            </Button>
+          </div>
+
+          {tournamentsLoading ? (
+            <p className="mt-4 text-slate-400">Loading tournaments...</p>
+          ) : managedTournaments.length === 0 ? (
+            <p className="mt-4 text-slate-400">No custom tournaments found yet. Create one from the left panel.</p>
+          ) : (
+            <div className="mt-5 space-y-3">
+              {managedTournaments.map((tournament) => (
+                <div
+                  key={tournament.id}
+                  className={`rounded-xl border px-4 py-3 ${editingTournamentId === tournament.id ? "border-cyan-400/40 bg-cyan-500/10" : "border-white/10 bg-slate-950/60"}`}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-white">{tournament.name}</p>
+                      <p className="text-xs text-slate-500">
+                        {tournament.status} • Participants: {tournament.participants} • Budget: {tournament.budget}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="border-cyan-500/30 bg-transparent text-cyan-300 hover:bg-cyan-500/10"
+                        onClick={() => loadTournamentForEdit(tournament)}
+                      >
+                        Customize
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="border-red-500/30 bg-transparent text-red-300 hover:bg-red-500/10"
+                        onClick={() => deleteTournament(tournament.id)}
+                        disabled={deletingTournamentId === tournament.id}
+                      >
+                        {deletingTournamentId === tournament.id ? "Deleting..." : "Delete"}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="mt-10 grid gap-8 xl:grid-cols-[420px_1fr]">
         <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
           <h2 className="text-xl font-bold">Tournament Badges</h2>
@@ -1308,7 +2176,7 @@ export function AdminPanel() {
                 onChange={(event) => handleTournamentChange(event.target.value)}
                 className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-2 text-sm outline-none"
               >
-                {tournaments.map((tournament) => (
+                {achievementTournamentOptions.map((tournament) => (
                   <option key={tournament.id} value={tournament.id}>
                     {tournament.name}
                   </option>
