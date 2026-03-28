@@ -61,8 +61,15 @@ A real-time football player auction platform built with Next.js App Router, Next
 - Admin-managed tournament module (create, update, delete).
 - Tournament fixtures and points table customization from admin panel.
 - Team-name based generator for random fixtures.
+- Tournament participants are derived from standings teams on save/update.
 - Public tournaments page reads live MongoDB tournament data.
-- Seed tournament data is used only as fallback when DB has no tournaments.
+- If DB has no tournaments, users see an empty published state.
+- Seed tournament data is used only as a resilience fallback when DB fetch fails.
+
+### Admin Workflow UX
+
+- Admin panel is sectioned into focused views: rooms, roster, tournaments, badges, and users.
+- Each section is shown independently to reduce scrolling and cognitive load.
 
 ## Tech Stack
 
