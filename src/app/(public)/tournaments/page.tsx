@@ -11,24 +11,22 @@ export default async function TournamentsPage() {
   const session = await auth();
   const viewerRole = session?.user?.role === "admin" ? "admin" : session?.user?.role === "manager" ? "manager" : "guest";
 
-  let liveTournaments: Tournament[] = tournaments;
+  let liveTournaments: Tournament[] = [];
   try {
     const db = await getDb();
     const dbTournaments = await db.collection("tournaments").find({}).sort({ createdAt: -1 }).toArray();
 
-    if (dbTournaments.length > 0) {
-      liveTournaments = dbTournaments.map((entry) => ({
-        id: String(entry.id ?? ""),
-        name: String(entry.name ?? ""),
-        status: (entry.status as Tournament["status"]) ?? "Upcoming",
-        budget: Number(entry.budget ?? 0),
-        maxPlayers: Number(entry.maxPlayers ?? 0),
-        minPlayers: Number(entry.minPlayers ?? 0),
-        participants: Number(entry.participants ?? 0),
-        standings: Array.isArray(entry.standings) ? (entry.standings as Tournament["standings"]) : [],
-        fixtures: Array.isArray(entry.fixtures) ? (entry.fixtures as Tournament["fixtures"]) : [],
-      }));
-    }
+    liveTournaments = dbTournaments.map((entry) => ({
+      id: String(entry.id ?? ""),
+      name: String(entry.name ?? ""),
+      status: (entry.status as Tournament["status"]) ?? "Upcoming",
+      budget: Number(entry.budget ?? 0),
+      maxPlayers: Number(entry.maxPlayers ?? 0),
+      minPlayers: Number(entry.minPlayers ?? 0),
+      participants: Number(entry.participants ?? 0),
+      standings: Array.isArray(entry.standings) ? (entry.standings as Tournament["standings"]) : [],
+      fixtures: Array.isArray(entry.fixtures) ? (entry.fixtures as Tournament["fixtures"]) : [],
+    }));
   } catch {
     liveTournaments = tournaments;
   }
@@ -140,6 +138,13 @@ export default async function TournamentsPage() {
                 <TournamentCard key={tournament.id} tournament={tournament} viewerRole={viewerRole} />
               ))}
             </div>
+          </div>
+        )}
+
+        {liveTournaments.length === 0 && (
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-center">
+            <p className="text-sm text-slate-300">No tournaments published yet.</p>
+            <p className="mt-1 text-xs text-slate-500">Admin can create and publish tournaments from the admin panel.</p>
           </div>
         )}
       </Container>

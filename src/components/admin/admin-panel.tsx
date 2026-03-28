@@ -5,7 +5,6 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/container";
 import { showConfirmAlert, showErrorAlert, showSuccessAlert } from "@/lib/alerts";
-import { tournaments as seedTournaments } from "@/data/tournaments";
 import { Tournament, TournamentFixture, TournamentStanding } from "@/types/tournament";
 
 type AuctionRoom = {
@@ -74,6 +73,7 @@ type AdminAchievement = {
 
 type TournamentStandingRow = TournamentStanding;
 type TournamentFixtureRow = TournamentFixture;
+type AdminView = "rooms" | "roster" | "tournaments" | "badges" | "users";
 
 const STATUS_STYLES: Record<string, string> = {
   live: "bg-emerald-500 text-black",
@@ -84,6 +84,7 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 export function AdminPanel() {
+  const [activeAdminView, setActiveAdminView] = useState<AdminView>("rooms");
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [userDrafts, setUserDrafts] = useState<Record<string, UserDraft>>({});
   const [usersLoading, setUsersLoading] = useState(false);
@@ -121,12 +122,8 @@ export function AdminPanel() {
   const [achievements, setAchievements] = useState<AdminAchievement[]>([]);
   const [achievementsLoading, setAchievementsLoading] = useState(false);
   const [achievementUserId, setAchievementUserId] = useState("");
-  const [achievementTournamentId, setAchievementTournamentId] = useState(
-    seedTournaments[0]?.id ?? ""
-  );
-  const [achievementTournamentName, setAchievementTournamentName] = useState(
-    seedTournaments[0]?.name ?? ""
-  );
+  const [achievementTournamentId, setAchievementTournamentId] = useState("");
+  const [achievementTournamentName, setAchievementTournamentName] = useState("");
   const [achievementBadgeType, setAchievementBadgeType] = useState<
     "Champion" | "RunnerUp" | "SemiFinalist"
   >("Champion");
@@ -170,7 +167,7 @@ export function AdminPanel() {
   );
 
   const achievementTournamentOptions = useMemo(
-    () => (managedTournaments.length > 0 ? managedTournaments : seedTournaments),
+    () => managedTournaments,
     [managedTournaments]
   );
 
@@ -254,7 +251,11 @@ export function AdminPanel() {
     const nextTournaments = (data.tournaments ?? []) as Tournament[];
     setManagedTournaments(nextTournaments);
 
-    if (!nextTournaments.length) return;
+    if (!nextTournaments.length) {
+      setAchievementTournamentId("");
+      setAchievementTournamentName("");
+      return;
+    }
     setAchievementTournamentId((previousTournamentId) => {
       const selectedTournamentId = nextTournaments.some((t) => t.id === previousTournamentId)
         ? previousTournamentId
@@ -1134,7 +1135,7 @@ export function AdminPanel() {
       budget: Number(tournamentBudget),
       maxPlayers: Number(tournamentMaxPlayers),
       minPlayers: Number(tournamentMinPlayers),
-      participants: Number(tournamentParticipants),
+      participants: sanitizedStandings.length,
       standings: sanitizedStandings,
       fixtures: sanitizedFixtures,
     };
@@ -1281,6 +1282,59 @@ export function AdminPanel() {
         Create rooms, control live auctions, and manually fix any squad ownership issue.
       </p>
 
+      <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4">
+        <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Control Center</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant={activeAdminView === "rooms" ? "default" : "outline"}
+            className={activeAdminView === "rooms" ? "bg-emerald-500 text-black hover:bg-emerald-400" : "border-white/20 bg-transparent text-white hover:bg-white/10"}
+            onClick={() => setActiveAdminView("rooms")}
+          >
+            Rooms
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={activeAdminView === "roster" ? "default" : "outline"}
+            className={activeAdminView === "roster" ? "bg-blue-500 text-white hover:bg-blue-400" : "border-white/20 bg-transparent text-white hover:bg-white/10"}
+            onClick={() => setActiveAdminView("roster")}
+          >
+            Roster
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={activeAdminView === "tournaments" ? "default" : "outline"}
+            className={activeAdminView === "tournaments" ? "bg-cyan-400 text-black hover:bg-cyan-300" : "border-white/20 bg-transparent text-white hover:bg-white/10"}
+            onClick={() => setActiveAdminView("tournaments")}
+          >
+            Tournaments
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={activeAdminView === "badges" ? "default" : "outline"}
+            className={activeAdminView === "badges" ? "bg-amber-500 text-black hover:bg-amber-400" : "border-white/20 bg-transparent text-white hover:bg-white/10"}
+            onClick={() => setActiveAdminView("badges")}
+          >
+            Badges
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={activeAdminView === "users" ? "default" : "outline"}
+            className={activeAdminView === "users" ? "bg-violet-500 text-white hover:bg-violet-400" : "border-white/20 bg-transparent text-white hover:bg-white/10"}
+            onClick={() => setActiveAdminView("users")}
+          >
+            Users
+          </Button>
+        </div>
+        <p className="mt-3 text-xs text-slate-500">Showing one section at a time to reduce admin overload.</p>
+      </div>
+
+      {activeAdminView === "rooms" && (
       <div className="mt-10 grid gap-8 lg:grid-cols-[380px_1fr]">
         <div className="h-fit rounded-3xl border border-white/10 bg-white/5 p-6">
           <h2 className="text-xl font-bold">Create Auction Room</h2>
@@ -1360,7 +1414,10 @@ export function AdminPanel() {
                         size="sm"
                         variant="outline"
                         className="border-white/20 bg-transparent text-white hover:bg-white/10"
-                        onClick={() => setSelectedRoomId(room.roomId)}
+                        onClick={() => {
+                          setSelectedRoomId(room.roomId);
+                          setActiveAdminView("roster");
+                        }}
                       >
                         Manage Roster
                       </Button>
@@ -1497,7 +1554,9 @@ export function AdminPanel() {
           )}
         </div>
       </div>
+      )}
 
+      {activeAdminView === "roster" && (
       <div className="mt-10 grid gap-8 xl:grid-cols-[420px_1fr]">
         <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
           <div className="flex items-center justify-between gap-3">
@@ -1731,7 +1790,9 @@ export function AdminPanel() {
           )}
         </div>
       </div>
+      )}
 
+      {activeAdminView === "tournaments" && (
       <div className="mt-10 grid gap-8 xl:grid-cols-[460px_1fr]">
         <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
           <h2 className="text-xl font-bold">Tournament Management</h2>
@@ -1771,9 +1832,10 @@ export function AdminPanel() {
                   type="number"
                   aria-label="Tournament participants"
                   value={tournamentParticipants}
-                  onChange={(event) => setTournamentParticipants(event.target.value)}
+                  readOnly
                   className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-2 text-sm outline-none"
                 />
+                <p className="mt-1 text-xs text-slate-500">Auto-calculated from the points table teams.</p>
               </div>
             </div>
 
@@ -2142,7 +2204,9 @@ export function AdminPanel() {
           )}
         </div>
       </div>
+      )}
 
+      {activeAdminView === "badges" && (
       <div className="mt-10 grid gap-8 xl:grid-cols-[420px_1fr]">
         <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
           <h2 className="text-xl font-bold">Tournament Badges</h2>
@@ -2176,12 +2240,16 @@ export function AdminPanel() {
                 onChange={(event) => handleTournamentChange(event.target.value)}
                 className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-2 text-sm outline-none"
               >
+                <option value="">Select a managed tournament...</option>
                 {achievementTournamentOptions.map((tournament) => (
                   <option key={tournament.id} value={tournament.id}>
                     {tournament.name}
                   </option>
                 ))}
               </select>
+              {achievementTournamentOptions.length === 0 ? (
+                <p className="mt-1 text-xs text-amber-300">Create a tournament first to award badges.</p>
+              ) : null}
             </div>
 
             <div>
@@ -2211,7 +2279,7 @@ export function AdminPanel() {
             <Button
               type="button"
               onClick={awardBadgeToUser}
-              disabled={awardingBadge || !achievementUserId}
+              disabled={awardingBadge || !achievementUserId || !achievementTournamentId}
               className="w-full bg-amber-500 text-black hover:bg-amber-400"
             >
               {awardingBadge ? "Awarding..." : "Award Badge"}
@@ -2284,7 +2352,9 @@ export function AdminPanel() {
           )}
         </div>
       </div>
+      )}
 
+      {activeAdminView === "users" && (
       <div className="mt-10 rounded-3xl border border-white/10 bg-white/5 p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -2435,6 +2505,7 @@ export function AdminPanel() {
           </div>
         </div>
       </div>
+      )}
     </Container>
   );
 }

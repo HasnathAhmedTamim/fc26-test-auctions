@@ -53,11 +53,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Min players cannot be greater than max players" }, { status: 400 });
   }
 
+  const participants = payload.standings.length;
+
   const db = await getDb();
   const id = randomUUID().slice(0, 8);
 
   await db.collection("tournaments").insertOne({
     ...payload,
+    participants,
     id,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -92,6 +95,8 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Min players cannot be greater than max players" }, { status: 400 });
   }
 
+  const participants = payload.standings.length;
+
   const db = await getDb();
   const result = await db.collection("tournaments").findOneAndUpdate(
     { id: payload.id },
@@ -102,7 +107,7 @@ export async function PATCH(req: Request) {
         budget: payload.budget,
         maxPlayers: payload.maxPlayers,
         minPlayers: payload.minPlayers,
-        participants: payload.participants,
+        participants,
         standings: payload.standings,
         fixtures: payload.fixtures,
         updatedAt: new Date(),

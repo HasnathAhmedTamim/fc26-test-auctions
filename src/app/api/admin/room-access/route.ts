@@ -23,12 +23,14 @@ export async function GET(request: NextRequest) {
   const db = await getDb();
   const [users, permissions] = await Promise.all([
     db.collection("users").find({ role: "manager" }).sort({ name: 1 }).toArray(),
-    db.collection("roomAccess").find({ roomId }).toArray(),
+    db.collection("roomAccess").find({ roomId }).sort({ updatedAt: -1 }).toArray(),
   ]);
 
   const allowMap = new Map<string, boolean>();
   for (const permission of permissions) {
-    allowMap.set(String(permission.userId ?? ""), Boolean(permission.canJoin));
+    const key = String(permission.userId ?? "");
+    if (allowMap.has(key)) continue;
+    allowMap.set(key, Boolean(permission.canJoin));
   }
 
   return NextResponse.json({
@@ -67,13 +69,15 @@ export async function POST(request: NextRequest) {
     }
 
     await Promise.all(
-      users.map((user) =>
-        db.collection("roomAccess").updateOne(
-          { roomId, userId: String(user._id) },
+      users.map(async (user) => {
+        const stringUserId = String(user._id);
+
+        await db.collection("roomAccess").updateOne(
+          { roomId, userId: stringUserId },
           {
             $set: {
               roomId,
-              userId: String(user._id),
+              userId: stringUserId,
               canJoin: nextCanJoin,
               updatedAt: new Date(),
             },
@@ -82,8 +86,11 @@ export async function POST(request: NextRequest) {
             },
           },
           { upsert: true }
-        )
-      )
+        );
+
+        // Cleanup old ObjectId-based rows so one user has a single canonical roomAccess record.
+        await db.collection("roomAccess").deleteMany({ roomId, userId: user._id });
+      })
     );
 
     await db.collection("adminAuditLog").insertOne({
@@ -117,7 +124,9 @@ export async function POST(request: NextRequest) {
   }
 
   await db.collection("roomAccess").updateOne(
-    { roomId, userId },
+    userObjectId
+      ? { roomId, $or: [{ userId }, { userId: userObjectId }] }
+      : { roomId, userId },
     {
       $set: {
         roomId,
