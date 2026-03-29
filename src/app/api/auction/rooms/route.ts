@@ -4,6 +4,7 @@ import { ObjectId } from "mongodb";
 import { auth } from "@/auth";
 import { requireAdmin } from "@/lib/roles";
 import { getDb } from "@/lib/mongodb";
+import { getAuctionRuntimeSettings } from "@/lib/auction-settings";
 
 function toObjectId(value: string) {
   try {
@@ -80,12 +81,13 @@ export async function POST(req: Request) {
 
   const roomId = randomUUID().slice(0, 8);
   const db = await getDb();
+  const runtimeSettings = await getAuctionRuntimeSettings(db);
 
   await db.collection("auctionRooms").insertOne({
     roomId,
     name: name.trim(),
     status: "waiting",
-    timer: 120,
+    timer: runtimeSettings.roundTimeSeconds,
     currentPlayer: null,
     currentBid: 0,
     highestBidderId: null,

@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/mongodb";
-
-const ROUND_TIME_SECONDS = 120;
+import { getAuctionRuntimeSettings } from "@/lib/auction-settings";
 
 export async function GET(
   _req: Request,
@@ -15,6 +14,7 @@ export async function GET(
 
   const { roomId } = await params;
   const db = await getDb();
+  const runtimeSettings = await getAuctionRuntimeSettings(db);
 
   const room = await db.collection("auctionRooms").findOne({ roomId });
 
@@ -39,7 +39,7 @@ export async function GET(
     room: {
       roomId: room.roomId,
       status: room.status,
-      timer: Math.max(0, Number(room.timer ?? ROUND_TIME_SECONDS)),
+      timer: Math.max(0, Number(room.timer ?? runtimeSettings.roundTimeSeconds)),
       currentPlayer: room.currentPlayer,
       currentBid: room.currentBid,
       highestBidderId: room.highestBidderId,

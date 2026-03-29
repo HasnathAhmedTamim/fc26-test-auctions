@@ -1,12 +1,16 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/mongodb";
 import { requireAdmin } from "@/lib/roles";
-import { getActivePlayerEdition, setActivePlayerEdition } from "@/lib/player-edition";
+import {
+  getActivePlayerEdition,
+  listAvailablePlayerEditions,
+  setActivePlayerEdition,
+} from "@/lib/player-edition";
 
 export async function GET() {
   const db = await getDb();
   const activeEdition = await getActivePlayerEdition(db);
-  const editions = await db.collection("players").distinct("edition");
+  const editions = await listAvailablePlayerEditions(db);
 
   return NextResponse.json({ activeEdition, editions });
 }

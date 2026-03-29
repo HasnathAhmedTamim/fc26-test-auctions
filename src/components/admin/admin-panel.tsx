@@ -1330,6 +1330,16 @@ export function AdminPanel() {
           >
             Users
           </Button>
+          <Link href="/admin/settings">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="border-emerald-500/30 bg-transparent text-emerald-300 hover:bg-emerald-500/10"
+            >
+              Settings
+            </Button>
+          </Link>
         </div>
         <p className="mt-3 text-xs text-slate-500">Showing one section at a time to reduce admin overload.</p>
       </div>

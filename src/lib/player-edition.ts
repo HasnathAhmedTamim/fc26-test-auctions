@@ -28,3 +28,38 @@ export async function setActivePlayerEdition(db: Db, edition: string) {
     { upsert: true }
   );
 }
+
+export async function listAvailablePlayerEditions(db: Db) {
+  const rows = await db
+    .collection("players")
+    .aggregate<{ edition: string }>([
+      {
+        $match: {
+          edition: { $type: "string", $ne: "" },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          edition: { $toLower: "$edition" },
+        },
+      },
+      {
+        $group: {
+          _id: "$edition",
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          edition: "$_id",
+        },
+      },
+      {
+        $sort: { edition: 1 },
+      },
+    ])
+    .toArray();
+
+  return rows.map((row) => row.edition).filter(Boolean);
+}

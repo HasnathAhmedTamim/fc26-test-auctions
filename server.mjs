@@ -5,7 +5,6 @@ import { Server } from "socket.io";
 import { MongoClient, ObjectId } from "mongodb";
 import { getToken } from "next-auth/jwt";
 import {
-  BID_COOLDOWN_MS,
   buildAtomicBidFilter,
   canPlaceBid,
   getBidCooldownState,
@@ -23,7 +22,20 @@ const port = 3000;
 
 const app = next({ dev, hostname, port });
 const handler = app.getRequestHandler();
-const ROUND_TIME_SECONDS = 120;
+
+const AUCTION_SETTINGS = {
+  defaults: {
+    roundTimeSeconds: 120,
+    bidIncrement: 10,
+    bidCooldownMs: 500,
+  },
+  keys: {
+    roundTimeSeconds: "auctionRoundTimeSeconds",
+    bidIncrement: "bidIncrement",
+    bidCooldownMs: "bidCooldownMs",
+  },
+  cacheTtlMs: 5000,
+};
 
 const mongoUri = process.env.MONGODB_URI;
 
@@ -41,9 +53,63 @@ function toObjectId(value) {
   }
 }
 
+function parseSettingInt(value, fallback, min, max) {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed)) return fallback;
+  if (parsed < min || parsed > max) return fallback;
+  return parsed;
+}
+
 app.prepare().then(async () => {
   await client.connect();
   const db = client.db("fc26-auction");
+  let runtimeSettingsCache = {
+    value: AUCTION_SETTINGS.defaults,
+    fetchedAt: 0,
+  };
+
+  async function getAuctionSettings() {
+    const now = Date.now();
+
+    if (now - runtimeSettingsCache.fetchedAt < AUCTION_SETTINGS.cacheTtlMs) {
+      return runtimeSettingsCache.value;
+    }
+
+    const keys = Object.values(AUCTION_SETTINGS.keys);
+    const docs = await db
+      .collection("settings")
+      .find({ key: { $in: keys } })
+      .toArray();
+    const byKey = new Map(docs.map((doc) => [String(doc.key), doc.value]));
+
+    const value = {
+      roundTimeSeconds: parseSettingInt(
+        byKey.get(AUCTION_SETTINGS.keys.roundTimeSeconds),
+        AUCTION_SETTINGS.defaults.roundTimeSeconds,
+        15,
+        600
+      ),
+      bidIncrement: parseSettingInt(
+        byKey.get(AUCTION_SETTINGS.keys.bidIncrement),
+        AUCTION_SETTINGS.defaults.bidIncrement,
+        1,
+        1000
+      ),
+      bidCooldownMs: parseSettingInt(
+        byKey.get(AUCTION_SETTINGS.keys.bidCooldownMs),
+        AUCTION_SETTINGS.defaults.bidCooldownMs,
+        0,
+        10000
+      ),
+    };
+
+    runtimeSettingsCache = {
+      value,
+      fetchedAt: now,
+    };
+
+    return value;
+  }
 
   const httpServer = createServer(handler);
   const io = new Server(httpServer, {
@@ -212,6 +278,7 @@ app.prepare().then(async () => {
   }
 
   async function checkAllOptedOut(roomId) {
+    const settings = await getAuctionSettings();
     const room = await db.collection("auctionRooms").findOne({ roomId });
     if (!room || room.status !== "live" || !room.highestBidderId) return;
 
@@ -231,7 +298,7 @@ app.prepare().then(async () => {
     if (!allOtherOptedOut) return;
 
     // Auto-pause: freeze the timer
-    const remaining = roomTimeLeft.get(roomId) ?? room.timer ?? ROUND_TIME_SECONDS;
+    const remaining = roomTimeLeft.get(roomId) ?? room.timer ?? settings.roundTimeSeconds;
     if (roomTimers.has(roomId)) {
       clearInterval(roomTimers.get(roomId));
       roomTimers.delete(roomId);
@@ -250,9 +317,10 @@ app.prepare().then(async () => {
     });
   }
 
-  async function startRoomTimer(roomId, initialTime = ROUND_TIME_SECONDS) {
+  async function startRoomTimer(roomId, initialTime) {
+    const settings = await getAuctionSettings();
     clearRoomTimer(roomId);
-    let timeLeft = Math.max(1, Number(initialTime) || ROUND_TIME_SECONDS);
+    let timeLeft = Math.max(1, Number(initialTime) || settings.roundTimeSeconds);
     roomTimeLeft.set(roomId, timeLeft);
 
     const interval = setInterval(async () => {
@@ -296,7 +364,7 @@ app.prepare().then(async () => {
                 currentBid: 0,
                 highestBidderId: null,
                 highestBidderName: null,
-                timer: ROUND_TIME_SECONDS,
+                timer: settings.roundTimeSeconds,
                 updatedAt: new Date(),
               },
             }
@@ -397,7 +465,8 @@ app.prepare().then(async () => {
         .limit(10)
         .toArray();
 
-      const persistedTimer = Math.max(0, Number(room?.timer ?? ROUND_TIME_SECONDS));
+      const settings = await getAuctionSettings();
+      const persistedTimer = Math.max(0, Number(room?.timer ?? settings.roundTimeSeconds));
       const timerForClient = room?.status === "live"
         ? (roomTimeLeft.get(roomId) ?? persistedTimer)
         : persistedTimer;
@@ -455,9 +524,14 @@ app.prepare().then(async () => {
 
       const userId = identity.userId;
       const userName = identity.userName;
+      const settings = await getAuctionSettings();
 
       const roomCooldowns = roomBidCooldowns.get(roomId) ?? new Map();
-      const cooldownState = getBidCooldownState(roomCooldowns.get(userId), Date.now(), BID_COOLDOWN_MS);
+      const cooldownState = getBidCooldownState(
+        roomCooldowns.get(userId),
+        Date.now(),
+        settings.bidCooldownMs
+      );
       if (cooldownState.limited) {
         socket.emit("auction:error", {
           message: `Bid rate limited. Try again in ${Math.ceil(cooldownState.retryAfterMs / 1000)}s.`,
@@ -485,7 +559,7 @@ app.prepare().then(async () => {
         return;
       }
 
-      const bidAmountCheck = validateBidAmount(amount, room.currentBid);
+      const bidAmountCheck = validateBidAmount(amount, room.currentBid, settings.bidIncrement);
       if (!bidAmountCheck.ok) {
         socket.emit("auction:error", { message: bidAmountCheck.message });
         return;
@@ -570,8 +644,8 @@ app.prepare().then(async () => {
       }
 
       const startTime = room.status === "paused"
-        ? (roomTimeLeft.get(roomId) ?? room.timer ?? ROUND_TIME_SECONDS)
-        : ROUND_TIME_SECONDS;
+        ? (roomTimeLeft.get(roomId) ?? room.timer ?? settings.roundTimeSeconds)
+        : settings.roundTimeSeconds;
 
       await db.collection("auctionRooms").updateOne(
         { roomId },
@@ -591,12 +665,13 @@ app.prepare().then(async () => {
       }
 
       const room = await db.collection("auctionRooms").findOne({ roomId });
+      const settings = await getAuctionSettings();
       if (!room || room.status !== "live") {
         socket.emit("auction:error", { message: "Auction is not live" });
         return;
       }
 
-      const remaining = roomTimeLeft.get(roomId) ?? room.timer ?? ROUND_TIME_SECONDS;
+      const remaining = roomTimeLeft.get(roomId) ?? room.timer ?? settings.roundTimeSeconds;
       if (roomTimers.has(roomId)) {
         clearInterval(roomTimers.get(roomId));
         roomTimers.delete(roomId);
@@ -672,7 +747,7 @@ app.prepare().then(async () => {
       clearRoomOptOuts(roomId);
       clearRoomBidCooldowns(roomId);
 
-      const basePrice = Number(player.basePrice) || 10;
+      const basePrice = Number(player.basePrice) || settings.bidIncrement;
 
       await db.collection("auctionRooms").updateOne(
         { roomId },
@@ -714,11 +789,11 @@ app.prepare().then(async () => {
                     }))
                 : [],
             },
-            currentBid: Math.max(0, basePrice - 10),
+            currentBid: Math.max(0, basePrice - settings.bidIncrement),
             status: "waiting",
             highestBidderId: null,
             highestBidderName: null,
-            timer: ROUND_TIME_SECONDS,
+            timer: settings.roundTimeSeconds,
             updatedAt: new Date(),
           },
         }
@@ -726,7 +801,7 @@ app.prepare().then(async () => {
 
       io.to(roomId).emit("auction:player-set", {
         player,
-        currentBid: Math.max(0, basePrice - 10),
+        currentBid: Math.max(0, basePrice - settings.bidIncrement),
       });
     });
 
@@ -777,6 +852,7 @@ app.prepare().then(async () => {
       }
 
       const room = await db.collection("auctionRooms").findOne({ roomId });
+      const settings = await getAuctionSettings();
       if (!room) {
         socket.emit("auction:error", { message: "Room not found" });
         return;
@@ -805,7 +881,7 @@ app.prepare().then(async () => {
             currentBid: 0,
             highestBidderId: null,
             highestBidderName: null,
-            timer: ROUND_TIME_SECONDS,
+            timer: settings.roundTimeSeconds,
             updatedAt: new Date(),
           },
         }
