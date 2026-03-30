@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { Container } from "@/components/layout/container";
 import { PlayerFilterSidebar } from "@/components/players/player-filter-sidebar";
 import { PlayerCard } from "@/components/players/player-card";
+import { Button } from "@/components/ui/button";
 import { Player } from "@/types/player";
 
 type Fc24RawPlayer = {
@@ -242,6 +244,13 @@ export default function PlayersPage() {
           <p className="mt-2 text-slate-400">
             Explore your FC player pool before the auction begins.
           </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Link href="/players/compare">
+              <Button size="sm" className="bg-emerald-500 text-black hover:bg-emerald-400">
+                Compare Players
+              </Button>
+            </Link>
+          </div>
 
           <div className="mt-5 grid gap-3 md:grid-cols-[1fr_auto]">
             <label className="block">
