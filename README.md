@@ -38,7 +38,7 @@ A real-time football player auction platform built with Next.js App Router, Next
 - Manager-only checks for bidding and opt-out actions.
 - Anti-spoof bid identity validation.
 - Strict bid increment rules (`+10` steps).
-- Bid cooldown to reduce spam.
+- Bid cool down to reduce spam.
 - Race-safe bid updates with atomic room-state filtering.
 - Sold-player and duplicate-ownership protections.
 
