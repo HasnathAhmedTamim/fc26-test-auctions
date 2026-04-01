@@ -227,3 +227,5 @@ db.users.updateOne(
 - Tournament standings/fixtures are maintained through admin panel tournament management.
 - App DB name is `fc26-auction` (set in code).
 - Default round timer is `120` seconds.
+
+# New Feature
