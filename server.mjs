@@ -144,6 +144,58 @@ app.prepare().then(async () => {
     return true;
   }
 
+  function ensureSocketJoinedRoom(socket, roomId) {
+    if (!socket.rooms.has(roomId)) {
+      socket.emit("auction:error", {
+        message: "Join the room before performing this action.",
+      });
+      return false;
+    }
+
+    return true;
+  }
+
+  async function ensureSocketRoomAccess(socket, roomId) {
+    const socketUser = getSocketUser(socket);
+    if (!socketUser) {
+      socket.emit("auction:error", { message: "Unauthorized socket connection." });
+      socket.disconnect(true);
+      return false;
+    }
+
+    if (!ensureSocketJoinedRoom(socket, roomId)) {
+      return false;
+    }
+
+    if (socketUser.role === "admin") {
+      return true;
+    }
+
+    const userObjectId = toObjectId(socketUser.id);
+    const accessQuery = userObjectId
+      ? {
+          roomId,
+          canJoin: true,
+          $or: [{ userId: socketUser.id }, { userId: userObjectId }],
+        }
+      : {
+          roomId,
+          userId: socketUser.id,
+          canJoin: true,
+        };
+
+    const roomAccess = await db.collection("roomAccess").findOne(accessQuery);
+
+    if (!roomAccess) {
+      socket.emit("auction:error", {
+        message: "You are not allowed to access this room.",
+      });
+      return false;
+    }
+
+    return true;
+  }
+
   function clearRoomTimer(roomId) {
     if (roomTimers.has(roomId)) {
       clearInterval(roomTimers.get(roomId));
@@ -510,6 +562,10 @@ app.prepare().then(async () => {
         return;
       }
 
+      if (!(await ensureSocketRoomAccess(socket, payload.roomId))) {
+        return;
+      }
+
       if (isBidIdentitySpoofAttempt(socketUser, payload)) {
         socket.emit("auction:error", { message: "Identity mismatch detected in bid payload." });
         return;
@@ -627,6 +683,10 @@ app.prepare().then(async () => {
         return;
       }
 
+      if (!ensureSocketJoinedRoom(socket, roomId)) return;
+
+      const settings = await getAuctionSettings();
+
       const room = await db.collection("auctionRooms").findOne({ roomId });
       if (!room) {
         socket.emit("auction:error", { message: "Room not found" });
@@ -664,6 +724,8 @@ app.prepare().then(async () => {
         return;
       }
 
+      if (!ensureSocketJoinedRoom(socket, roomId)) return;
+
       const room = await db.collection("auctionRooms").findOne({ roomId });
       const settings = await getAuctionSettings();
       if (!room || room.status !== "live") {
@@ -693,6 +755,8 @@ app.prepare().then(async () => {
         return;
       }
 
+      if (!ensureSocketJoinedRoom(socket, roomId)) return;
+
       const room = await db.collection("auctionRooms").findOne({ roomId });
       if (!room) {
         socket.emit("auction:error", { message: "Room not found" });
@@ -713,7 +777,10 @@ app.prepare().then(async () => {
         socket.emit("auction:error", { message: "roomId is required" });
         return;
       }
+      if (!ensureSocketJoinedRoom(socket, roomId)) return;
       if (!player?.id || !player?.name) return;
+
+      const settings = await getAuctionSettings();
 
       const room = await db.collection("auctionRooms").findOne({ roomId });
       if (!room) {
@@ -805,7 +872,7 @@ app.prepare().then(async () => {
       });
     });
 
-    socket.on("auction:opt-out", ({ roomId }) => {
+    socket.on("auction:opt-out", async ({ roomId }) => {
       if (!roomId) {
         socket.emit("auction:error", { message: "roomId is required" });
         return;
@@ -816,6 +883,10 @@ app.prepare().then(async () => {
 
       if (!canPlaceBid(socketUser)) {
         socket.emit("auction:error", { message: "Only managers can opt out." });
+        return;
+      }
+
+      if (!(await ensureSocketRoomAccess(socket, roomId))) {
         return;
       }
 
@@ -850,6 +921,8 @@ app.prepare().then(async () => {
         socket.emit("auction:error", { message: "roomId is required" });
         return;
       }
+
+      if (!ensureSocketJoinedRoom(socket, roomId)) return;
 
       const room = await db.collection("auctionRooms").findOne({ roomId });
       const settings = await getAuctionSettings();

@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/mongodb";
+import { requireAdmin } from "@/lib/roles";
 
 export async function GET() {
   try {
+    const access = await requireAdmin();
+    if (!access.ok) return access.response;
+
     const db = await getDb();
     await db.command({ ping: 1 });
 

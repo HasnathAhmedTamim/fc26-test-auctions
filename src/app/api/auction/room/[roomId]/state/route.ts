@@ -1,7 +1,16 @@
 import { NextResponse } from "next/server";
+import { ObjectId } from "mongodb";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/mongodb";
 import { getAuctionRuntimeSettings } from "@/lib/auction-settings";
+
+function toObjectId(value: string) {
+  try {
+    return new ObjectId(value);
+  } catch {
+    return null;
+  }
+}
 
 export async function GET(
   _req: Request,
@@ -15,6 +24,27 @@ export async function GET(
   const { roomId } = await params;
   const db = await getDb();
   const runtimeSettings = await getAuctionRuntimeSettings(db);
+
+  if (session.user.role !== "admin") {
+    const userObjectId = toObjectId(session.user.id);
+    const accessQuery = userObjectId
+      ? {
+          roomId,
+          canJoin: true,
+          $or: [{ userId: session.user.id }, { userId: userObjectId }],
+        }
+      : {
+          roomId,
+          userId: session.user.id,
+          canJoin: true,
+        };
+
+    const permission = await db.collection("roomAccess").findOne(accessQuery);
+
+    if (!permission) {
+      return NextResponse.json({ error: "Room access denied" }, { status: 403 });
+    }
+  }
 
   const room = await db.collection("auctionRooms").findOne({ roomId });
 
