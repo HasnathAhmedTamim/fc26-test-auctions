@@ -103,6 +103,7 @@ Create `.env.local` in the project root:
 MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>/<db>?retryWrites=true&w=majority
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 AUTH_SECRET=replace-with-a-long-random-string
+AUTH_URL=http://localhost:3000
 ```
 
 Variable notes:
@@ -110,6 +111,9 @@ Variable notes:
 - `MONGODB_URI`: required by app runtime and scripts.
 - `NEXT_PUBLIC_APP_URL`: used for Socket.IO client/server CORS.
 - `AUTH_SECRET`: required for stable NextAuth JWT encryption/signing.
+- `AUTH_URL` (optional): explicit auth/app base URL fallback for redirects.
+- `NEXTAUTH_URL` (optional): legacy NextAuth URL fallback.
+- `VERCEL_URL` (optional, on Vercel): used automatically when available.
 
 ### 3. Run the App
 
@@ -160,6 +164,7 @@ db.users.updateOne(
 - `npm run build`: build production assets.
 - `npm run start`: start production server (`server.mjs`).
 - `npm run lint`: run ESLint.
+- `npm run test`: run Vitest test suite.
 - `npm run import:players -- <file> <edition>`: import/upsert players.
 - `npm run players:version -- <edition>`: set active player edition.
 
@@ -179,6 +184,7 @@ db.users.updateOne(
 ### API Endpoints
 
 - `POST /api/auth/register`: register manager account.
+- `GET/POST /api/auth/[...nextauth]`: NextAuth handler endpoints.
 - `GET /api/players`: list players (supports `edition`, `search`).
 - `GET /api/players/version`: get active edition and available editions.
 - `POST /api/players/version`: set active edition (admin only).
@@ -192,15 +198,19 @@ db.users.updateOne(
 - `GET /api/auction/room/:roomId/state`: room snapshot and recent bids.
 - `GET /api/auction/room/:roomId/manager-state`: manager budget/slot state and recent audit entries.
 - `GET /api/admin`: admin-protected test endpoint.
+- `GET/PATCH /api/admin/settings`: read/update runtime auction settings and active edition.
 - `GET /api/admin/room-access`: list manager room permissions for a room.
 - `POST /api/admin/room-access`: grant/revoke manager room access, plus bulk grant-all/revoke-all.
 - `GET /api/admin/achievements`: admin achievement history view.
 - `POST /api/admin/achievements`: award tournament badge.
 - `DELETE /api/admin/achievements`: revoke tournament badge.
+- `GET/POST/PATCH/DELETE /api/admin/users`: admin user management.
+- `GET/POST/PATCH /api/admin/manager-stats`: room roster overrides, budget adjustments, room end/reset.
 - `GET /api/admin/tournaments`: list admin-managed tournaments.
 - `POST /api/admin/tournaments`: create tournament.
 - `PATCH /api/admin/tournaments`: update tournament.
 - `DELETE /api/admin/tournaments`: delete tournament.
+- `GET /api/test-db`: quick DB connectivity check.
 
 ## Database Collections
 
@@ -227,5 +237,3 @@ db.users.updateOne(
 - Tournament standings/fixtures are maintained through admin panel tournament management.
 - App DB name is `fc26-auction` (set in code).
 - Default round timer is `120` seconds.
-
-# New Feature
