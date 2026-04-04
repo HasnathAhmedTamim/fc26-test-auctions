@@ -5,6 +5,7 @@ export async function GET() {
   const access = await requireAdmin();
   if (!access.ok) return access.response;
 
+  // Echo authenticated admin identity for dashboard bootstrap checks.
   return NextResponse.json({
     message: "Welcome admin",
     user: access.session.user,

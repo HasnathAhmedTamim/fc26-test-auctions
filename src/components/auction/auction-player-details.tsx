@@ -21,6 +21,7 @@ function clamp(value: number) {
 }
 
 function deriveFaceStats(player: AuctionPlayer) {
+  // When source stats are missing, infer plausible card stats from overall rating.
   return {
     pace: player.pace ?? clamp(player.rating + 2),
     shooting: player.shooting ?? clamp(player.rating - 1),
@@ -32,6 +33,7 @@ function deriveFaceStats(player: AuctionPlayer) {
 }
 
 function deriveProfile(player: AuctionPlayer) {
+  // Keep the details panel complete even if optional profile fields are absent.
   const preferredFoot = player.preferredFoot ?? (player.position.includes("L") ? "Left" : "Right");
   const weakFoot = player.weakFoot ?? 4;
   const skillMoves = player.skillMoves ?? 4;
@@ -122,6 +124,7 @@ function deriveAttributeGroups(player: AuctionPlayer) {
 function derivePlaystyles(player: AuctionPlayer) {
   if (player.playstyles?.length) return player.playstyles;
 
+  // Position-based fallback presets mimic common FC archetypes.
   if (player.position.includes("ST") || player.position.includes("CF")) {
     return [
       { name: "Finesse Shot+", description: "Higher precision on finesse shots.", plus: true },

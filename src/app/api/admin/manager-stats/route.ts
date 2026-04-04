@@ -10,6 +10,7 @@ type ManagerPlayer = {
   amount: number;
 };
 
+// Centralized audit writer keeps admin actions traceable across all mutation paths.
 async function createAuditEntry(
   db: Awaited<ReturnType<typeof getDb>>,
   input: {
@@ -30,6 +31,7 @@ async function createAuditEntry(
   });
 }
 
+// Converts string IDs for lookups against Mongo _id fields.
 function toObjectId(value: string) {
   try {
     return new ObjectId(value);
@@ -58,6 +60,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Room not found" }, { status: 404 });
   }
 
+  // Seed all managers so API response is stable even when stats documents are missing.
   const managers = new Map<string, {
     userId: string;
     userName: string;
@@ -77,6 +80,7 @@ export async function GET(request: NextRequest) {
   }
 
   for (const stat of stats) {
+    // Merge persisted room stats on top of seeded manager defaults.
     const userId = String(stat.userId ?? "");
     const existing = managers.get(userId);
     const playersBought = Array.isArray(stat.playersBought)
@@ -169,6 +173,7 @@ export async function POST(request: NextRequest) {
     const amount = Number.isFinite(amountValue) && amountValue >= 0
       ? amountValue
       : Number(player.price ?? 0);
+    // Enforce room-level squad size and budget constraints before committing roster updates.
     const budgetLimit = Number(room.budget ?? 0);
     const maxPlayers = Number(room.maxPlayers ?? 0);
     const currentPlayersBought = Array.isArray(existingStat?.playersBought)
@@ -205,6 +210,7 @@ export async function POST(request: NextRequest) {
       { roomId, userId },
       {
         $set: {
+          // Store a full snapshot of manager roster state for fast dashboard reads.
           roomId,
           userId,
           userName,
@@ -240,6 +246,7 @@ export async function POST(request: NextRequest) {
     }
     const currentSpent = Number(existingStat?.budgetSpent ?? 0);
     const budgetLimit = Number(room.budget ?? 0);
+    // Never let manual adjustments push spent budget below zero.
     const newBudgetSpent = Math.max(0, currentSpent + adjustment);
 
     if (budgetLimit > 0 && newBudgetSpent > budgetLimit) {
@@ -295,6 +302,7 @@ export async function POST(request: NextRequest) {
   }
 
   const [removedPlayer] = playersBought.splice(playerIndex, 1);
+  // Keep spent budget non-negative even when historical amounts are inconsistent.
   const nextBudgetSpent = Math.max(
     0,
     Number(existingStat.budgetSpent ?? 0) - Number(removedPlayer?.amount ?? 0)
@@ -344,6 +352,7 @@ export async function PATCH(request: NextRequest) {
   }
 
   if (action === "end") {
+    // Room-level action is also written to audit log for manager timeline visibility.
     await db.collection("auctionRooms").updateOne(
       { roomId },
       { $set: { status: "ended", updatedAt: new Date() } }
@@ -360,6 +369,7 @@ export async function PATCH(request: NextRequest) {
   }
 
   if (action === "reset") {
+    // Reset clears active bidding fields so the next player starts from a clean state.
     await db.collection("auctionRooms").updateOne(
       { roomId },
       {

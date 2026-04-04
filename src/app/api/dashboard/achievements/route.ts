@@ -3,6 +3,7 @@ import { ObjectId } from "mongodb";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/mongodb";
 
+// Some achievements may still reference ObjectId-form userId values.
 function toObjectId(value: string) {
   try {
     return new ObjectId(value);
@@ -17,6 +18,7 @@ function buildUserIdQuery(userId: string) {
     return { userId };
   }
 
+  // Support both legacy ObjectId and string userId representations.
   return {
     $or: [
       { userId },

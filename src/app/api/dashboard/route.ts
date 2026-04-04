@@ -26,6 +26,7 @@ export async function GET() {
     : null;
 
   if (!stats) {
+    // Fallback to most recent stats so dashboard still works between room transitions.
     const latestStats = await statsCollection.find({ userId: session.user.id })
       .sort({ updatedAt: -1, createdAt: -1 })
       .limit(1)
@@ -41,6 +42,7 @@ export async function GET() {
   const budgetLimit = dashboardRoom?.budget ?? 2000;
   const budgetSpent = stats?.budgetSpent ?? 0;
 
+  // Derived values keep the client display logic simple and consistent.
   return NextResponse.json({
     budgetLeft: Math.max(0, budgetLimit - budgetSpent),
     budgetSpent,

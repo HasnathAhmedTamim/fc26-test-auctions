@@ -16,10 +16,12 @@ export async function GET(req: Request) {
 
   const db = await getDb();
   const activeEdition = await getActivePlayerEdition(db);
+  // Query parameter can temporarily override the globally active edition.
   const edition = queryEdition || activeEdition;
 
   const filter: Record<string, unknown> = { edition };
   if (search) {
+    // Lightweight text search across the most common scouting fields.
     filter.$or = [
       { name: { $regex: search, $options: "i" } },
       { club: { $regex: search, $options: "i" } },
@@ -30,6 +32,7 @@ export async function GET(req: Request) {
 
   const docs = await db
     .collection("players")
+    // Stable secondary sort keeps pagination deterministic for equal ratings.
     .find(filter)
     .sort({ rating: -1, name: 1 })
     .skip(skip)

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/roles";
 import { getDb } from "@/lib/mongodb";
 
+// Some legacy roomAccess rows store userId as ObjectId.
 function toObjectId(value: string) {
   try {
     return new ObjectId(value);
@@ -29,6 +30,7 @@ export async function GET(request: NextRequest) {
   const allowMap = new Map<string, boolean>();
   for (const permission of permissions) {
     const key = String(permission.userId ?? "");
+    // Query is sorted newest-first; keep the first value as canonical for each user.
     if (allowMap.has(key)) continue;
     allowMap.set(key, Boolean(permission.canJoin));
   }
@@ -125,6 +127,7 @@ export async function POST(request: NextRequest) {
 
   await db.collection("roomAccess").updateOne(
     userObjectId
+      // Match both ID formats so updates converge into a single string-keyed record.
       ? { roomId, $or: [{ userId }, { userId: userObjectId }] }
       : { roomId, userId },
     {

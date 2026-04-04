@@ -8,6 +8,7 @@ export async function GET() {
     if (!access.ok) return access.response;
 
     const db = await getDb();
+    // Lightweight health check to verify DB connectivity from API runtime.
     await db.command({ ping: 1 });
 
     return NextResponse.json({

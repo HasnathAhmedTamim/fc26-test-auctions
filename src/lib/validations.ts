@@ -12,9 +12,11 @@ export const loginSchema = z.object({
 });
 
 function isValidFormationPattern(value: string) {
+  // Supports compact tactics strings like 4-3-3 and 4-2-3-1.
   if (!/^\d(?:-\d){1,4}$/.test(value)) return false;
   const lines = value.split("-").map((part) => Number(part));
   if (lines.some((line) => !Number.isFinite(line) || line < 1 || line > 6)) return false;
+  // Outfield total must be 10 because goalkeeper is fixed separately.
   const totalOutfieldPlayers = lines.reduce((sum, line) => sum + line, 0);
   return totalOutfieldPlayers === 10;
 }
@@ -31,6 +33,7 @@ export const lineupStarterSchema = z.object({
 export const saveLineupSchema = z.object({
   roomId: z.string().min(1, "roomId is required"),
   formation: lineupFormationSchema,
+  // Exactly 11 starters (including GK) are required for a valid lineup submission.
   starters: z.array(lineupStarterSchema).length(11, "Exactly 11 starters are required"),
 });
 

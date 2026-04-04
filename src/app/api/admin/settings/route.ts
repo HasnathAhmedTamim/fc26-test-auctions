@@ -14,6 +14,7 @@ import {
   setActivePlayerEdition,
 } from "@/lib/player-edition";
 
+// Treat blank inputs as 'not provided' while preserving integer-only semantics.
 function parseOptionalInt(value: unknown) {
   if (value === undefined || value === null || value === "") return null;
   const parsed = Number(value);
@@ -71,6 +72,7 @@ export async function PATCH(req: Request) {
     const db = await getDb();
 
     if (activeEdition) {
+      // Guard against switching to an edition that has no backing player dataset.
       const exists = await db.collection("players").countDocuments({ edition: activeEdition }, { limit: 1 });
       if (!exists) {
         return NextResponse.json({ error: `No players found for edition '${activeEdition}'` }, { status: 404 });
@@ -99,6 +101,7 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: "No settings provided" }, { status: 400 });
     }
 
+    // Commit independent setting writes concurrently for lower admin API latency.
     await Promise.all(updates);
 
     const runtime = await getAuctionRuntimeSettings(db);

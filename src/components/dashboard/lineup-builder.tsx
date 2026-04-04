@@ -17,9 +17,11 @@ type FormationRow = {
 };
 
 function parseFormation(value: string) {
+  // Accept tactical strings such as 4-3-3 or 4-2-3-1.
   if (!/^\d(?:-\d){1,4}$/.test(value)) return null;
   const lines = value.split("-").map((part) => Number(part));
   const sum = lines.reduce((acc, line) => acc + line, 0);
+  // Outfield total must be 10 because goalkeeper is fixed.
   if (sum !== 10) return null;
   return lines;
 }
@@ -44,6 +46,7 @@ function getFormationRows(formation: string): FormationRow[] {
     rows.push(row);
   });
 
+  // Render from forwards to defenders so the pitch visually matches broadcast orientation.
   rows.reverse();
 
   rows.push({
@@ -97,6 +100,7 @@ export function LineupBuilder() {
     setAvailablePlayers(Array.isArray(data.availablePlayers) ? data.availablePlayers : []);
 
     const nextMap: Record<string, string> = {};
+    // Starter map is the canonical local state: slotId -> playerId.
     for (const starter of data.starters ?? []) {
       nextMap[starter.slotId] = starter.playerId;
     }
@@ -142,6 +146,7 @@ export function LineupBuilder() {
       const next = { ...prev };
       const targetPlayer = next[slotId];
 
+      // Remove player from any previous slot to preserve one-player-per-slot invariant.
       for (const slot of Object.keys(next)) {
         if (next[slot] === playerId) {
           delete next[slot];
@@ -174,6 +179,7 @@ export function LineupBuilder() {
       const used = new Set<string>();
       const next: Record<string, string> = {};
 
+      // Keep existing valid assignments first, then place remaining players into free slots.
       for (const slotId of nextSlots) {
         if (prev[slotId] && !used.has(prev[slotId])) {
           next[slotId] = prev[slotId];
@@ -215,6 +221,7 @@ export function LineupBuilder() {
       .map((slot) => ({ slotId: slot.slotId, playerId: starterMap[slot.slotId] }))
       .filter((entry) => Boolean(entry.playerId));
 
+    // API requires exactly 11 occupied slots, including goalkeeper.
     if (starters.length !== 11) {
       setError("You must set exactly 11 players on the pitch.");
       return;

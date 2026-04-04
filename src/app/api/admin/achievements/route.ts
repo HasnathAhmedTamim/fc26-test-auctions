@@ -14,6 +14,7 @@ function toObjectId(value: string) {
 
 function buildUserIdQuery(userId: string) {
   const objectId = toObjectId(userId);
+  // Compatibility layer for historical ObjectId-based achievements.
   if (!objectId) {
     return { userId };
   }
@@ -40,6 +41,7 @@ export async function GET(request: NextRequest) {
     .toArray();
 
   const userIds = [...new Set(achievements.map((item) => String(item.userId ?? "")).filter(Boolean))];
+  // Enrich achievement rows with current user profile metadata when available.
   const objectIds = userIds.map((id) => toObjectId(id)).filter((id): id is ObjectId => Boolean(id));
   const users = objectIds.length
     ? await db
@@ -96,6 +98,7 @@ export async function POST(request: NextRequest) {
     badgeType,
   });
 
+  // Prevent duplicate badge grants for the same tournament result.
   if (existing) {
     return NextResponse.json({ error: "Badge already awarded for this tournament" }, { status: 409 });
   }

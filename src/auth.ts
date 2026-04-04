@@ -5,6 +5,7 @@ import { ObjectId } from "mongodb";
 import { getDb } from "@/lib/mongodb";
 import { loginSchema } from "@/lib/validations";
 
+// Safely parse string IDs when tokens need to query Mongo _id fields.
 function toObjectId(value: string) {
   try {
     return new ObjectId(value);
@@ -27,6 +28,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const parsed = loginSchema.safeParse(credentials);
 
         if (!parsed.success) return null;
+        // Normalize email so login is case-insensitive and whitespace-tolerant.
         const normalizedEmail = parsed.data.email.trim().toLowerCase();
 
         const db = await getDb();
@@ -108,6 +110,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const target = new URL(url);
         const allowed = new URL(appUrl);
 
+        // Prevent open redirects by allowing only same-origin absolute URLs.
         if (target.origin === allowed.origin) {
           return url;
         }

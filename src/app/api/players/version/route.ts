@@ -12,6 +12,7 @@ export async function GET() {
   const activeEdition = await getActivePlayerEdition(db);
   const editions = await listAvailablePlayerEditions(db);
 
+  // Expose both active and available editions for admin/client selector UIs.
   return NextResponse.json({ activeEdition, editions });
 }
 
@@ -31,6 +32,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: `No players found for edition '${edition}'` }, { status: 404 });
   }
 
+  // Persist the switch only when the target edition has data.
   await setActivePlayerEdition(db, edition);
   return NextResponse.json({ message: "Active player edition updated", activeEdition: edition });
 }

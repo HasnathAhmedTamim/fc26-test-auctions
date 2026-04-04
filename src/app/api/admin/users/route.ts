@@ -6,6 +6,7 @@ import { getDb } from "@/lib/mongodb";
 
 type UserRole = "admin" | "manager";
 
+// User ids arrive as strings from API payloads and need safe conversion for Mongo lookups.
 function toObjectId(value: string) {
   try {
     return new ObjectId(value);
@@ -66,6 +67,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "User already exists" }, { status: 409 });
   }
 
+  // Hash password before persistence; plaintext is never stored.
   const passwordHash = await bcrypt.hash(password, 10);
 
   const result = await usersCollection.insertOne({
@@ -131,6 +133,7 @@ export async function PATCH(request: NextRequest) {
   }
 
   const currentAdminId = access.session.user.id;
+  // Prevent accidental lockout by disallowing self-demotion.
   if (role === "manager" && String(existing._id) === currentAdminId) {
     return NextResponse.json({ error: "You cannot demote your own account" }, { status: 400 });
   }
@@ -167,6 +170,7 @@ export async function DELETE(request: NextRequest) {
   }
 
   if (userId === access.session.user.id) {
+    // Protect currently authenticated admin account from self-delete.
     return NextResponse.json({ error: "You cannot delete your own account" }, { status: 400 });
   }
 

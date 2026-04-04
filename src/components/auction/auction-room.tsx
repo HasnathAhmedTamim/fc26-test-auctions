@@ -9,6 +9,7 @@ import { BidPanel } from "./bid-panel";
 import { AuctionPlayerDetails } from "./auction-player-details";
 import { Player } from "@/types/player";
 
+// Module-level socket avoids duplicate connections while this page is mounted.
 let socket: Socket | null = null;
 
 type Props = {
@@ -87,6 +88,7 @@ export function AuctionRoom({ roomId, user }: Props) {
   const [managerRoomState, setManagerRoomState] = useState<ManagerRoomState | null>(null);
 
   const isLive = state.status === "live";
+  // UI minimum uses the current fixed increment configured in realtime guards.
   const minNextBid = useMemo(() => state.currentBid + 10, [state.currentBid]);
   const filteredPlayerPool = useMemo(() => {
     if (!playerSearch.trim()) return playerPool;
@@ -98,6 +100,7 @@ export function AuctionRoom({ roomId, user }: Props) {
   const maxAllowedBid = user.role === "manager" ? Math.max(0, managerRoomState?.budgetLeft ?? 0) : null;
 
   function showNotification(msg: string, duration = 5000) {
+    // Ephemeral banner for action confirmations and room events.
     setNotification(msg);
     setTimeout(() => setNotification(""), duration);
   }
@@ -154,6 +157,7 @@ export function AuctionRoom({ roomId, user }: Props) {
     }
 
     const timeoutId = window.setTimeout(() => {
+      // Defer initial network calls to avoid synchronous setState-in-effect lint violations.
       void loadPlayers();
       void loadManagerRoomState();
       void loadRoomHistory();
@@ -168,6 +172,7 @@ export function AuctionRoom({ roomId, user }: Props) {
   useEffect(() => {
     if (user.role !== "manager") return;
 
+    // Polling keeps budget/slot counters fresh between websocket events.
     const interval = window.setInterval(() => {
       void loadManagerRoomState();
     }, 4000);
@@ -184,6 +189,7 @@ export function AuctionRoom({ roomId, user }: Props) {
     });
 
     socket.on("auction:state", (payload: AuctionRoomState) => {
+      // Server state is authoritative; hydrate local UI from push events.
       setState(payload);
       setBidAmount(String((payload.currentBid ?? 0) + 10));
       loadRoomHistory();
@@ -330,6 +336,7 @@ export function AuctionRoom({ roomId, user }: Props) {
   function submitBid() {
     setError("");
     const amount = Number(bidAmount);
+    // Fast client-side guard; server still enforces final bid validity.
     if (!amount || amount < minNextBid) {
       setError(`Minimum next bid is ${minNextBid}`);
       return;
@@ -354,6 +361,7 @@ export function AuctionRoom({ roomId, user }: Props) {
     const player = playerPool.find((p) => p.id === selectedPlayerId);
     if (!player) return;
 
+    // Build a normalized auction payload so all rooms receive consistent player fields.
     socket?.emit("auction:set-player", {
       roomId,
       player: {

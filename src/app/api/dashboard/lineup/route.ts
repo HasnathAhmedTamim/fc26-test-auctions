@@ -13,6 +13,7 @@ function getFormationSlots(formationInput: string): LineupSlotId[] {
     : [];
   const totalOutfieldPlayers = parsedLines.reduce((sum, line) => sum + line, 0);
   const isValid = isValidPattern && totalOutfieldPlayers === 10;
+  // Fallback keeps API resilient if stale or custom invalid formations are stored.
   const formation = isValid ? formationInput : DEFAULT_FORMATION;
   const lines = formation.split("-").map((part) => Number(part));
   const slots: LineupSlotId[] = ["gk"];
@@ -51,6 +52,7 @@ async function resolveUserRoster(userId: string) {
     : null;
 
   if (!stats) {
+    // If active-room stats are missing, use the latest known roster for dashboard continuity.
     const latestStats = await statsCollection.find({ userId })
       .sort({ updatedAt: -1, createdAt: -1 })
       .limit(1)
@@ -102,6 +104,7 @@ export async function GET() {
 
   const ownedSet = new Set(playersBought.map((p) => p.playerId));
   const persistedStarters = Array.isArray(existing?.starters)
+    // Keep only starters that are valid for the chosen formation and still owned by the manager.
     ? existing.starters.filter(
         (entry: { slotId?: string; playerId?: string }) =>
           entry.slotId &&
@@ -126,6 +129,7 @@ export async function GET() {
   }
 
   if (normalizedStarters.length < 11) {
+    // Auto-fill missing slots from purchased players to keep a complete initial XI.
     for (const player of playersBought) {
       if (normalizedStarters.length >= 11) break;
       if (seen.has(player.playerId)) continue;
@@ -165,6 +169,7 @@ export async function PUT(request: NextRequest) {
   const slots = getFormationSlots(formation);
 
   const slotSet = new Set(starters.map((entry) => entry.slotId));
+  // Reject duplicate slots and slots that do not belong to this formation.
   if (slotSet.size !== starters.length || starters.some((entry) => !slots.includes(entry.slotId as LineupSlotId))) {
     return NextResponse.json(
       { error: "Starter slots do not match selected formation" },
@@ -182,6 +187,7 @@ export async function PUT(request: NextRequest) {
   const playersBought = Array.isArray(stats?.playersBought) ? (stats.playersBought as BoughtPlayer[]) : [];
 
   const ownedSet = new Set(playersBought.map((player) => player.playerId));
+  // Server-side ownership guard prevents forged lineup payloads.
   const hasForeignPlayer = starterPlayerIds.some((playerId) => !ownedSet.has(playerId));
   if (hasForeignPlayer) {
     return NextResponse.json({ error: "Lineup contains players not owned by you" }, { status: 400 });

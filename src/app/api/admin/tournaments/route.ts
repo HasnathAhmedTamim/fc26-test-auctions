@@ -53,6 +53,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Min players cannot be greater than max players" }, { status: 400 });
   }
 
+  // Keep participants derived from standings to avoid stale client-provided counts.
   const participants = payload.standings.length;
 
   const db = await getDb();
@@ -95,6 +96,7 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Min players cannot be greater than max players" }, { status: 400 });
   }
 
+  // Recompute participants server-side whenever standings are edited.
   const participants = payload.standings.length;
 
   const db = await getDb();

@@ -20,6 +20,7 @@ export function RegisterForm() {
     e.preventDefault();
     setError("");
 
+    // Transition keeps the UI responsive while async register/sign-in requests run.
     startTransition(async () => {
       const res = await fetch("/api/auth/register", {
         method: "POST",
@@ -35,6 +36,7 @@ export function RegisterForm() {
         return;
       }
 
+      // Auto sign-in streamlines onboarding right after successful account creation.
       const signInResult = await signIn("credentials", {
         email,
         password,

@@ -15,6 +15,7 @@ export async function POST(req: Request) {
       );
     }
 
+    // Normalize email to avoid duplicate accounts that differ only by case.
     const normalizedEmail = parsed.data.email.trim().toLowerCase();
 
     const db = await getDb();
@@ -26,6 +27,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "User already exists" }, { status: 409 });
     }
 
+    // Cost factor 10 balances baseline security and API responsiveness.
     const passwordHash = await bcrypt.hash(parsed.data.password, 10);
 
     const result = await users.insertOne({

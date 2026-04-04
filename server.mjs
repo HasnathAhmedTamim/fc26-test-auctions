@@ -23,6 +23,7 @@ const port = 3000;
 const app = next({ dev, hostname, port });
 const handler = app.getRequestHandler();
 
+// Runtime auction knobs loaded from DB with bounded parsing and short-lived cache.
 const AUCTION_SETTINGS = {
   defaults: {
     roundTimeSeconds: 120,
@@ -45,6 +46,7 @@ if (!mongoUri) {
 
 const client = new MongoClient(mongoUri);
 
+// Convert string user IDs when querying Mongo _id/ObjectId fields.
 function toObjectId(value) {
   try {
     return new ObjectId(value);
@@ -71,6 +73,7 @@ app.prepare().then(async () => {
   async function getAuctionSettings() {
     const now = Date.now();
 
+    // Keep hot path settings reads cheap during intense realtime bidding.
     if (now - runtimeSettingsCache.fetchedAt < AUCTION_SETTINGS.cacheTtlMs) {
       return runtimeSettingsCache.value;
     }
@@ -171,6 +174,7 @@ app.prepare().then(async () => {
       return true;
     }
 
+    // Managers must have explicit per-room access grants.
     const userObjectId = toObjectId(socketUser.id);
     const accessQuery = userObjectId
       ? {
@@ -253,6 +257,7 @@ app.prepare().then(async () => {
     const remainingBudget = Math.max(0, budgetLimit - budgetSpent);
     const squadSlotsLeft = Math.max(0, maxPlayers - playersBoughtCount);
 
+    // Hard room constraints are re-checked server-side before accepting bids/sales.
     if (playersBoughtCount >= maxPlayers) {
       return {
         ok: false,
@@ -289,6 +294,7 @@ app.prepare().then(async () => {
       : false;
 
     if (alreadyOwned) {
+      // Pause instead of selling when roster invariants are violated.
       await db.collection("auctionRooms").updateOne(
         { roomId: room.roomId },
         { $set: { status: "paused", updatedAt: new Date() } }
@@ -372,6 +378,7 @@ app.prepare().then(async () => {
   async function startRoomTimer(roomId, initialTime) {
     const settings = await getAuctionSettings();
     clearRoomTimer(roomId);
+    // Persist remaining time in memory so reconnecting clients get the accurate countdown.
     let timeLeft = Math.max(1, Number(initialTime) || settings.roundTimeSeconds);
     roomTimeLeft.set(roomId, timeLeft);
 
@@ -583,6 +590,7 @@ app.prepare().then(async () => {
       const settings = await getAuctionSettings();
 
       const roomCooldowns = roomBidCooldowns.get(roomId) ?? new Map();
+      // Per-user cooldown reduces burst races and accidental double-bids.
       const cooldownState = getBidCooldownState(
         roomCooldowns.get(userId),
         Date.now(),
@@ -629,6 +637,7 @@ app.prepare().then(async () => {
       }
 
       const roomUpdateResult = await db.collection("auctionRooms").updateOne(
+        // Atomic filter ensures this bid applies only if observed currentBid is still current.
         buildAtomicBidFilter(roomId, expectedCurrentBid),
         {
           $set: {
@@ -966,6 +975,7 @@ app.prepare().then(async () => {
 
   io.use(async (socket, nextAuthDone) => {
     try {
+      // Authenticate websocket handshakes using the same NextAuth token cookie.
       const token = await getToken({
         req: {
           headers: {
