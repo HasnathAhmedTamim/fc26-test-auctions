@@ -15,6 +15,7 @@ type RuntimeSettingsKey =
   | typeof BID_INCREMENT_KEY
   | typeof BID_COOLDOWN_KEY;
 
+// Normalize persisted values and enforce safe bounds before exposing them at runtime.
 function coerceInt(value: unknown, fallback: number, min: number, max: number) {
   const parsed = Number(value);
   if (!Number.isInteger(parsed)) return fallback;
@@ -30,6 +31,7 @@ export async function getAuctionRuntimeSettings(db: Db) {
     BID_COOLDOWN_KEY,
   ];
 
+  // Fetch all runtime knobs in one query to keep reads cheap during request handling.
   const docs = await db
     .collection("settings")
     .find({ key: { $in: keys } })
@@ -60,6 +62,7 @@ export async function getAuctionRuntimeSettings(db: Db) {
 }
 
 export async function setAuctionRuntimeSetting(db: Db, key: RuntimeSettingsKey, value: number) {
+  // Upsert keeps settings idempotent while preserving createdAt for existing keys.
   await db.collection("settings").updateOne(
     { key },
     {

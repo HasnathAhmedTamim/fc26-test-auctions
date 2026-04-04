@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { getDb } from "@/lib/mongodb";
 import { getAuctionRuntimeSettings } from "@/lib/auction-settings";
 
+// Handles mixed userId types in persisted access records.
 function toObjectId(value: string) {
   try {
     return new ObjectId(value);
@@ -27,6 +28,7 @@ export async function GET(
 
   if (session.user.role !== "admin") {
     const userObjectId = toObjectId(session.user.id);
+    // Match both string and ObjectId user IDs so older data remains accessible.
     const accessQuery = userObjectId
       ? {
           roomId,
@@ -69,6 +71,7 @@ export async function GET(
     room: {
       roomId: room.roomId,
       status: room.status,
+      // Fallback prevents broken UI timers when DB value is missing or malformed.
       timer: Math.max(0, Number(room.timer ?? runtimeSettings.roundTimeSeconds)),
       currentPlayer: room.currentPlayer,
       currentBid: room.currentBid,

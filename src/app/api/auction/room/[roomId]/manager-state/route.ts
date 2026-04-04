@@ -3,6 +3,7 @@ import { ObjectId } from "mongodb";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/mongodb";
 
+// Converts session user IDs when roomAccess stores ObjectId values.
 function toObjectId(value: string) {
   try {
     return new ObjectId(value);
@@ -25,6 +26,7 @@ export async function GET(
 
   if (session.user.role !== "admin") {
     const userObjectId = toObjectId(session.user.id);
+    // Preserve compatibility with both old and new roomAccess userId formats.
     const accessQuery = userObjectId
       ? {
           roomId,
@@ -53,6 +55,7 @@ export async function GET(
     roomId,
     userId: session.user.id,
   });
+  // Include both personal and system-generated room events for manager context.
   const auditEntries = await db
     .collection("adminAuditLog")
     .find({ roomId, $or: [{ userId: session.user.id }, { userId: "room" }] })

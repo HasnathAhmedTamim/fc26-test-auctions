@@ -14,6 +14,7 @@ export function resolveSocketIdentity(socketUser) {
     return null;
   }
 
+  // Always derive bid identity from authenticated socket context, never from client payload.
   return {
     userId: String(socketUser.id),
     userName: String(socketUser.name ?? "Unknown"),
@@ -24,6 +25,7 @@ export function resolveSocketIdentity(socketUser) {
 export function isBidIdentitySpoofAttempt(socketUser, payload) {
   if (!socketUser || !payload) return false;
 
+  // Reject attempts to override server-trusted identity fields in bid events.
   if (payload.userId !== undefined && String(payload.userId) !== String(socketUser.id)) {
     return true;
   }
@@ -45,6 +47,7 @@ export function validateBidAmount(amount, currentBid, increment = BID_INCREMENT)
 
   const expectedCurrentBid = Number(currentBid ?? 0);
   const minimumAllowedBid = expectedCurrentBid + increment;
+  // Enforce monotonic bids with fixed increments so all clients see a consistent ladder.
   if (amount < minimumAllowedBid) {
     return {
       ok: false,
@@ -67,6 +70,7 @@ export function validateBidAmount(amount, currentBid, increment = BID_INCREMENT)
 }
 
 export function buildAtomicBidFilter(roomId, expectedCurrentBid) {
+  // Optimistic concurrency guard: update succeeds only if currentBid is unchanged.
   return {
     roomId,
     status: "live",
@@ -81,6 +85,7 @@ export function getBidCooldownState(lastBidAt, now = Date.now(), cooldownMs = BI
   }
 
   const elapsed = Math.max(0, now - Number(lastBidAt));
+  // Simple per-room throttle that smooths bursts and reduces race-prone bid storms.
   if (elapsed >= cooldownMs) {
     return { limited: false, retryAfterMs: 0 };
   }

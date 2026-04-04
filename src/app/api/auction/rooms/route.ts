@@ -6,6 +6,7 @@ import { requireAdmin } from "@/lib/roles";
 import { getDb } from "@/lib/mongodb";
 import { getAuctionRuntimeSettings } from "@/lib/auction-settings";
 
+// Some records may store user IDs as ObjectId while session IDs are strings.
 function toObjectId(value: string) {
   try {
     return new ObjectId(value);
@@ -25,6 +26,7 @@ export async function GET() {
 
   if (session.user.role !== "admin") {
     const userObjectId = toObjectId(session.user.id);
+    // Support both legacy ObjectId and current string userId formats in roomAccess.
     const accessQuery = userObjectId
       ? {
           canJoin: true,
@@ -118,6 +120,7 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ error: "Room not found" }, { status: 404 });
   }
 
+  // Keep room deletion atomic from API perspective by cascading related collections together.
   await Promise.all([
     db.collection("auctionRooms").deleteOne({ roomId }),
     db.collection("managerStats").deleteMany({ roomId }),
