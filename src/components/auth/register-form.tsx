@@ -7,6 +7,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { showErrorAlert, showInfoAlert, showSuccessAlert } from "@/lib/alerts";
 
+// This component handles user registration with client-side validation, error handling, and automatic sign-in after successful account creation for a seamless onboarding experience.
 export function RegisterForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
