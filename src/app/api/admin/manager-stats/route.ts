@@ -151,6 +151,7 @@ export async function POST(request: NextRequest) {
 
   const userName = String(existingStat?.userName ?? user?.name ?? "Unknown Manager");
 
+  // `add`, `remove`, and `adjust-budget` all mutate manager room stats through one endpoint.
   if (action === "add") {
     const edition = await getActivePlayerEdition(db);
     const player = await db.collection("players").findOne({ edition, playerId });
@@ -351,6 +352,7 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "Room not found" }, { status: 404 });
   }
 
+  // PATCH is reserved for room-level lifecycle actions (`end` or `reset`).
   if (action === "end") {
     // Room-level action is also written to audit log for manager timeline visibility.
     await db.collection("auctionRooms").updateOne(

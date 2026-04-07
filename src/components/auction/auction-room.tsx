@@ -54,6 +54,7 @@ const initialState: AuctionRoomState = {
 };
 
 function timerColor(timer: number, isLive: boolean) {
+  // Visual urgency tiers for active countdown: safe -> warning -> critical.
   if (!isLive) return "text-slate-400";
   if (timer > 45) return "text-emerald-400";
   if (timer > 15) return "text-yellow-400";

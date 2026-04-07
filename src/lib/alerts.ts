@@ -5,6 +5,7 @@ const bgColor = "#08142b";
 const textColor = "#f8fafc";
 
 export function showSuccessAlert(title: string, text?: string) {
+  // Short auto-closing success toast for completed user actions.
   return Swal.fire({
     icon: "success",
     title,
@@ -18,6 +19,7 @@ export function showSuccessAlert(title: string, text?: string) {
 }
 
 export function showErrorAlert(title: string, text?: string) {
+  // Persistent error alert that requires explicit user acknowledgment.
   return Swal.fire({
     icon: "error",
     title,
@@ -29,6 +31,7 @@ export function showErrorAlert(title: string, text?: string) {
 }
 
 export function showInfoAlert(title: string, text?: string) {
+  // Neutral informational prompt used for non-blocking guidance.
   return Swal.fire({
     icon: "info",
     title,
@@ -40,6 +43,7 @@ export function showInfoAlert(title: string, text?: string) {
 }
 
 export async function showConfirmAlert(title: string, text: string) {
+  // Confirmation modal used before potentially destructive actions.
   const result = await Swal.fire({
     icon: "question",
     title,

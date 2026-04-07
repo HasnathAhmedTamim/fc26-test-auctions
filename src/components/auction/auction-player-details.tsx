@@ -17,6 +17,7 @@ const LEAGUE_BY_CLUB: Record<string, string> = {
 };
 
 function clamp(value: number) {
+  // Keep all displayed card stats inside EA-style 1..99 bounds.
   return Math.max(1, Math.min(99, Math.round(value)));
 }
 
@@ -149,6 +150,7 @@ function derivePlaystyles(player: AuctionPlayer) {
 }
 
 function statRow(label: string, value: number) {
+  // Reusable stat tile renderer for compact face-stat grids.
   return (
     <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-3" key={label}>
       <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">{label}</p>

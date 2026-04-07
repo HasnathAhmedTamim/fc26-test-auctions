@@ -43,6 +43,7 @@ type Fc24RawPlayer = {
 let fallbackPlayersCache: Promise<Fc24RawPlayer[]> | null = null;
 
 function getFallbackPlayers() {
+  // Cache fallback JSON read across requests to avoid repeated disk I/O.
   if (!fallbackPlayersCache) {
     const jsonPath = path.join(process.cwd(), "public", "fifa24-player-list.json");
     fallbackPlayersCache = fs
@@ -58,6 +59,7 @@ function getFallbackPlayers() {
 }
 
 function normalizeSlug(value: string) {
+  // Normalize route ids so accented/encoded variants resolve to the same player.
   return String(value)
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -72,11 +74,13 @@ function star(value?: number) {
 }
 
 function clean(value?: string | number | null, fallback = "-") {
+  // Shared null/empty formatter for detail sections.
   if (value === undefined || value === null || value === "") return fallback;
   return String(value);
 }
 
 function mapJsonPlayer(item: Fc24RawPlayer, slug: string) {
+  // Map one fallback JSON player into the page view model when slug matches.
   const itemSlug = String(item.slug ?? "").toLowerCase();
   if (itemSlug !== slug.toLowerCase()) return null;
 
@@ -134,6 +138,7 @@ export default async function PlayerDetailsPage({
   const playersCollection = db.collection("players");
 
   const doc =
+    // Try strict/normalized/collation variants so old links still resolve.
     (await playersCollection.findOne({ playerId: decodedId, edition })) ??
     (await playersCollection.findOne({ playerId: decodedId.normalize("NFC"), edition })) ??
     (await playersCollection.findOne({ playerId: decodedId.normalize("NFD"), edition })) ??

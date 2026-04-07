@@ -2,10 +2,12 @@ export const BID_INCREMENT = 10;
 export const BID_COOLDOWN_MS = 500;
 
 export function isAdminUser(user) {
+  // Admin-only gate used by privileged realtime actions.
   return Boolean(user && user.role === "admin");
 }
 
 export function canPlaceBid(user) {
+  // Only manager accounts are allowed to participate in bidding.
   return Boolean(user && user.role === "manager");
 }
 

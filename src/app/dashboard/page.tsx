@@ -55,6 +55,7 @@ export default async function DashboardPage({
     : {};
 
   function withRoomScope(baseQuery: Record<string, unknown>) {
+    // Managers are restricted to assigned rooms; admins query without room constraints.
     if (!allowedRoomIds) return baseQuery;
     return {
       $and: [roomScopeQuery, baseQuery],

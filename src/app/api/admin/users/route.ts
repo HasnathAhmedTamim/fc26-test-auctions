@@ -16,6 +16,7 @@ function toObjectId(value: string) {
 }
 
 function normalizeEmail(email: string) {
+  // Canonical email format avoids case/whitespace duplicates.
   return email.trim().toLowerCase();
 }
 
@@ -146,6 +147,7 @@ export async function PATCH(request: NextRequest) {
   }
 
   const updateDoc: Record<string, unknown> = { updatedAt: new Date() };
+  // Build a minimal patch document so unspecified fields remain unchanged.
   if (name !== undefined) updateDoc.name = name;
   if (email !== undefined) updateDoc.email = email;
   if (role !== undefined) updateDoc.role = role;
@@ -182,6 +184,7 @@ export async function DELETE(request: NextRequest) {
   const db = await getDb();
   const usersCollection = db.collection("users");
 
+  // Hard delete is safe here because related runtime stats are keyed by userId strings.
   const result = await usersCollection.deleteOne({ _id: userObjectId });
   if (!result.deletedCount) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });

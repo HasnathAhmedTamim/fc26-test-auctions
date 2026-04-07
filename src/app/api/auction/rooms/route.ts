@@ -83,11 +83,13 @@ export async function POST(req: Request) {
 
   const roomId = randomUUID().slice(0, 8);
   const db = await getDb();
+  // New rooms inherit runtime-configured timer settings from admin controls.
   const runtimeSettings = await getAuctionRuntimeSettings(db);
 
   await db.collection("auctionRooms").insertOne({
     roomId,
     name: name.trim(),
+    // Room starts idle with no selected player and no active bid.
     status: "waiting",
     timer: runtimeSettings.roundTimeSeconds,
     currentPlayer: null,

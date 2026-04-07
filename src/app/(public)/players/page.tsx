@@ -32,10 +32,12 @@ type Fc24RawPlayer = {
 };
 
 function derivePrice(overall: number) {
+  // Keep fallback pricing aligned with server-side seeding conventions.
   return Math.round(overall * 4.5);
 }
 
 function mapFc24ToPlayer(item: Fc24RawPlayer, idx: number): Player {
+  // Normalize JSON fallback rows into the app-wide `Player` shape.
   const rating = Number(item.overall ?? 60);
   const id = String(item.slug ?? `${item.name ?? "player"}-${idx}`)
     .toLowerCase()
@@ -56,6 +58,7 @@ function mapFc24ToPlayer(item: Fc24RawPlayer, idx: number): Player {
     dribbling: Number(item.dribbling ?? 50),
     defending: Number(item.defending ?? 50),
     physical: Number(item.physicality ?? 50),
+    // Prefer higher-resolution card art variant when JSON includes `.adapt.50w` URLs.
     image: (String(item.picture ?? "").trim().replace(".adapt.50w.png", ".adapt.320w.png") || String(item.cardPicture ?? "").trim()) || "/player-placeholder.svg",
     age: Number(item.age ?? 27),
     preferredFoot: item.foot === "Left" ? "Left" : "Right",
@@ -103,6 +106,7 @@ export default function PlayersPage() {
     async function loadPlayers() {
       setLoading(true);
       try {
+        // Prefer paginated DB API first; fallback JSON is used only when DB data is unavailable.
         const allDbPlayers: Player[] = [];
         let hasMore = true;
         let page = 1;
@@ -188,6 +192,7 @@ export default function PlayersPage() {
 
   const filtered = useMemo(
     () =>
+      // Apply sidebar constraints and search text on top of loaded source data.
       players.filter((p) => {
         const pos = String(p.position ?? "").trim().toUpperCase();
         const selectedPos = position.trim().toUpperCase();
@@ -217,6 +222,7 @@ export default function PlayersPage() {
   const paginatedPlayers = filtered.slice(pageStart, pageEnd);
 
   const pageButtons = useMemo(() => {
+    // Show a compact sliding window of pagination controls around the active page.
     const start = Math.max(1, safePage - 2);
     const end = Math.min(totalPages, start + 4);
     const pages = [];

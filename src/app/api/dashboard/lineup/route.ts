@@ -72,6 +72,7 @@ async function resolveUserRoster(userId: string) {
 }
 
 function toBench(playersBought: BoughtPlayer[], starterPlayerIds: string[]) {
+  // Bench is derived as owned players minus selected starters.
   const starterSet = new Set(starterPlayerIds);
   return playersBought.filter((player) => !starterSet.has(player.playerId));
 }
@@ -178,6 +179,7 @@ export async function PUT(request: NextRequest) {
   }
 
   const starterPlayerIds = starters.map((entry) => entry.playerId);
+  // Duplicate players across slots are not allowed, even with valid slot IDs.
   if (new Set(starterPlayerIds).size !== starterPlayerIds.length) {
     return NextResponse.json({ error: "Duplicate starter players are not allowed" }, { status: 400 });
   }

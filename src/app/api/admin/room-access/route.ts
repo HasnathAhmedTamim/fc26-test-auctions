@@ -63,6 +63,7 @@ export async function POST(request: NextRequest) {
   const db = await getDb();
 
   if (action === "grant-all" || action === "revoke-all") {
+    // Bulk toggle applies a consistent canJoin flag to every manager in the room.
     const nextCanJoin = action === "grant-all";
     const users = await db.collection("users").find({ role: "manager" }).toArray();
 

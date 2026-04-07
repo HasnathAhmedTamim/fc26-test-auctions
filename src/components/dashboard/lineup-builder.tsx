@@ -27,6 +27,7 @@ function parseFormation(value: string) {
 }
 
 function getFormationRows(formation: string): FormationRow[] {
+  // Generate slot layout rows from formation digits plus a fixed goalkeeper row.
   const parsed = parseFormation(formation) ?? [4, 3, 3];
   const rows: FormationRow[] = [];
 

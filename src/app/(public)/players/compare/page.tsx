@@ -52,10 +52,12 @@ const METRICS: CompareMetric[] = [
 ];
 
 function derivePrice(overall: number) {
+  // Mirror price derivation used in other fallback player mappers.
   return Math.round(overall * 4.5);
 }
 
 function mapFc24ToPlayer(item: Fc24RawPlayer, idx: number): Player {
+  // Convert fallback JSON rows into normalized compare-ready player records.
   const rating = Number(item.overall ?? 60);
   const id = String(item.slug ?? `${item.name ?? "player"}-${idx}`)
     .toLowerCase()
@@ -76,6 +78,7 @@ function mapFc24ToPlayer(item: Fc24RawPlayer, idx: number): Player {
     dribbling: Number(item.dribbling ?? 50),
     defending: Number(item.defending ?? 50),
     physical: Number(item.physicality ?? 50),
+    // Prefer higher-resolution card art variant when available in fallback JSON.
     image:
       (String(item.picture ?? "").trim().replace(".adapt.50w.png", ".adapt.320w.png") ||
         String(item.cardPicture ?? "").trim()) ||
@@ -111,6 +114,7 @@ export default function PlayerComparePage() {
     async function loadPlayers() {
       setLoading(true);
       try {
+        // Load from API first, then fallback to static JSON when API data is unavailable.
         const allDbPlayers: Player[] = [];
         let hasMore = true;
         let page = 1;
@@ -199,6 +203,7 @@ export default function PlayerComparePage() {
   const chosenPlayerIds = useMemo(() => new Set(selectedIds.filter(Boolean)), [selectedIds]);
 
   const metricBestValues = useMemo(() => {
+    // Determine best value per metric among currently selected players.
     return METRICS.reduce<Record<string, number | null>>((acc, metric) => {
       const values = selectedPlayers
         .map((player) => (player ? Number(player[metric.key] ?? 0) : NaN))
@@ -215,6 +220,7 @@ export default function PlayerComparePage() {
   }, [selectedPlayers]);
 
   const deltaComparison = useMemo(() => {
+    // Side-by-side delta compares slot 1 (base) against slot 2 (target).
     const filled = selectedPlayers
       .map((player, index) => ({ player, index }))
       .filter((entry): entry is { player: Player; index: number } => Boolean(entry.player));
