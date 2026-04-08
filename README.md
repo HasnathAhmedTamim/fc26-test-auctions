@@ -1,75 +1,43 @@
 # FC26 Auction
 
-A real-time football player auction platform built with Next.js App Router, NextAuth, MongoDB, and Socket.IO.
+Real-time football player auction platform built with Next.js App Router, NextAuth, MongoDB, and Socket.IO.
 
-## What This Project Does
+## Overview
 
-- Lets managers register and bid in live auction rooms.
-- Lets admins create rooms and control auction flow.
-- Lets admins control room-level access for each manager.
-- Lets managers build room-specific lineups and track achievements.
-- Lets admins create, customize, and delete tournament fixtures/standings.
-- Keeps all bidders synced in real time (state, timer, bids, pause/resume, sold/skip).
-- Protects critical actions with server-side auth and validation rules.
+FC26 Auction supports a full manager/admin workflow:
 
-## Core Features
+- Managers can register, join allowed rooms, bid in live auctions, and manage lineup + achievements.
+- Admins can create and control rooms, manage player editions, control room access, and manage tournaments.
+- Socket events and REST endpoints enforce role and access checks server-side.
 
-### Authentication and Roles
+## Core Capabilities
 
-- Credentials-based registration and login.
-- Two roles:
-  - `manager`: dashboard access and auction bidding.
-  - `admin`: room creation and live auction controls.
+### Authentication and authorization
 
-### Real-Time Auction Flow
+- Credentials-based login and registration.
+- Role model:
+  - `manager`: dashboard, room participation, bidding.
+  - `admin`: room controls and admin modules.
+- Middleware protection for private routes (`/dashboard`, `/admin`, `/auction/*`).
 
-- Room join and state synchronization.
-- Live bidding updates.
-- Round timer ticks.
-- Pause and resume controls.
-- Mark player as sold or skip player.
-- Manager opt-out.
-- Auto-pause when all non-leading managers opt out.
+### Live auction engine
 
-### Realtime Safety Guardrails
+- Real-time room state sync over Socket.IO.
+- Bid updates, timer ticks, sold/skip actions, and pause/resume.
+- Manager opt-out support with auto-pause when everyone except leader opts out.
+- Server-side guardrails:
+  - socket identity/session binding
+  - anti-spoof bid checks
+  - strict bid increment + cooldown rules
+  - atomic/race-safe update filters
+  - sold/duplicate ownership protections
 
-- Socket identity is bound to authenticated session token.
-- Admin-only checks for start, pause, set-player, sold, and skip actions.
-- Manager-only checks for bidding and opt-out actions.
-- Anti-spoof bid identity validation.
-- Strict bid increment rules (`+10` steps).
-- Bid cool down to reduce spam.
-- Race-safe bid updates with atomic room-state filtering.
-- Sold-player and duplicate-ownership protections.
+### Player, dashboard, and tournament workflows
 
-### Player and Dashboard Experience
-
-- Player catalog API with active edition support (example: `fc24`, `fc26`).
-- Player explorer improvements:
-  - debounced search
-  - clearer filtering flow
-  - improved client-side pagination
-  - better result count visibility
-- SweetAlert2-based alert and confirmation UX.
-- Manager dashboard for budget and purchased players grouped by room.
-- Room access overview on dashboard with clear join/no-access status.
-- Room-specific lineup builder and achievements view.
-- Admin roster management with destructive-action confirmations.
-
-### Tournament Management
-
-- Admin-managed tournament module (create, update, delete).
-- Tournament fixtures and points table customization from admin panel.
-- Team-name based generator for random fixtures.
-- Tournament participants are derived from standings teams on save/update.
-- Public tournaments page reads live MongoDB tournament data.
-- If DB has no tournaments, users see an empty published state.
-- Seed tournament data is used only as a resilience fallback when DB fetch fails.
-
-### Admin Workflow UX
-
-- Admin panel is sectioned into focused views: rooms, roster, tournaments, badges, and users.
-- Each section is shown independently to reduce scrolling and cognitive load.
+- Edition-aware player catalog with active edition switching (for example `fc24`, `fc26`).
+- Manager dashboard for budget, room status, lineup builder, and achievements.
+- Admin modules for users, room access, manager stats, runtime settings, and tournaments.
+- Tournament fixtures/standings customization from admin UI.
 
 ## Tech Stack
 
@@ -78,9 +46,9 @@ A real-time football player auction platform built with Next.js App Router, Next
 - NextAuth v5 (credentials provider)
 - MongoDB Node driver
 - Socket.IO
-- SweetAlert2
 - Tailwind CSS v4
 - TypeScript + Zod
+- Vitest + ESLint
 
 ## Prerequisites
 
@@ -89,57 +57,64 @@ A real-time football player auction platform built with Next.js App Router, Next
 
 ## Quick Start
 
-### 1. Install Dependencies
+1. Install dependencies:
 
 ```bash
 npm install
 ```
 
-### 2. Add Environment Variables
-
-Create `.env.local` in the project root:
+2. Create `.env.local` in project root:
 
 ```env
 MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>/<db>?retryWrites=true&w=majority
-NEXT_PUBLIC_APP_URL=http://localhost:3000
 AUTH_SECRET=replace-with-a-long-random-string
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 AUTH_URL=http://localhost:3000
 ```
 
-Variable notes:
-
-- `MONGODB_URI`: required by app runtime and scripts.
-- `NEXT_PUBLIC_APP_URL`: used for Socket.IO client/server CORS.
-- `AUTH_SECRET`: required for stable NextAuth JWT encryption/signing.
-- `AUTH_URL` (optional): explicit auth/app base URL fallback for redirects.
-- `NEXTAUTH_URL` (optional): legacy NextAuth URL fallback.
-- `VERCEL_URL` (optional, on Vercel): used automatically when available.
-
-### 3. Run the App
+3. Start development server:
 
 ```bash
 npm run dev
 ```
 
-The app uses a custom server (`server.mjs`) to run Next.js and Socket.IO together on port `3000`.
+The app runs through the custom server in `server.mjs` (Next.js + Socket.IO) on port `3000`.
 
-## Player Data Setup
+## Environment Variables
 
-### Import Players
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `MONGODB_URI` | Yes | MongoDB connection string for app runtime and data scripts |
+| `AUTH_SECRET` | Yes | NextAuth JWT/session encryption secret |
+| `NEXT_PUBLIC_APP_URL` | Recommended | Base URL used by Socket.IO client/server CORS |
+| `AUTH_URL` | Recommended | Explicit app/auth base URL fallback for redirects |
+| `NEXTAUTH_URL` | Optional | Legacy URL fallback |
+| `NEXTAUTH_SECRET` | Optional | Legacy/fallback secret check in middleware |
+| `VERCEL_URL` | Optional | Used as redirect fallback in hosted environments |
+
+## Scripts
+
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Start development server using `server.mjs` |
+| `npm run build` | Build Next.js production assets |
+| `npm run start` | Start production server using `server.mjs` |
+| `npm run lint` | Run ESLint |
+| `npm run test` | Run Vitest test suite |
+| `npm run import:players -- <file> <edition>` | Import/upsert players from JSON and set active edition |
+| `npm run players:version -- <edition>` | Set active player edition |
+| `node -r dotenv/config scripts/migrate-room-timer.mjs` | One-off maintenance: bump room timers below 120 |
+
+## Player Data Workflow
+
+Import player data (example commands):
 
 ```bash
 npm run import:players -- public/fifa24-player-list.json fc24
-```
-
-Or:
-
-```bash
 npm run import:players -- public/fc26-player-list-with-base-price.json fc26
 ```
 
-This import script upserts into `players` and also sets `settings.activePlayerEdition`.
-
-### Set Active Player Edition
+Switch active edition:
 
 ```bash
 npm run players:version -- fc24
@@ -147,70 +122,82 @@ npm run players:version -- fc24
 
 ## First Admin Setup
 
-Public registration creates users with the `manager` role.
+Public registration creates users with role `manager` by default.
 
-To access `/admin`, promote a user manually in MongoDB:
+Promote an account manually in MongoDB:
 
 ```javascript
 db.users.updateOne(
   { email: "admin@example.com" },
   { $set: { role: "admin" } }
-)
+);
 ```
 
-## Scripts
+## Main Routes
 
-- `npm run dev`: start development server (`server.mjs`).
-- `npm run build`: build production assets.
-- `npm run start`: start production server (`server.mjs`).
-- `npm run lint`: run ESLint.
-- `npm run test`: run Vitest test suite.
-- `npm run import:players -- <file> <edition>`: import/upsert players.
-- `npm run players:version -- <edition>`: set active player edition.
+### Public pages
 
-## Routes
+- `/`
+- `/login`
+- `/register`
+- `/players`
+- `/players/compare`
+- `/players/[id]`
+- `/tournaments`
 
-### Pages
+### Protected pages
 
-- `/`: landing page.
-- `/players`: player catalog.
-- `/tournaments`: tournament listing.
-- `/register`: registration page.
-- `/login`: login page.
-- `/dashboard`: manager dashboard (auth required).
-- `/admin`: admin panel (admin only).
-- `/auction/[roomId]`: live auction room (auth required).
+- `/dashboard`
+- `/dashboard/lineup`
+- `/dashboard/achievements`
+- `/auction/[roomId]`
 
-### API Endpoints
+### Admin pages
 
-- `POST /api/auth/register`: register manager account.
-- `GET/POST /api/auth/[...nextauth]`: NextAuth handler endpoints.
-- `GET /api/players`: list players (supports `edition`, `search`).
-- `GET /api/players/version`: get active edition and available editions.
-- `POST /api/players/version`: set active edition (admin only).
-- `GET /api/dashboard`: manager dashboard stats (auth required).
-- `GET /api/dashboard/lineup`: get manager lineup for a room.
-- `PUT /api/dashboard/lineup`: save manager lineup.
-- `GET /api/dashboard/achievements`: get manager achievements.
-- `GET /api/auction/rooms`: list auction rooms.
-- `POST /api/auction/rooms`: create auction room (admin only).
-- `DELETE /api/auction/rooms`: delete auction room and related room data (admin only).
-- `GET /api/auction/room/:roomId/state`: room snapshot and recent bids.
-- `GET /api/auction/room/:roomId/manager-state`: manager budget/slot state and recent audit entries.
-- `GET /api/admin`: admin-protected test endpoint.
-- `GET/PATCH /api/admin/settings`: read/update runtime auction settings and active edition.
-- `GET /api/admin/room-access`: list manager room permissions for a room.
-- `POST /api/admin/room-access`: grant/revoke manager room access, plus bulk grant-all/revoke-all.
-- `GET /api/admin/achievements`: admin achievement history view.
-- `POST /api/admin/achievements`: award tournament badge.
-- `DELETE /api/admin/achievements`: revoke tournament badge.
-- `GET/POST/PATCH/DELETE /api/admin/users`: admin user management.
-- `GET/POST/PATCH /api/admin/manager-stats`: room roster overrides, budget adjustments, room end/reset.
-- `GET /api/admin/tournaments`: list admin-managed tournaments.
-- `POST /api/admin/tournaments`: create tournament.
-- `PATCH /api/admin/tournaments`: update tournament.
-- `DELETE /api/admin/tournaments`: delete tournament.
-- `GET /api/test-db`: quick DB connectivity check.
+- `/admin`
+- `/admin/settings`
+
+## API Endpoints
+
+### Auth
+
+- `POST /api/auth/register`
+- `GET,POST /api/auth/[...nextauth]`
+
+### Players
+
+- `GET /api/players`
+- `GET /api/players/version`
+- `POST /api/players/version` (admin only)
+
+### Dashboard
+
+- `GET /api/dashboard`
+- `GET /api/dashboard/lineup`
+- `PUT /api/dashboard/lineup`
+- `GET /api/dashboard/achievements`
+
+### Auction
+
+- `GET /api/auction/rooms`
+- `POST /api/auction/rooms` (admin only)
+- `DELETE /api/auction/rooms` (admin only)
+- `GET /api/auction/room/[roomId]/state`
+- `GET /api/auction/room/[roomId]/manager-state`
+
+### Admin
+
+- `GET /api/admin`
+- `GET,PATCH /api/admin/settings`
+- `GET,POST /api/admin/room-access`
+- `GET,POST,PATCH /api/admin/manager-stats`
+- `GET,POST,PATCH,DELETE /api/admin/users`
+- `GET,POST,DELETE /api/admin/achievements`
+- `GET,POST,PATCH,DELETE /api/admin/tournaments`
+
+### Diagnostics
+
+- `GET /api/test-db`
 
 ## Database Collections
 
@@ -229,11 +216,7 @@ db.users.updateOne(
 
 ## Development Notes
 
-- Middleware protects `/dashboard`, `/admin`, and `/auction/*`.
-- Socket connections are validated against authenticated session token before realtime actions.
-- Realtime admin actions are enforced server-side (not only in UI).
-- Bid constraints are validated server-side (increment, budget/squad limits, cooldown, race safety).
-- Room access checks are enforced in page guard, APIs, room list queries, and socket room join.
-- Tournament standings/fixtures are maintained through admin panel tournament management.
-- App DB name is `fc26-auction` (set in code).
+- Database name is fixed in code as `fc26-auction`.
 - Default round timer is `120` seconds.
+- Room access checks are enforced in page guards, APIs, room queries, and socket room joins.
+- Critical auction actions are validated server-side, not only in the UI.
