@@ -1,4 +1,4 @@
-# FC26 Auction
+# FC26 Auction (Testing Phase)
 
 Real-time football player auction platform built with Next.js App Router, NextAuth, MongoDB, and Socket.IO.
 
