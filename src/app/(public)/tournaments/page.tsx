@@ -9,13 +9,16 @@ import Link from "next/link";
 
 export default async function TournamentsPage() {
   const session = await auth();
+  // Normalize the viewer role so downstream UI checks can stay simple.
   const viewerRole = session?.user?.role === "admin" ? "admin" : session?.user?.role === "manager" ? "manager" : "guest";
 
   let liveTournaments: Tournament[] = [];
   try {
+    // Prefer live tournament data from MongoDB when available.
     const db = await getDb();
     const dbTournaments = await db.collection("tournaments").find({}).sort({ createdAt: -1 }).toArray();
 
+    // Coerce DB values into the Tournament shape used by UI components.
     liveTournaments = dbTournaments.map((entry) => ({
       id: String(entry.id ?? ""),
       name: String(entry.name ?? ""),
@@ -28,15 +31,18 @@ export default async function TournamentsPage() {
       fixtures: Array.isArray(entry.fixtures) ? (entry.fixtures as Tournament["fixtures"]) : [],
     }));
   } catch {
+    // Fall back to static seeded data if DB is unavailable.
     liveTournaments = tournaments;
   }
 
+  // Pre-group tournaments for summary cards and sectioned rendering.
   const grouped = {
     live: liveTournaments.filter((t) => t.status === "Live"),
     upcoming: liveTournaments.filter((t) => t.status === "Upcoming"),
     completed: liveTournaments.filter((t) => t.status === "Completed"),
   };
 
+  // Aggregate total participants across all loaded tournaments.
   const totalParticipants = liveTournaments.reduce((sum, t) => sum + t.participants, 0);
 
   return (
@@ -47,6 +53,7 @@ export default async function TournamentsPage() {
           <p className="mt-2 text-slate-400">
             View fixtures, results, and points tables published by admin.
           </p>
+          {/* Show role-specific quick actions to keep navigation contextual. */}
           <div className="mt-4 flex flex-wrap gap-2">
             {viewerRole === "admin" ? (
               <>
@@ -78,6 +85,7 @@ export default async function TournamentsPage() {
             )}
           </div>
 
+          {/* Messaging block clarifies that tournament lifecycle is admin-owned. */}
           <div className="mt-4 rounded-2xl border border-cyan-400/30 bg-cyan-500/10 p-4">
             <p className="text-sm font-semibold text-cyan-200">Tournament data is admin-managed.</p>
             <p className="mt-1 text-xs text-cyan-100/90">
@@ -86,6 +94,7 @@ export default async function TournamentsPage() {
           </div>
         </div>
 
+        {/* Top-level counters provide quick status overview before card details. */}
         <div className="mb-8 grid gap-4 md:grid-cols-4">
           <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
             <p className="text-xs text-slate-400">Live</p>
@@ -105,6 +114,7 @@ export default async function TournamentsPage() {
           </div>
         </div>
 
+        {/* Render each status section only when it has tournaments to show. */}
         {grouped.live.length > 0 && (
           <div className="mb-10">
             <h2 className="text-xl font-bold text-emerald-300">Live Tournaments</h2>
@@ -141,6 +151,7 @@ export default async function TournamentsPage() {
           </div>
         )}
 
+        {/* Empty state appears only when no tournaments were loaded at all. */}
         {liveTournaments.length === 0 && (
           <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-center">
             <p className="text-sm text-slate-300">No tournaments published yet.</p>
