@@ -26,6 +26,7 @@ export function HeroSection() {
           </div>
         </div>
 
+        {/* Right-side preview card highlights the live auction experience. */}
         <div className="panel-glass stagger-rise rounded-3xl p-6 shadow-2xl" style={{ animationDelay: "120ms" }}>
           <div className="space-y-4">
             <div className="rounded-2xl bg-slate-900 p-5">
