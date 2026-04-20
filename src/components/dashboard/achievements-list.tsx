@@ -9,6 +9,7 @@ export function AchievementsList() {
   const [error, setError] = useState("");
   const [achievements, setAchievements] = useState<TournamentAchievement[]>([]);
 
+  // Shared loader for the initial fetch and any future refresh action.
   const loadAchievements = useCallback(async () => {
     setLoading(true);
     setError("");
