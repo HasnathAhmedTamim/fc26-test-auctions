@@ -21,6 +21,7 @@ export const metadata: Metadata = {
   description: "Build your squad, bid live, dominate the tournament.",
 };
 
+// Wraps the app with shared providers and global navigation/footer chrome.
 export default function RootLayout({
   children,
 }: Readonly<{
