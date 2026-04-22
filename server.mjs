@@ -14,6 +14,7 @@ import {
   validateBidAmount,
 } from "./src/lib/auction-realtime-guards.mjs";
 
+// Load environment variables from .env.local file for local development.
 dotenv.config({ path: ".env.local" });
 
 const dev = process.env.NODE_ENV !== "production";
