@@ -13,7 +13,7 @@ function toObjectId(value: string) {
     return null;
   }
 }
-
+// NextAuth's built-in CSRF protection and secure cookie handling mitigate common vulnerabilities like CSRF and session hijacking.
 export const { handlers, signIn, signOut, auth } = NextAuth({
   session: {
     strategy: "jwt",
