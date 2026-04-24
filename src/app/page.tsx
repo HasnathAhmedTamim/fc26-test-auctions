@@ -4,12 +4,14 @@ import { FeatureSection } from "@/components/home/feature-section";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 
+//HomePage
 export default function HomePage() {
   return (
     <>
+      
       <HeroSection />
       <FeatureSection />
-
+     
       <section className="relative pb-24 pt-6">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(16,185,129,0.12),transparent_45%),radial-gradient(circle_at_80%_100%,rgba(250,204,21,0.08),transparent_40%)]" />
         <Container className="relative">
