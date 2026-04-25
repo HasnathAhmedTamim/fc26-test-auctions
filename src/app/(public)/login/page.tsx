@@ -2,20 +2,22 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { Container } from "@/components/layout/container";
 import { LoginForm } from "@/components/auth/login-form";
+import { getSafePath } from "@/lib/safe-path";
 
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams?: { callbackUrl?: string };
+  searchParams: Promise<{ callbackUrl?: string | string[] }>;
 }) {
   const session = await auth();
-
-  const callbackUrl = searchParams?.callbackUrl;
+  const { callbackUrl } = await searchParams;
+  const safeCallback = getSafePath(callbackUrl);
 
   // redirect logged in users
   if (session?.user) {
     const redirectTo =
-      session.user.role === "admin" ? "/admin" : "/dashboard";
+      safeCallback ??
+      (session.user.role === "admin" ? "/admin" : "/dashboard");
 
     redirect(redirectTo);
   }
@@ -37,7 +39,7 @@ export default async function LoginPage({
             the control panel.
           </p>
 
-          <LoginForm callbackUrl={callbackUrl} />
+          <LoginForm callbackUrl={safeCallback} />
         </div>
       </Container>
     </section>
