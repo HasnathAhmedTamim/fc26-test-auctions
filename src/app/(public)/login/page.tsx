@@ -4,6 +4,7 @@ import { Container } from "@/components/layout/container";
 import { LoginForm } from "@/components/auth/login-form";
 import { getSafePath } from "@/lib/safe-path";
 
+// This page is rendered on the server to check for an active session and redirect if necessary. If no session is found, it renders the login form.
 export default async function LoginPage({
   searchParams,
 }: {
