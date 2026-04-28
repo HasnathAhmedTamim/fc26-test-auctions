@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { getDb } from "@/lib/mongodb";
 import { registerSchema } from "@/lib/validations";
-
+// Using a cost factor of 10 for bcrypt provides a good balance between security and performance for typical web applications. It makes password hashing computationally expensive enough to deter brute-force attacks while still allowing for reasonable response times during user registration and login processes.
 export async function POST(req: Request) {
   try {
     const body = await req.json();
