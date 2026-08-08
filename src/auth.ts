@@ -1,14 +1,13 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
+import { authConfig } from "@/auth.config";
 import { getDb } from "@/lib/mongodb";
 import { toObjectId } from "@/lib/db/object-id";
 import { loginSchema } from "@/lib/validations";
-// NextAuth's built-in CSRF protection and secure cookie handling mitigate common vulnerabilities like CSRF and session hijacking.
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  session: {
-    strategy: "jwt",
-  },
+  ...authConfig,
   providers: [
     Credentials({
       credentials: {
@@ -19,7 +18,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const parsed = loginSchema.safeParse(credentials);
 
         if (!parsed.success) return null;
-        // Normalize email so login is case-insensitive and whitespace-tolerant.
+
         const normalizedEmail = parsed.data.email.trim().toLowerCase();
 
         const db = await getDb();
@@ -45,6 +44,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
+    ...authConfig.callbacks,
     async jwt({ token, user }) {
       if (user) {
         const incomingRole = (user as { role?: unknown }).role;
@@ -54,7 +54,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         return token;
       }
 
-      // Keep role in sync with DB so manual role changes are reflected in live sessions.
       if (token.sub) {
         const db = await getDb();
         const users = db.collection("users");
@@ -72,37 +71,5 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       return token;
     },
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.sub ?? "";
-        session.user.role = (token.role as "admin" | "manager") ?? "manager";
-      }
-      return session;
-    },
-    async redirect({ url, baseUrl }) {
-      const appUrl = baseUrl.replace(/\/$/, "");
-
-      if (url.startsWith("/")) {
-        return `${appUrl}${url}`;
-      }
-
-      try {
-        const target = new URL(url);
-        const allowed = new URL(appUrl);
-
-        // Prevent open redirects by allowing only same-origin absolute URLs.
-        if (target.origin === allowed.origin) {
-          return url;
-        }
-
-        return appUrl;
-      } catch {
-        return appUrl;
-      }
-    },
   },
-  pages: {
-    signIn: "/login",
-  },
-  trustHost: true,
 });
