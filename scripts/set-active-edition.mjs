@@ -1,5 +1,13 @@
-import "dotenv/config";
+import dotenv from "dotenv";
+import dns from "node:dns";
 import { MongoClient } from "mongodb";
+
+dotenv.config({ path: ".env.local" });
+
+const dnsServers = process.env.MONGODB_DNS_SERVERS?.split(",").map((value) => value.trim()).filter(Boolean);
+if (dnsServers?.length) {
+  dns.setServers(dnsServers);
+}
 
 const editionArg = (process.argv[2] || "").trim().toLowerCase();
 if (!editionArg) {
