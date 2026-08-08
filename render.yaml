@@ -16,8 +16,8 @@ services:
       - key: AUTH_SECRET
         generateValue: true
       - key: AUTH_URL
-        sync: false
+        value: https://fc26-test-auctions.onrender.com
       - key: NEXT_PUBLIC_APP_URL
-        sync: false
+        value: https://fc26-test-auctions.onrender.com
       - key: MONGODB_DNS_SERVERS
         value: 8.8.8.8,1.1.1.1

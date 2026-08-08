@@ -63,14 +63,15 @@ export function useAuctionSocket(
     });
     socketRef.current = socket;
 
-    socket.on("connect", () => setConnectionStatus("connected"));
+    socket.on("connect", () => {
+      setConnectionStatus("connected");
+      socket.emit(E.JOIN, {
+        roomId,
+        user: { id: user.id, name: user.name, role: user.role },
+      });
+    });
     socket.on("disconnect", () => setConnectionStatus("disconnected"));
     socket.on("connect_error", () => setConnectionStatus("error"));
-
-    socket.emit(E.JOIN, {
-      roomId,
-      user: { id: user.id, name: user.name, role: user.role },
-    });
 
     socket.on(E.STATE, (payload) => handlersRef.current.onState(payload));
     socket.on(E.NEW_BID, (bid) => handlersRef.current.onNewBid(bid));

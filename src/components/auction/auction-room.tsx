@@ -164,16 +164,22 @@ export function AuctionRoom({ roomId, user }: Props) {
   useEffect(() => {
     let cancelled = false;
 
-    async function loadPlayers() {
+    async function loadPlayers(attempt = 0) {
       const all: Player[] = [];
       let page = 1;
       let hasMore = true;
 
       while (hasMore) {
         const res = await fetch(`/api/players?limit=200&page=${page}`, { cache: "no-store" });
-        const data = await res.json();
-        if (!res.ok) break;
+        if (!res.ok) {
+          if (attempt < 4) {
+            await new Promise((resolve) => window.setTimeout(resolve, 1500 * (attempt + 1)));
+            return loadPlayers(attempt + 1);
+          }
+          break;
+        }
 
+        const data = await res.json();
         all.push(...(data.players ?? []));
         hasMore = Boolean(data.hasMore);
         page += 1;
@@ -413,9 +419,8 @@ export function AuctionRoom({ roomId, user }: Props) {
 
       {socketActions.connectionStatus === "error" || socketActions.connectionStatus === "disconnected" ? (
         <div className="col-span-full rounded-2xl border border-red-500/30 bg-red-500/10 px-5 py-3 text-sm text-red-200">
-          Real-time auction updates are unavailable. This app must run on a Node host with{" "}
-          <code className="rounded bg-black/30 px-1">npm start</code> (Render, Railway, etc.). Vercel-only
-          deploys do not support Socket.IO. See README → &quot;Production (live auction)&quot;.
+          Real-time auction updates are unavailable. Try refreshing, then log out and log back in on this
+          site. Sessions from localhost or another domain will not connect here.
         </div>
       ) : null}
 

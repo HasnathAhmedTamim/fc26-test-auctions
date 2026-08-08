@@ -26,6 +26,36 @@ function resolveAppUrl() {
     .replace(/\/$/, "");
 }
 
+function resolveAllowedOrigins() {
+  return [
+    resolveAppUrl(),
+    process.env.RENDER_EXTERNAL_URL,
+    process.env.AUTH_URL,
+    process.env.NEXT_PUBLIC_APP_URL,
+  ]
+    .filter(Boolean)
+    .map((value) => String(value).trim().replace(/\/$/, ""));
+}
+
+function createCorsOriginChecker() {
+  const allowed = new Set(resolveAllowedOrigins());
+
+  return (origin, callback) => {
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
+
+    const normalized = origin.replace(/\/$/, "");
+    if (allowed.has(normalized)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error(`Socket.IO CORS blocked origin: ${origin}`));
+  };
+}
+
 const dev = process.env.NODE_ENV !== "production";
 // Do not use process.env.HOSTNAME — Render/Linux containers set it to the pod name,
 // which breaks load balancer routing (502). Always bind all interfaces in production.
@@ -107,7 +137,7 @@ async function bootstrap() {
 
     const io = new Server(httpServer, {
       cors: {
-        origin: appUrl,
+        origin: createCorsOriginChecker(),
         methods: ["GET", "POST"],
         credentials: true,
       },
