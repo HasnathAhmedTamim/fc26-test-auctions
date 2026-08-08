@@ -159,6 +159,12 @@ If you see **HTTP 502**:
 
 Free tier cold starts can take 30–60 seconds after idle; wait and refresh once.
 
+**Why you see 502 on first visit:** Render free tier sleeps after ~15 minutes idle. The first request wakes the server and may return **502** for 30–60 seconds. Refresh after a minute — `/health` should return `ok` and the site will load.
+
+**Keep it awake (free):** Use [UptimeRobot](https://uptimerobot.com) or similar to ping `https://fc26-test-auctions.onrender.com/health` every **10–14 minutes**.
+
+**Always on:** Upgrade the Render service to a paid plan.
+
 #### Railway
 
 1. [Railway](https://railway.app) → **New Project** → **Deploy from GitHub** → select repo.
