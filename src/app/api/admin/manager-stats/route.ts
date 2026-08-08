@@ -1,44 +1,11 @@
-import { ObjectId } from "mongodb";
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/mongodb";
-import { getActivePlayerEdition } from "@/lib/player-edition";
 import { requireAdmin } from "@/lib/roles";
-
-type ManagerPlayer = {
-  playerId: string;
-  playerName: string;
-  amount: number;
-};
-
-// Centralized audit writer keeps admin actions traceable across all mutation paths.
-async function createAuditEntry(
-  db: Awaited<ReturnType<typeof getDb>>,
-  input: {
-    roomId: string;
-    userId: string;
-    userName: string;
-    action: "add" | "remove" | "adjust-budget" | "room-end" | "room-reset";
-    message: string;
-  }
-) {
-  await db.collection("adminAuditLog").insertOne({
-    roomId: input.roomId,
-    userId: input.userId,
-    userName: input.userName,
-    action: input.action,
-    message: input.message,
-    createdAt: new Date().toISOString(),
-  });
-}
-
-// Converts string IDs for lookups against Mongo _id fields.
-function toObjectId(value: string) {
-  try {
-    return new ObjectId(value);
-  } catch {
-    return null;
-  }
-}
+import {
+  getManagerRoster,
+  mutateManagerStats,
+  mutateRoomLifecycle,
+} from "@/services/manager-stats.service";
 
 export async function GET(request: NextRequest) {
   const access = await requireAdmin();
@@ -50,66 +17,12 @@ export async function GET(request: NextRequest) {
   }
 
   const db = await getDb();
-  const [room, users, stats] = await Promise.all([
-    db.collection("auctionRooms").findOne({ roomId }),
-    db.collection("users").find({ role: "manager" }).sort({ name: 1 }).toArray(),
-    db.collection("managerStats").find({ roomId }).toArray(),
-  ]);
-
-  if (!room) {
+  const roster = await getManagerRoster(db, roomId);
+  if (!roster) {
     return NextResponse.json({ error: "Room not found" }, { status: 404 });
   }
 
-  // Seed all managers so API response is stable even when stats documents are missing.
-  const managers = new Map<string, {
-    userId: string;
-    userName: string;
-    email: string;
-    budgetSpent: number;
-    playersBought: ManagerPlayer[];
-  }>();
-
-  for (const user of users) {
-    managers.set(String(user._id), {
-      userId: String(user._id),
-      userName: String(user.name ?? "Unknown Manager"),
-      email: String(user.email ?? ""),
-      budgetSpent: 0,
-      playersBought: [],
-    });
-  }
-
-  for (const stat of stats) {
-    // Merge persisted room stats on top of seeded manager defaults.
-    const userId = String(stat.userId ?? "");
-    const existing = managers.get(userId);
-    const playersBought = Array.isArray(stat.playersBought)
-      ? stat.playersBought.map((player: { playerId?: string; playerName?: string; amount?: number }) => ({
-          playerId: String(player.playerId ?? ""),
-          playerName: String(player.playerName ?? "Unknown Player"),
-          amount: Number(player.amount ?? 0),
-        }))
-      : [];
-
-    managers.set(userId, {
-      userId,
-      userName: String(stat.userName ?? existing?.userName ?? "Unknown Manager"),
-      email: existing?.email ?? "",
-      budgetSpent: Number(stat.budgetSpent ?? 0),
-      playersBought,
-    });
-  }
-
-  return NextResponse.json({
-    room: {
-      roomId: room.roomId,
-      name: room.name,
-      budget: Number(room.budget ?? 0),
-      maxPlayers: Number(room.maxPlayers ?? 0),
-      status: room.status,
-    },
-    managers: [...managers.values()].sort((a, b) => a.userName.localeCompare(b.userName)),
-  });
+  return NextResponse.json(roster);
 }
 
 export async function POST(request: NextRequest) {
@@ -136,202 +49,20 @@ export async function POST(request: NextRequest) {
   }
 
   const db = await getDb();
-  const statsCollection = db.collection("managerStats");
-  const room = await db.collection("auctionRooms").findOne({ roomId });
-
-  if (!room) {
-    return NextResponse.json({ error: "Room not found" }, { status: 404 });
-  }
-
-  const existingStat = await statsCollection.findOne({ roomId, userId });
-  const userObjectId = toObjectId(userId);
-  const user = userObjectId
-    ? await db.collection("users").findOne({ _id: userObjectId, role: "manager" })
-    : null;
-
-  const userName = String(existingStat?.userName ?? user?.name ?? "Unknown Manager");
-
-  // `add`, `remove`, and `adjust-budget` all mutate manager room stats through one endpoint.
-  if (action === "add") {
-    const edition = await getActivePlayerEdition(db);
-    const player = await db.collection("players").findOne({ edition, playerId });
-
-    if (!player) {
-      return NextResponse.json({ error: "Player not found" }, { status: 404 });
-    }
-
-    const alreadyOwned = existingStat?.playersBought?.some(
-      (owned: { playerId?: string }) => String(owned.playerId ?? "") === playerId
-    );
-
-    if (alreadyOwned) {
-      return NextResponse.json(
-        { error: `${userName} already has ${player.name}` },
-        { status: 409 }
-      );
-    }
-
-    const amount = Number.isFinite(amountValue) && amountValue >= 0
-      ? amountValue
-      : Number(player.price ?? 0);
-    // Enforce room-level squad size and budget constraints before committing roster updates.
-    const budgetLimit = Number(room.budget ?? 0);
-    const maxPlayers = Number(room.maxPlayers ?? 0);
-    const currentPlayersBought = Array.isArray(existingStat?.playersBought)
-      ? existingStat.playersBought.length
-      : 0;
-
-    if (maxPlayers > 0 && currentPlayersBought >= maxPlayers) {
-      return NextResponse.json(
-        { error: `${userName} already reached the room squad limit (${maxPlayers}).` },
-        { status: 409 }
-      );
-    }
-
-    const nextPlayersBought = [
-      ...((Array.isArray(existingStat?.playersBought) ? existingStat.playersBought : []) as ManagerPlayer[]),
-      {
-        playerId,
-        playerName: String(player.name ?? "Unknown Player"),
-        amount,
-      },
-    ];
-    const nextBudgetSpent = Number(existingStat?.budgetSpent ?? 0) + amount;
-
-    if (budgetLimit > 0 && nextBudgetSpent > budgetLimit) {
-      return NextResponse.json(
-        {
-          error: `Cannot add ${player.name}. ${userName} would exceed room budget (${budgetLimit}).`,
-        },
-        { status: 409 }
-      );
-    }
-
-    await statsCollection.updateOne(
-      { roomId, userId },
-      {
-        $set: {
-          // Store a full snapshot of manager roster state for fast dashboard reads.
-          roomId,
-          userId,
-          userName,
-          budgetSpent: nextBudgetSpent,
-          playersBought: nextPlayersBought,
-          updatedAt: new Date(),
-        },
-        $setOnInsert: {
-          createdAt: new Date(),
-        },
-      },
-      { upsert: true }
-    );
-
-    await createAuditEntry(db, {
-      roomId,
-      userId,
-      userName,
-      action: "add",
-      message: `Admin added ${player.name} to your squad for ${amount} coins.`,
-    });
-
-    return NextResponse.json({
-      ok: true,
-      message: `${player.name} added to ${userName}`,
-    });
-  }
-
-  if (action === "adjust-budget") {
-    const adjustment = Number(body.adjustment ?? 0);
-    if (!Number.isFinite(adjustment)) {
-      return NextResponse.json({ error: "Invalid adjustment value" }, { status: 400 });
-    }
-    const currentSpent = Number(existingStat?.budgetSpent ?? 0);
-    const budgetLimit = Number(room.budget ?? 0);
-    // Never let manual adjustments push spent budget below zero.
-    const newBudgetSpent = Math.max(0, currentSpent + adjustment);
-
-    if (budgetLimit > 0 && newBudgetSpent > budgetLimit) {
-      return NextResponse.json(
-        { error: `Adjusted spent budget cannot exceed room budget (${budgetLimit}).` },
-        { status: 409 }
-      );
-    }
-
-    await statsCollection.updateOne(
-      { roomId, userId },
-      {
-        $set: {
-          roomId,
-          userId,
-          userName,
-          budgetSpent: newBudgetSpent,
-          updatedAt: new Date(),
-        },
-        $setOnInsert: { createdAt: new Date() },
-      },
-      { upsert: true }
-    );
-
-    const direction = adjustment >= 0 ? `+${adjustment}` : String(adjustment);
-    await createAuditEntry(db, {
-      roomId,
-      userId,
-      userName,
-      action: "adjust-budget",
-      message: `Admin adjusted your spent budget by ${direction} coins. New spent total: ${newBudgetSpent}.`,
-    });
-
-    return NextResponse.json({
-      ok: true,
-      message: `Budget adjusted (${direction}) → ${newBudgetSpent} spent for ${userName}`,
-    });
-  }
-
-  if (!existingStat) {
-    return NextResponse.json({ error: "Manager roster not found" }, { status: 404 });
-  }
-
-  const playersBought = Array.isArray(existingStat.playersBought)
-    ? [...existingStat.playersBought]
-    : [];
-  const playerIndex = playersBought.findIndex(
-    (owned: { playerId?: string }) => String(owned.playerId ?? "") === playerId
-  );
-
-  if (playerIndex === -1) {
-    return NextResponse.json({ error: "Player not found in roster" }, { status: 404 });
-  }
-
-  const [removedPlayer] = playersBought.splice(playerIndex, 1);
-  // Keep spent budget non-negative even when historical amounts are inconsistent.
-  const nextBudgetSpent = Math.max(
-    0,
-    Number(existingStat.budgetSpent ?? 0) - Number(removedPlayer?.amount ?? 0)
-  );
-
-  await statsCollection.updateOne(
-    { roomId, userId },
-    {
-      $set: {
-        playersBought,
-        budgetSpent: nextBudgetSpent,
-        updatedAt: new Date(),
-      },
-    }
-  );
-
-  await createAuditEntry(db, {
+  const result = await mutateManagerStats(db, {
     roomId,
     userId,
-    userName,
-    action: "remove",
-    message: `Admin removed ${removedPlayer.playerName} from your squad and refunded ${Number(removedPlayer?.amount ?? 0)} coins from spent budget.`,
+    action,
+    playerId,
+    amount: amountValue,
+    adjustment: Number(body.adjustment ?? 0),
   });
 
-  return NextResponse.json({
-    ok: true,
-    message: `${removedPlayer.playerName} removed from ${userName}`,
-  });
+  if (!result.ok) {
+    return NextResponse.json({ error: result.error }, { status: result.status });
+  }
+
+  return NextResponse.json({ ok: true, message: result.message });
 }
 
 export async function PATCH(request: NextRequest) {
@@ -346,55 +77,16 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "roomId is required" }, { status: 400 });
   }
 
+  if (action !== "end" && action !== "reset") {
+    return NextResponse.json({ error: "Invalid action" }, { status: 400 });
+  }
+
   const db = await getDb();
-  const room = await db.collection("auctionRooms").findOne({ roomId });
-  if (!room) {
-    return NextResponse.json({ error: "Room not found" }, { status: 404 });
+  const result = await mutateRoomLifecycle(db, roomId, action);
+
+  if (!result.ok) {
+    return NextResponse.json({ error: result.error }, { status: result.status });
   }
 
-  // PATCH is reserved for room-level lifecycle actions (`end` or `reset`).
-  if (action === "end") {
-    // Room-level action is also written to audit log for manager timeline visibility.
-    await db.collection("auctionRooms").updateOne(
-      { roomId },
-      { $set: { status: "ended", updatedAt: new Date() } }
-    );
-    await db.collection("adminAuditLog").insertOne({
-      roomId,
-      userId: "room",
-      userName: "Room",
-      action: "room-end",
-      message: `Admin ended room ${room.name ?? roomId}.`,
-      createdAt: new Date().toISOString(),
-    });
-    return NextResponse.json({ ok: true, message: "Room ended" });
-  }
-
-  if (action === "reset") {
-    // Reset clears active bidding fields so the next player starts from a clean state.
-    await db.collection("auctionRooms").updateOne(
-      { roomId },
-      {
-        $set: {
-          status: "waiting",
-          currentPlayer: null,
-          currentBid: 0,
-          highestBidderId: null,
-          highestBidderName: null,
-          updatedAt: new Date(),
-        },
-      }
-    );
-    await db.collection("adminAuditLog").insertOne({
-      roomId,
-      userId: "room",
-      userName: "Room",
-      action: "room-reset",
-      message: `Admin reset room ${room.name ?? roomId} back to waiting.`,
-      createdAt: new Date().toISOString(),
-    });
-    return NextResponse.json({ ok: true, message: "Room reset to waiting" });
-  }
-
-  return NextResponse.json({ error: "Invalid action" }, { status: 400 });
+  return NextResponse.json({ ok: true, message: result.message });
 }

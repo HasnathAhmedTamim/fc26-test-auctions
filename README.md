@@ -63,7 +63,13 @@ FC26 Auction supports a full manager/admin workflow:
 npm install
 ```
 
-2. Create `.env.local` in project root:
+2. Copy environment variables:
+
+```bash
+cp .env.example .env.local
+```
+
+Then edit `.env.local` with your values:
 
 ```env
 MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>/<db>?retryWrites=true&w=majority
@@ -78,7 +84,29 @@ AUTH_URL=http://localhost:3000
 npm run dev
 ```
 
-The app runs through the custom server in `server.mjs` (Next.js + Socket.IO) on port `3000`.
+The app runs through the custom server in `server/index.mjs` (Next.js + Socket.IO) on port `3000`. The root `server.mjs` re-exports the modular server entry point.
+
+## Project Structure
+
+```
+src/
+  app/
+    (public)/          # Marketing/auth pages (login, register, players, tournaments)
+    (app)/             # Authenticated app pages (dashboard, admin, auction)
+    api/               # Route handlers
+  components/
+    features/admin/    # Admin panel tabs + useAdminPanel hook
+    auction/           # Auction room UI
+  hooks/               # Shared React hooks (e.g. useAuctionSocket, useFetchJson)
+  lib/                 # DB helpers, auth, validations, auction settings
+  services/            # Data-access layer used by API routes
+  types/               # Shared TypeScript types
+
+server/
+  index.mjs            # HTTP + Socket.IO bootstrap
+  lib/db.mjs           # Server-side Mongo helpers
+  socket/              # Socket auth, room runtime, event handlers
+```
 
 ## Environment Variables
 
@@ -92,13 +120,33 @@ The app runs through the custom server in `server.mjs` (Next.js + Socket.IO) on 
 | `NEXTAUTH_SECRET` | Optional | Legacy/fallback secret check in middleware |
 | `VERCEL_URL` | Optional | Used as redirect fallback in hosted environments |
 
+### Production (Vercel)
+
+Set these in the [Vercel project environment variables](https://vercel.com/docs/projects/environment-variables) for [fc26-test-auctions.vercel.app](https://fc26-test-auctions.vercel.app/):
+
+```env
+MONGODB_URI=<your-atlas-uri>
+AUTH_SECRET=<same-secret-as-local-or-new-one>
+AUTH_URL=https://fc26-test-auctions.vercel.app
+NEXT_PUBLIC_APP_URL=https://fc26-test-auctions.vercel.app
+```
+
+Use **Production** scope for all four variables. Redeploy after changing env vars.
+
+Automated setup (after `vercel login`):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/set-vercel-production-env.ps1
+vercel --prod
+```
+
 ## Scripts
 
 | Command | Description |
 | --- | --- |
-| `npm run dev` | Start development server using `server.mjs` |
+| `npm run dev` | Start development server using `server/index.mjs` |
 | `npm run build` | Build Next.js production assets |
-| `npm run start` | Start production server using `server.mjs` |
+| `npm run start` | Start production server using `server/index.mjs` |
 | `npm run lint` | Run ESLint |
 | `npm run test` | Run Vitest test suite |
 | `npm run import:players -- <file> <edition>` | Import/upsert players from JSON and set active edition |
@@ -216,7 +264,7 @@ db.users.updateOne(
 
 ## Development Notes
 
-- Database name is fixed in code as `fc26-auction`.
+- Database name is configured in `src/lib/db/constants.ts` as `fc26-auction`.
 - Default round timer is `120` seconds.
 - Room access checks are enforced in page guards, APIs, room queries, and socket room joins.
 - Critical auction actions are validated server-side, not only in the UI.

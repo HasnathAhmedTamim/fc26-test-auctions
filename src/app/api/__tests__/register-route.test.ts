@@ -43,7 +43,10 @@ describe("POST /api/auth/register", () => {
 
     expect(res.status).toBe(409);
     expect(json.error).toBe("User already exists");
-    expect(findOneMock).toHaveBeenCalledWith({ email: "manager@example.com" });
+    expect(findOneMock).toHaveBeenCalledWith(
+      { email: "manager@example.com" },
+      { projection: { _id: 1 } }
+    );
   });
 
   it("creates user and returns inserted id", async () => {

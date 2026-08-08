@@ -7,76 +7,7 @@ import { PlayerFilterSidebar } from "@/components/players/player-filter-sidebar"
 import { PlayerCard } from "@/components/players/player-card";
 import { Button } from "@/components/ui/button";
 import { Player } from "@/types/player";
-
-type Fc24RawPlayer = {
-  name?: string;
-  position?: string;
-  overall?: number;
-  pace?: number;
-  shooting?: number;
-  passing?: number;
-  dribbling?: number;
-  defending?: number;
-  physicality?: number;
-  nation?: string;
-  club?: string;
-  league?: string;
-  cardPicture?: string;
-  picture?: string;
-  age?: number;
-  foot?: string;
-  height?: string;
-  weight?: string;
-  playStyle?: string;
-  slug?: string;
-};
-
-function derivePrice(overall: number) {
-  // Keep fallback pricing aligned with server-side seeding conventions.
-  return Math.round(overall * 4.5);
-}
-
-function mapFc24ToPlayer(item: Fc24RawPlayer, idx: number): Player {
-  // Normalize JSON fallback rows into the app-wide `Player` shape.
-  const rating = Number(item.overall ?? 60);
-  const id = String(item.slug ?? `${item.name ?? "player"}-${idx}`)
-    .toLowerCase()
-    .replace(/[^a-z0-9-]+/g, "-");
-
-  return {
-    id,
-    name: String(item.name ?? `Player ${idx + 1}`),
-    rating,
-    position: String(item.position ?? "CM"),
-    club: String(item.club ?? "Unknown Club"),
-    league: String(item.league ?? "Unknown League"),
-    nation: String(item.nation ?? "Unknown Nation"),
-    price: derivePrice(rating),
-    pace: Number(item.pace ?? 50),
-    shooting: Number(item.shooting ?? 50),
-    passing: Number(item.passing ?? 50),
-    dribbling: Number(item.dribbling ?? 50),
-    defending: Number(item.defending ?? 50),
-    physical: Number(item.physicality ?? 50),
-    // Prefer higher-resolution card art variant when JSON includes `.adapt.50w` URLs.
-    image: (String(item.picture ?? "").trim().replace(".adapt.50w.png", ".adapt.320w.png") || String(item.cardPicture ?? "").trim()) || "/player-placeholder.svg",
-    age: Number(item.age ?? 27),
-    preferredFoot: item.foot === "Left" ? "Left" : "Right",
-    height: String(item.height ?? ""),
-    weight: String(item.weight ?? ""),
-    playstyles: item.playStyle
-      ? String(item.playStyle)
-          .split(/[|,;/]+/)
-          .map((v) => v.trim())
-          .filter(Boolean)
-          .map((name) => ({
-            name,
-            description: `${name} trait`,
-            plus: name.includes("+") || name.toLowerCase().endsWith("plus"),
-          }))
-      : [],
-  };
-}
+import { fetchPlayersFromEditionJson } from "@/lib/players/fallback";
 
 export default function PlayersPage() {
   const [query, setQuery] = useState("");
@@ -142,14 +73,10 @@ export default function PlayersPage() {
           return;
         }
 
-        const fallbackRes = await fetch("/fifa24-player-list.json", {
-          cache: "no-store",
-        });
-        if (!fallbackRes.ok) {
-          throw new Error("Fallback JSON fetch failed");
-        }
-        const raw = (await fallbackRes.json()) as Fc24RawPlayer[];
-        const mapped = Array.isArray(raw) ? raw.map(mapFc24ToPlayer) : [];
+        const versionRes = await fetch("/api/players/version", { cache: "no-store" });
+        const versionData = versionRes.ok ? await versionRes.json() : { activeEdition: "fc24" };
+        const edition = String(versionData.activeEdition ?? "fc24");
+        const mapped = await fetchPlayersFromEditionJson(edition);
         const fallbackFiltered = debouncedQuery
           ? mapped.filter((p) => {
               const q = debouncedQuery.toLowerCase();

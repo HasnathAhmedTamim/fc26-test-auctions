@@ -1,18 +1,9 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import { ObjectId } from "mongodb";
 import { getDb } from "@/lib/mongodb";
+import { toObjectId } from "@/lib/db/object-id";
 import { loginSchema } from "@/lib/validations";
-
-// Safely parse string IDs when tokens need to query Mongo _id fields.
-function toObjectId(value: string) {
-  try {
-    return new ObjectId(value);
-  } catch {
-    return null;
-  }
-}
 // NextAuth's built-in CSRF protection and secure cookie handling mitigate common vulnerabilities like CSRF and session hijacking.
 export const { handlers, signIn, signOut, auth } = NextAuth({
   session: {

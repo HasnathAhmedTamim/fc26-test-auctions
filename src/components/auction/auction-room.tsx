@@ -1,16 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { io, Socket } from "socket.io-client";
 import { Button } from "@/components/ui/button";
 import { AuctionRoomState, BidEntry } from "@/types/auction";
+import { useAuctionSocket } from "@/hooks/use-auction-socket";
 import { LiveFeed } from "./live-feed";
 import { BidPanel } from "./bid-panel";
 import { AuctionPlayerDetails } from "./auction-player-details";
 import { Player } from "@/types/player";
-
-// Module-level socket avoids duplicate connections while this page is mounted.
-let socket: Socket | null = null;
 
 type Props = {
   roomId: string;
@@ -181,28 +178,18 @@ export function AuctionRoom({ roomId, user }: Props) {
     return () => window.clearInterval(interval);
   }, [roomId, user.role, loadManagerRoomState]);
 
-  useEffect(() => {
-    socket = io(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000");
-
-    socket.emit("auction:join", {
-      roomId,
-      user: { id: user.id, name: user.name, role: user.role },
-    });
-
-    socket.on("auction:state", (payload: AuctionRoomState) => {
-      // Server state is authoritative; hydrate local UI from push events.
+  const socketActions = useAuctionSocket(roomId, user, {
+    onState: (payload) => {
       setState(payload);
       setBidAmount(String((payload.currentBid ?? 0) + 10));
       loadRoomHistory();
       loadManagerRoomState();
-    });
-
-    socket.on("auction:new-bid", (bid: BidEntry) => {
+    },
+    onNewBid: (bid) => {
       setState((prev) => ({ ...prev, bidHistory: [...prev.bidHistory, bid] }));
       loadManagerRoomState();
-    });
-
-    socket.on("auction:bid-updated", (payload) => {
+    },
+    onBidUpdated: (payload) => {
       setState((prev) => ({
         ...prev,
         currentBid: payload.currentBid,
@@ -211,25 +198,21 @@ export function AuctionRoom({ roomId, user }: Props) {
       }));
       setBidAmount(String(payload.currentBid + 10));
       loadManagerRoomState();
-    });
-
-    socket.on("auction:started", (payload) => {
-      setState((prev) => ({ ...prev, status: payload.status, timer: payload.timer }));
+    },
+    onStarted: (payload) => {
+      setState((prev) => ({ ...prev, status: payload.status as AuctionRoomState["status"], timer: payload.timer }));
       pushActivity("Auction is live.");
       loadManagerRoomState();
-    });
-
-    socket.on("auction:paused", (payload) => {
-      setState((prev) => ({ ...prev, status: payload.status, timer: payload.timer }));
+    },
+    onPaused: (payload) => {
+      setState((prev) => ({ ...prev, status: payload.status as AuctionRoomState["status"], timer: payload.timer }));
       pushActivity("Auction paused by admin.", "warn");
       loadManagerRoomState();
-    });
-
-    socket.on("auction:timer-tick", ({ timer }: { timer: number }) => {
+    },
+    onTimerTick: ({ timer }) => {
       setState((prev) => ({ ...prev, timer }));
-    });
-
-    socket.on("auction:player-set", ({ player, currentBid }) => {
+    },
+    onPlayerSet: ({ player, currentBid }) => {
       setState((prev) => ({
         ...prev,
         currentPlayer: player,
@@ -242,13 +225,14 @@ export function AuctionRoom({ roomId, user }: Props) {
       }));
       setHasOptedOut(false);
       setBidAmount(String(currentBid + 10));
-      pushActivity(`${player.name} is up for auction. Starting bid: ${currentBid + 10} coins.`);
+      if (player) {
+        pushActivity(`${player.name} is up for auction. Starting bid: ${currentBid + 10} coins.`);
+        showNotification(`${player.name} is up for auction — set a bid and start!`);
+      }
       setAutoPauseAlert(null);
       loadManagerRoomState();
-      showNotification(`${player.name} is up for auction — set a bid and start!`);
-    });
-
-    socket.on("auction:sold", ({ player, winnerName, amount }) => {
+    },
+    onSold: ({ player, winnerName, amount }) => {
       setState((prev) => ({ ...prev, status: "sold" }));
       setAutoPauseAlert(null);
       setHasOptedOut(false);
@@ -264,13 +248,9 @@ export function AuctionRoom({ roomId, user }: Props) {
       pushActivity(`${winnerName} won ${player.name} for ${amount} coins.`, "success");
       loadManagerRoomState();
       loadRoomHistory();
-      showNotification(
-        `${player.name} sold to ${winnerName} for ${amount} coins!`,
-        8000
-      );
-    });
-
-    socket.on("auction:no-bid", ({ message }: { message: string }) => {
+      showNotification(`${player.name} sold to ${winnerName} for ${amount} coins!`, 8000);
+    },
+    onNoBid: ({ message }) => {
       setAutoPauseAlert(null);
       setState((prev) => ({
         ...prev,
@@ -282,9 +262,8 @@ export function AuctionRoom({ roomId, user }: Props) {
       pushActivity("No one bid for this player. Player skipped.", "warn");
       loadManagerRoomState();
       showNotification(message);
-    });
-
-    socket.on("auction:skipped", () => {
+    },
+    onSkipped: () => {
       setAutoPauseAlert(null);
       setState((prev) => ({
         ...prev,
@@ -296,18 +275,15 @@ export function AuctionRoom({ roomId, user }: Props) {
       pushActivity("Admin skipped the current player.", "warn");
       loadManagerRoomState();
       showNotification("Player skipped.");
-    });
-
-    socket.on("auction:you-opted-out", () => {
+    },
+    onYouOptedOut: () => {
       setHasOptedOut(true);
       showNotification("You are out for this player. You can bid again on the next player.");
-    });
-
-    socket.on("auction:user-opted-out", ({ userName }) => {
+    },
+    onUserOptedOut: ({ userName }) => {
       pushActivity(`${userName} is out for this player.`, "warn");
-    });
-
-    socket.on("auction:auto-paused", (payload: { status: string; timer: number; leadingBidder: string; amount: number }) => {
+    },
+    onAutoPaused: (payload) => {
       setState((prev) => ({ ...prev, status: "paused", timer: payload.timer }));
       setAutoPauseAlert({ leadingBidder: payload.leadingBidder, amount: payload.amount });
       pushActivity(
@@ -321,40 +297,33 @@ export function AuctionRoom({ roomId, user }: Props) {
           8000
         );
       }
-    });
-
-    socket.on("auction:error", (payload) => {
+    },
+    onError: (payload) => {
       setError(payload.message ?? "Something went wrong");
       setTimeout(() => setError(""), 4000);
-    });
-
-    return () => {
-      socket?.disconnect();
-      socket = null;
-    };
-  }, [roomId, user.id, user.name, user.role, loadManagerRoomState, loadRoomHistory]);
+    },
+  });
 
   function submitBid() {
     setError("");
     const amount = Number(bidAmount);
-    // Fast client-side guard; server still enforces final bid validity.
     if (!amount || amount < minNextBid) {
       setError(`Minimum next bid is ${minNextBid}`);
       return;
     }
-    socket?.emit("auction:bid", { roomId, userId: user.id, userName: user.name, amount });
+    socketActions.emitBid(amount);
   }
 
   function startAuction() {
-    socket?.emit("auction:start", { roomId });
+    socketActions.emitStart();
   }
 
   function pauseAuction() {
-    socket?.emit("auction:pause", { roomId });
+    socketActions.emitPause();
   }
 
   function soldNow() {
-    socket?.emit("auction:sold-now", { roomId });
+    socketActions.emitSoldNow();
   }
 
   function setPlayer() {
@@ -362,50 +331,39 @@ export function AuctionRoom({ roomId, user }: Props) {
     const player = playerPool.find((p) => p.id === selectedPlayerId);
     if (!player) return;
 
-    // Build a normalized auction payload so all rooms receive consistent player fields.
-    socket?.emit("auction:set-player", {
-      roomId,
-      player: {
-        id: player.id,
-        name: player.name,
-        rating: player.rating,
-        position: player.position,
-        altPositions: player.position === "ST" ? ["CF"] : [player.position],
-        club: player.club,
-        league:
-          player.club === "Real Madrid"
-            ? "LALIGA EA SPORTS"
-            : "Premier League",
-        nation: player.nation,
-        age: 27,
-        preferredFoot: player.position.includes("L") ? "Left" : "Right",
-        weakFoot: 4,
-        skillMoves: 4,
-        height: "178cm / 5'10\"",
-        weight: "74kg / 163lb",
-        image: player.image,
-        basePrice: player.price,
-        pace: player.pace,
-        shooting: player.shooting,
-        passing: player.passing,
-        dribbling: player.dribbling,
-        defending: player.defending,
-        physicality: player.physical,
-      },
+    socketActions.emitSetPlayer({
+      id: player.id,
+      name: player.name,
+      rating: player.rating,
+      position: player.position,
+      altPositions: player.position === "ST" ? ["CF"] : [player.position],
+      club: player.club,
+      league: player.club === "Real Madrid" ? "LALIGA EA SPORTS" : "Premier League",
+      nation: player.nation,
+      age: 27,
+      preferredFoot: player.position.includes("L") ? "Left" : "Right",
+      weakFoot: 4,
+      skillMoves: 4,
+      height: "178cm / 5'10\"",
+      weight: "74kg / 163lb",
+      image: player.image,
+      basePrice: player.price,
+      pace: player.pace,
+      shooting: player.shooting,
+      passing: player.passing,
+      dribbling: player.dribbling,
+      defending: player.defending,
+      physicality: player.physical,
     });
     setSelectedPlayerId("");
   }
 
   function skipPlayer() {
-    socket?.emit("auction:skip", { roomId });
+    socketActions.emitSkip();
   }
 
   function optOutCurrentPlayer() {
-    socket?.emit("auction:opt-out", {
-      roomId,
-      userId: user.id,
-      userName: user.name,
-    });
+    socketActions.emitOptOut();
   }
 
   return (

@@ -1,17 +1,9 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ObjectId } from "mongodb";
 import { getDb } from "@/lib/mongodb";
+import { toObjectId } from "@/lib/db/object-id";
 import { Button } from "@/components/ui/button";
-
-function toObjectId(value: string) {
-  try {
-    return new ObjectId(value);
-  } catch {
-    return null;
-  }
-}
 
 export default async function DashboardPage({
   searchParams,

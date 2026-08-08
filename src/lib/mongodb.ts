@@ -1,30 +1,34 @@
 import { MongoClient, ServerApiVersion } from "mongodb";
+import { DB_NAME } from "@/lib/db/constants";
 
 const uri = process.env.MONGODB_URI;
-
-if (!uri) {
-  throw new Error("Please add MONGODB_URI to .env.local");
-}
 
 const globalForMongo = global as typeof globalThis & {
   _mongoClient?: MongoClient;
 };
 
-const client =
-  globalForMongo._mongoClient ??
-  new MongoClient(uri, {
-    serverApi: {
-      version: ServerApiVersion.v1,
-      strict: true,
-      deprecationErrors: true,
-    },
-  });
+function getClient() {
+  if (!uri) {
+    throw new Error("Please add MONGODB_URI to .env.local");
+  }
 
-if (process.env.NODE_ENV !== "production") {
-  globalForMongo._mongoClient = client;
+  if (!globalForMongo._mongoClient) {
+    globalForMongo._mongoClient = new MongoClient(uri, {
+      serverApi: {
+        version: ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true,
+      },
+    });
+  }
+
+  return globalForMongo._mongoClient;
 }
 
 export async function getDb() {
+  const client = getClient();
   await client.connect();
-  return client.db("fc26-auction");
+  return client.db(DB_NAME);
 }
+
+export { DB_NAME };

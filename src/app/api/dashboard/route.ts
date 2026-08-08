@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/mongodb";
+import { getDashboardSummary } from "@/services/dashboard.service";
 
 export async function GET() {
   const session = await auth();
@@ -9,47 +10,7 @@ export async function GET() {
   }
 
   const db = await getDb();
-  const roomsCollection = db.collection("auctionRooms");
-  const statsCollection = db.collection("managerStats");
+  const summary = await getDashboardSummary(db, session.user.id);
 
-  const activeRoom = await roomsCollection.findOne(
-    { status: { $in: ["live", "waiting", "sold", "paused"] } },
-    { sort: { createdAt: -1 } }
-  );
-
-  let dashboardRoom = activeRoom;
-  let stats = activeRoom
-    ? await statsCollection.findOne({
-        userId: session.user.id,
-        roomId: activeRoom.roomId,
-      })
-    : null;
-
-  if (!stats) {
-    // Fallback to most recent stats so dashboard still works between room transitions.
-    const latestStats = await statsCollection.find({ userId: session.user.id })
-      .sort({ updatedAt: -1, createdAt: -1 })
-      .limit(1)
-      .next();
-
-    if (latestStats) {
-      const statsRoom = await roomsCollection.findOne({ roomId: latestStats.roomId });
-      dashboardRoom = statsRoom ?? dashboardRoom;
-      stats = latestStats;
-    }
-  }
-
-  const budgetLimit = dashboardRoom?.budget ?? 2000;
-  const budgetSpent = stats?.budgetSpent ?? 0;
-
-  // Derived values keep the client display logic simple and consistent.
-  return NextResponse.json({
-    budgetLeft: Math.max(0, budgetLimit - budgetSpent),
-    budgetSpent,
-    budgetLimit,
-    playersBought: stats?.playersBought?.length ?? 0,
-    playersList: stats?.playersBought ?? [],
-    tournamentStatus: dashboardRoom ? dashboardRoom.status : "No active room",
-    activeRoomId: dashboardRoom?.roomId ?? null,
-  });
+  return NextResponse.json(summary);
 }

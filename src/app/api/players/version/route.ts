@@ -6,13 +6,13 @@ import {
   listAvailablePlayerEditions,
   setActivePlayerEdition,
 } from "@/lib/player-edition";
+import { editionHasPlayers } from "@/services/player.service";
 
 export async function GET() {
   const db = await getDb();
   const activeEdition = await getActivePlayerEdition(db);
   const editions = await listAvailablePlayerEditions(db);
 
-  // Expose both active and available editions for admin/client selector UIs.
   return NextResponse.json({ activeEdition, editions });
 }
 
@@ -27,12 +27,10 @@ export async function POST(req: Request) {
   }
 
   const db = await getDb();
-  const exists = await db.collection("players").countDocuments({ edition }, { limit: 1 });
-  if (!exists) {
+  if (!(await editionHasPlayers(db, edition))) {
     return NextResponse.json({ error: `No players found for edition '${edition}'` }, { status: 404 });
   }
 
-  // Persist the switch only when the target edition has data.
   await setActivePlayerEdition(db, edition);
   return NextResponse.json({ message: "Active player edition updated", activeEdition: edition });
 }

@@ -4,62 +4,34 @@ import { notFound } from "next/navigation";
 import { Container } from "@/components/layout/container";
 import { getDb } from "@/lib/mongodb";
 import { getActivePlayerEdition } from "@/lib/player-edition";
+import {
+  getPlayerJsonPathForEdition,
+  mapRawJsonToPlayer,
+  type RawPlayerJson,
+} from "@/lib/players/fallback";
 
-type Fc24RawPlayer = {
-  slug?: string;
-  name?: string;
-  position?: string;
-  overall?: number;
-  pace?: number;
-  shooting?: number;
-  passing?: number;
-  dribbling?: number;
-  defending?: number;
-  physicality?: number;
-  nation?: string;
-  club?: string;
-  league?: string;
-  cardPicture?: string;
-  picture?: string;
-  age?: number;
-  foot?: string;
-  height?: string;
-  weight?: string;
-  playStyle?: string;
-  acceleration?: number;
-  sprintSpeed?: number;
-  finishing?: number;
-  shotPower?: number;
-  vision?: number;
-  shortPassing?: number;
-  agility?: number;
-  balance?: number;
-  interceptions?: number;
-  standingTackle?: number;
-  stamina?: number;
-  strength?: number;
-};
+const fallbackCache = new Map<string, Promise<RawPlayerJson[]>>();
 
-let fallbackPlayersCache: Promise<Fc24RawPlayer[]> | null = null;
-
-function getFallbackPlayers() {
-  // Cache fallback JSON read across requests to avoid repeated disk I/O.
-  if (!fallbackPlayersCache) {
-    const jsonPath = path.join(process.cwd(), "public", "fifa24-player-list.json");
-    fallbackPlayersCache = fs
-      .readFile(jsonPath, "utf8")
-      .then((raw) => {
-        const arr = JSON.parse(raw) as Fc24RawPlayer[];
-        return Array.isArray(arr) ? arr : [];
-      })
-      .catch(() => []);
+function getFallbackPlayers(edition: string) {
+  if (!fallbackCache.has(edition)) {
+    const relativePath = getPlayerJsonPathForEdition(edition).replace(/^\//, "");
+    const jsonPath = path.join(process.cwd(), "public", relativePath);
+    fallbackCache.set(
+      edition,
+      fs
+        .readFile(jsonPath, "utf8")
+        .then((raw) => {
+          const arr = JSON.parse(raw) as RawPlayerJson[];
+          return Array.isArray(arr) ? arr : [];
+        })
+        .catch(() => [])
+    );
   }
 
-  return fallbackPlayersCache;
+  return fallbackCache.get(edition)!;
 }
 
 function normalizeSlug(value: string) {
-  // Normalize route ids so accented/encoded variants resolve to the same player.
   return String(value)
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -74,56 +46,56 @@ function star(value?: number) {
 }
 
 function clean(value?: string | number | null, fallback = "-") {
-  // Shared null/empty formatter for detail sections.
   if (value === undefined || value === null || value === "") return fallback;
   return String(value);
 }
 
-function mapJsonPlayer(item: Fc24RawPlayer, slug: string) {
-  // Map one fallback JSON player into the page view model when slug matches.
+function mapJsonPlayer(item: RawPlayerJson, slug: string, idx: number) {
   const itemSlug = String(item.slug ?? "").toLowerCase();
   if (itemSlug !== slug.toLowerCase()) return null;
 
-  const rating = Number(item.overall ?? 60);
+  const mapped = mapRawJsonToPlayer(item, idx);
   return {
-    id: String(item.slug ?? ""),
-    name: clean(item.name, "Unknown Player"),
-    rating,
-    position: clean(item.position, "CM"),
-    club: clean(item.club, "Unknown Club"),
-    nation: clean(item.nation, "Unknown Nation"),
-    league: clean(item.league, "Unknown League"),
-    price: Math.round(rating * 4.5),
-    image: (clean(item.picture, "").trim().replace(".adapt.50w.png", ".adapt.320w.png") || clean(item.cardPicture, "").trim()) || "/player-placeholder.svg",
-    pace: Number(item.pace ?? 50),
-    shooting: Number(item.shooting ?? 50),
-    passing: Number(item.passing ?? 50),
-    dribbling: Number(item.dribbling ?? 50),
-    defending: Number(item.defending ?? 50),
-    physical: Number(item.physicality ?? 50),
-    age: Number(item.age ?? 27),
-    preferredFoot: clean(item.foot, "Right"),
-    height: clean(item.height),
-    weight: clean(item.weight),
+    id: mapped.id,
+    name: mapped.name,
+    rating: mapped.rating,
+    position: mapped.position,
+    club: mapped.club,
+    nation: mapped.nation,
+    league: mapped.league ?? "Unknown League",
+    price: mapped.price,
+    pace: mapped.pace,
+    shooting: mapped.shooting,
+    passing: mapped.passing,
+    dribbling: mapped.dribbling,
+    defending: mapped.defending,
+    physical: mapped.physical,
+    image: mapped.image,
+    age: mapped.age ?? 27,
+    preferredFoot: mapped.preferredFoot ?? "Right",
+    height: mapped.height ?? "",
+    weight: mapped.weight ?? "",
     weakFoot: 4,
     skillMoves: 4,
-    playStyle: clean(item.playStyle, "None"),
+    playStyle: item.playStyle ? String(item.playStyle) : "None",
     attributes: {
-      acceleration: Number(item.acceleration ?? 50),
-      sprintSpeed: Number(item.sprintSpeed ?? 50),
-      finishing: Number(item.finishing ?? 50),
-      shotPower: Number(item.shotPower ?? 50),
-      vision: Number(item.vision ?? 50),
-      shortPassing: Number(item.shortPassing ?? 50),
-      agility: Number(item.agility ?? 50),
-      balance: Number(item.balance ?? 50),
-      interceptions: Number(item.interceptions ?? 50),
-      standingTackle: Number(item.standingTackle ?? 50),
-      stamina: Number(item.stamina ?? 50),
-      strength: Number(item.strength ?? 50),
+      acceleration: Number(item.pace ?? 50),
+      sprintSpeed: Number(item.pace ?? 50),
+      finishing: Number(item.shooting ?? 50),
+      shotPower: Number(item.shooting ?? 50),
+      vision: Number(item.passing ?? 50),
+      shortPassing: Number(item.passing ?? 50),
+      agility: Number(item.dribbling ?? 50),
+      balance: Number(item.dribbling ?? 50),
+      interceptions: Number(item.defending ?? 50),
+      standingTackle: Number(item.defending ?? 50),
+      stamina: Number(item.physicality ?? 50),
+      strength: Number(item.physicality ?? 50),
     },
   };
 }
+
+type PlayerView = NonNullable<ReturnType<typeof mapJsonPlayer>>;
 
 export default async function PlayerDetailsPage({
   params,
@@ -138,7 +110,6 @@ export default async function PlayerDetailsPage({
   const playersCollection = db.collection("players");
 
   const doc =
-    // Try strict/normalized/collation variants so old links still resolve.
     (await playersCollection.findOne({ playerId: decodedId, edition })) ??
     (await playersCollection.findOne({ playerId: decodedId.normalize("NFC"), edition })) ??
     (await playersCollection.findOne({ playerId: decodedId.normalize("NFD"), edition })) ??
@@ -148,29 +119,29 @@ export default async function PlayerDetailsPage({
       { collation: { locale: "en", strength: 1 } }
     ));
 
-  let player = doc
+  let player: PlayerView | null = doc
     ? {
-        id: doc.playerId,
-        name: doc.name,
-        rating: doc.rating,
-        position: doc.position,
-        club: doc.club,
-        nation: doc.nation,
-        league: doc.league,
-        price: doc.price,
-        pace: doc.pace,
-        shooting: doc.shooting,
-        passing: doc.passing,
-        dribbling: doc.dribbling,
-        defending: doc.defending,
-        physical: doc.physical,
+        id: String(doc.playerId),
+        name: String(doc.name),
+        rating: Number(doc.rating),
+        position: String(doc.position),
+        club: String(doc.club),
+        nation: String(doc.nation),
+        league: String(doc.league ?? "Unknown League"),
+        price: Number(doc.price),
+        pace: Number(doc.pace),
+        shooting: Number(doc.shooting),
+        passing: Number(doc.passing),
+        dribbling: Number(doc.dribbling),
+        defending: Number(doc.defending),
+        physical: Number(doc.physical),
         image: String(doc.image ?? "").trim() || "/player-placeholder.svg",
-        age: doc.age,
-        preferredFoot: doc.preferredFoot,
-        height: doc.height,
-        weight: doc.weight,
-        weakFoot: doc.weakFoot ?? 4,
-        skillMoves: doc.skillMoves ?? 4,
+        age: Number(doc.age ?? 27),
+        preferredFoot: doc.preferredFoot === "Left" ? "Left" : "Right",
+        height: String(doc.height ?? ""),
+        weight: String(doc.weight ?? ""),
+        weakFoot: Number(doc.weakFoot ?? 4),
+        skillMoves: Number(doc.skillMoves ?? 4),
         playStyle:
           Array.isArray(doc.playstyles) && doc.playstyles.length > 0
             ? doc.playstyles.map((p: { name?: string }) => p.name).filter(Boolean).join(", ")
@@ -181,17 +152,15 @@ export default async function PlayerDetailsPage({
 
   if (!player) {
     try {
-      const arr = await getFallbackPlayers();
+      const arr = await getFallbackPlayers(edition);
       const fallback = Array.isArray(arr)
         ? arr
-            .map((item) => mapJsonPlayer(item, decodedId))
+            .map((item, idx) => mapJsonPlayer(item, decodedId, idx))
             .find(Boolean) ??
           arr
-            .map((item) => {
+            .map((item, idx) => {
               const slug = String(item.slug ?? "");
-              return normalizeSlug(slug) === normalizedId
-                ? mapJsonPlayer(item, slug)
-                : null;
+              return normalizeSlug(slug) === normalizedId ? mapJsonPlayer(item, slug, idx) : null;
             })
             .find(Boolean)
         : null;

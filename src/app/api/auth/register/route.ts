@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { getDb } from "@/lib/mongodb";
 import { registerSchema } from "@/lib/validations";
-// Using a cost factor of 10 for bcrypt provides a good balance between security and performance for typical web applications. It makes password hashing computationally expensive enough to deter brute-force attacks while still allowing for reasonable response times during user registration and login processes.
+import { createUserRecord, userExistsByEmail } from "@/services/user.service";
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -15,32 +16,24 @@ export async function POST(req: Request) {
       );
     }
 
-    // Normalize email to avoid duplicate accounts that differ only by case.
     const normalizedEmail = parsed.data.email.trim().toLowerCase();
-
     const db = await getDb();
-    const users = db.collection("users");
 
-    const existing = await users.findOne({ email: normalizedEmail });
-
-    if (existing) {
+    if (await userExistsByEmail(db, normalizedEmail)) {
       return NextResponse.json({ error: "User already exists" }, { status: 409 });
     }
 
-    // Cost factor 10 balances baseline security and API responsiveness.
     const passwordHash = await bcrypt.hash(parsed.data.password, 10);
-
-    const result = await users.insertOne({
+    const userId = await createUserRecord(db, {
       name: parsed.data.name.trim(),
       email: normalizedEmail,
       passwordHash,
       role: "manager",
-      createdAt: new Date(),
     });
 
     return NextResponse.json({
       message: "User created successfully",
-      userId: result.insertedId.toString(),
+      userId,
     });
   } catch {
     return NextResponse.json(

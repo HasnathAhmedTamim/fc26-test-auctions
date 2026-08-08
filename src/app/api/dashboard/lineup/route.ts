@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { getDb } from "@/lib/mongodb";
 import { saveLineupSchema } from "@/lib/validations";
 import type { LineupFormation, LineupSlotId } from "@/types/auction";
+import { resolveUserRoster, type BoughtPlayer } from "@/services/dashboard.service";
 
 const DEFAULT_FORMATION = "4-3-3";
 
@@ -27,51 +28,14 @@ function getFormationSlots(formationInput: string): LineupSlotId[] {
   return slots;
 }
 
-type BoughtPlayer = {
-  playerId: string;
-  playerName: string;
-  amount: number;
-};
+type BoughtPlayerLocal = BoughtPlayer;
 
-async function resolveUserRoster(userId: string) {
+async function resolveUserRosterForSession(userId: string) {
   const db = await getDb();
-  const roomsCollection = db.collection("auctionRooms");
-  const statsCollection = db.collection("managerStats");
-
-  const activeRoom = await roomsCollection.findOne(
-    { status: { $in: ["live", "waiting", "sold", "paused"] } },
-    { sort: { createdAt: -1 } }
-  );
-
-  let dashboardRoom = activeRoom;
-  let stats = activeRoom
-    ? await statsCollection.findOne({
-        userId,
-        roomId: activeRoom.roomId,
-      })
-    : null;
-
-  if (!stats) {
-    // If active-room stats are missing, use the latest known roster for dashboard continuity.
-    const latestStats = await statsCollection.find({ userId })
-      .sort({ updatedAt: -1, createdAt: -1 })
-      .limit(1)
-      .next();
-
-    if (latestStats) {
-      const statsRoom = await roomsCollection.findOne({ roomId: latestStats.roomId });
-      dashboardRoom = statsRoom ?? dashboardRoom;
-      stats = latestStats;
-    }
-  }
-
-  return {
-    roomId: String(dashboardRoom?.roomId ?? ""),
-    playersBought: (stats?.playersBought ?? []) as BoughtPlayer[],
-  };
+  return resolveUserRoster(db, userId);
 }
 
-function toBench(playersBought: BoughtPlayer[], starterPlayerIds: string[]) {
+function toBench(playersBought: BoughtPlayerLocal[], starterPlayerIds: string[]) {
   // Bench is derived as owned players minus selected starters.
   const starterSet = new Set(starterPlayerIds);
   return playersBought.filter((player) => !starterSet.has(player.playerId));
@@ -83,7 +47,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { roomId, playersBought } = await resolveUserRoster(session.user.id);
+  const { roomId, playersBought } = await resolveUserRosterForSession(session.user.id);
 
   if (!roomId) {
     return NextResponse.json({

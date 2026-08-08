@@ -1,19 +1,15 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
-import { ObjectId } from "mongodb";
 import { auth } from "@/auth";
 import { requireAdmin } from "@/lib/roles";
 import { getDb } from "@/lib/mongodb";
 import { getAuctionRuntimeSettings } from "@/lib/auction-settings";
-
-// Some records may store user IDs as ObjectId while session IDs are strings.
-function toObjectId(value: string) {
-  try {
-    return new ObjectId(value);
-  } catch {
-    return null;
-  }
-}
+import {
+  createRoom,
+  deleteRoomCascade,
+  findRoomById,
+  listAccessibleRooms,
+} from "@/services/auction.service";
 
 export async function GET() {
   const session = await auth();
@@ -22,31 +18,8 @@ export async function GET() {
   }
 
   const db = await getDb();
-  let roomQuery: Record<string, unknown> = {};
-
-  if (session.user.role !== "admin") {
-    const userObjectId = toObjectId(session.user.id);
-    // Support both legacy ObjectId and current string userId formats in roomAccess.
-    const accessQuery = userObjectId
-      ? {
-          canJoin: true,
-          $or: [{ userId: session.user.id }, { userId: userObjectId }],
-        }
-      : {
-          canJoin: true,
-          userId: session.user.id,
-        };
-
-    const grantedAccess = await db
-      .collection("roomAccess")
-      .find(accessQuery, { projection: { roomId: 1 } })
-      .toArray();
-
-    const roomIds = [...new Set(grantedAccess.map((entry) => String(entry.roomId ?? "")).filter(Boolean))];
-    roomQuery = roomIds.length ? { roomId: { $in: roomIds } } : { roomId: { $in: [] } };
-  }
-
-  const rooms = await db.collection("auctionRooms").find(roomQuery).sort({ createdAt: -1 }).toArray();
+  const role = session.user.role === "admin" ? "admin" : "manager";
+  const rooms = await listAccessibleRooms(db, session.user.id, role);
 
   return NextResponse.json({
     rooms: rooms.map((r) => ({
@@ -83,23 +56,14 @@ export async function POST(req: Request) {
 
   const roomId = randomUUID().slice(0, 8);
   const db = await getDb();
-  // New rooms inherit runtime-configured timer settings from admin controls.
   const runtimeSettings = await getAuctionRuntimeSettings(db);
 
-  await db.collection("auctionRooms").insertOne({
+  await createRoom(db, {
     roomId,
     name: name.trim(),
-    // Room starts idle with no selected player and no active bid.
-    status: "waiting",
-    timer: runtimeSettings.roundTimeSeconds,
-    currentPlayer: null,
-    currentBid: 0,
-    highestBidderId: null,
-    highestBidderName: null,
     budget: parsedBudget,
     maxPlayers: parsedMaxPlayers,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    timer: runtimeSettings.roundTimeSeconds,
   });
 
   return NextResponse.json({ roomId, message: "Room created" }, { status: 201 });
@@ -117,21 +81,13 @@ export async function DELETE(req: Request) {
   }
 
   const db = await getDb();
-  const room = await db.collection("auctionRooms").findOne({ roomId });
+  const room = await findRoomById(db, roomId);
   if (!room) {
     return NextResponse.json({ error: "Room not found" }, { status: 404 });
   }
 
-  // Keep room deletion atomic from API perspective by cascading related collections together.
-  await Promise.all([
-    db.collection("auctionRooms").deleteOne({ roomId }),
-    db.collection("managerStats").deleteMany({ roomId }),
-    db.collection("bids").deleteMany({ roomId }),
-    db.collection("soldPlayers").deleteMany({ roomId }),
-    db.collection("adminAuditLog").deleteMany({ roomId }),
-    db.collection("roomAccess").deleteMany({ roomId }),
-    db.collection("lineups").deleteMany({ roomId }),
-  ]);
+  await deleteRoomCascade(db, roomId);
+  await db.collection("adminAuditLog").deleteMany({ roomId });
 
   return NextResponse.json({ ok: true, message: "Room deleted" });
 }

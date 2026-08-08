@@ -1,16 +1,8 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { ObjectId } from "mongodb";
 import { AuctionRoom } from "@/components/auction/auction-room";
 import { getDb } from "@/lib/mongodb";
-
-function toObjectId(value: string) {
-  try {
-    return new ObjectId(value);
-  } catch {
-    return null;
-  }
-}
+import { toObjectId } from "@/lib/db/object-id";
 
 export default async function AuctionPage({
   params,
