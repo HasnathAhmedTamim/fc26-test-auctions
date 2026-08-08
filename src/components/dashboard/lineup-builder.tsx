@@ -334,7 +334,7 @@ export function LineupBuilder() {
           </label>
         ) : null}
 
-        <div className="mt-3 grid gap-2 lg:grid-cols-[180px_1fr_100px_130px]">
+        <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-[180px_1fr_auto_auto]">
           <select
             aria-label="Select lineup formation"
             value={formation}
@@ -377,8 +377,9 @@ export function LineupBuilder() {
       </p>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="rounded-3xl border border-emerald-400/20 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.25),transparent_45%),linear-gradient(180deg,#0d1f1b,#070f0d)] p-3 md:p-4">
-        <div className="relative mx-auto aspect-5/3 w-full max-w-5xl overflow-hidden rounded-3xl border border-white/20 bg-[linear-gradient(180deg,#0e2c24,#102218)]">
+        <div className="rounded-3xl border border-emerald-400/20 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.25),transparent_45%),linear-gradient(180deg,#0d1f1b,#070f0d)] p-2 sm:p-3 md:p-4">
+        <div className="scroll-hint-x overflow-x-auto pb-1">
+        <div className="relative mx-auto aspect-5/3 min-w-[300px] w-full max-w-5xl overflow-hidden rounded-3xl border border-white/20 bg-[linear-gradient(180deg,#0e2c24,#102218)]">
           <div className="absolute inset-0 bg-[repeating-linear-gradient(180deg,rgba(255,255,255,0.04)_0,rgba(255,255,255,0.04)_7%,transparent_7%,transparent_14%)]" />
           <div className="absolute left-1/2 top-1/2 h-26 w-26 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/40" />
           <div className="absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/70" />
@@ -387,7 +388,7 @@ export function LineupBuilder() {
 
           <div className="relative z-10 flex h-full flex-col justify-between px-2 py-3 md:px-4 md:py-4">
             {formationRows.map((row) => (
-              <div key={row.rowId} className="flex items-center justify-evenly gap-2">
+              <div key={row.rowId} className="flex items-center justify-evenly gap-1 sm:gap-2">
                 {row.slots.map((slot) => {
                   const playerId = starterMap[slot.slotId];
                   const player = playerId ? playersById.get(playerId) : null;
@@ -404,13 +405,13 @@ export function LineupBuilder() {
                         <div
                           draggable
                           onDragStart={(event) => onDragStart(event, player.playerId, slot.slotId)}
-                          className="w-20 cursor-move rounded-full border-2 border-emerald-300/90 bg-slate-950/75 p-2 text-center shadow-[0_0_0_3px_rgba(45,212,191,0.2)] md:w-24"
+                          className="w-12 cursor-move rounded-full border-2 border-emerald-300/90 bg-slate-950/75 p-1.5 text-center shadow-[0_0_0_3px_rgba(45,212,191,0.2)] sm:w-16 sm:p-2 md:w-20 lg:w-24"
                         >
-                          <p className="truncate text-[10px] font-semibold text-white">{slot.label}</p>
-                          <p className="truncate text-[11px] font-bold text-emerald-200">{player.playerName}</p>
+                          <p className="truncate text-[9px] font-semibold text-white sm:text-[10px]">{slot.label}</p>
+                          <p className="truncate text-[10px] font-bold text-emerald-200 sm:text-[11px]">{player.playerName}</p>
                         </div>
                       ) : (
-                        <div className="w-16 rounded-full border-2 border-dashed border-emerald-300/70 bg-black/35 px-2 py-2 text-center text-[10px] font-semibold text-emerald-200 md:w-20 md:py-3">
+                        <div className="w-11 rounded-full border-2 border-dashed border-emerald-300/70 bg-black/35 px-1.5 py-1.5 text-center text-[9px] font-semibold text-emerald-200 sm:w-14 sm:px-2 sm:py-2 sm:text-[10px] md:w-16 md:py-3">
                           {slot.label}
                         </div>
                       )}
@@ -420,6 +421,7 @@ export function LineupBuilder() {
               </div>
             ))}
           </div>
+        </div>
         </div>
         </div>
 

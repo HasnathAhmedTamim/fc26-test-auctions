@@ -11,6 +11,11 @@ const NAV_ITEMS = [
     label: "Achievements",
     match: (path: string) => path.startsWith("/dashboard/achievements"),
   },
+  {
+    href: "/dashboard/profile",
+    label: "Profile",
+    match: (path: string) => path.startsWith("/dashboard/profile"),
+  },
   { href: "/players", label: "Players", match: (path: string) => path.startsWith("/players") },
   { href: "/tournaments", label: "Tournaments", match: (path: string) => path.startsWith("/tournaments") },
 ];

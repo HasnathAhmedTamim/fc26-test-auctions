@@ -74,8 +74,8 @@ export function TournamentCard({
       <div className="mt-5 grid gap-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-white/10 bg-black/20 p-3">
           <p className="text-sm font-semibold text-white">Points Table</p>
-          <div className="mt-3 overflow-hidden rounded-xl border border-white/10">
-            <table className="w-full text-xs">
+          <div className="mt-3 scroll-hint-x overflow-x-auto rounded-xl border border-white/10">
+            <table className="min-w-[280px] w-full text-xs">
               <thead className="bg-white/10 text-slate-300">
                 <tr>
                   <th className="px-2 py-2 text-left">Team</th>
@@ -87,7 +87,7 @@ export function TournamentCard({
               <tbody>
                 {topStandings.map((team) => (
                   <tr key={`${tournament.id}-${team.team}`} className="border-t border-white/10 text-slate-100">
-                    <td className="px-2 py-2">{team.team}</td>
+                    <td className="max-w-[120px] truncate px-2 py-2" title={team.team}>{team.team}</td>
                     <td className="px-2 py-2 text-center">{team.played}</td>
                     <td className="px-2 py-2 text-center">{team.goalsFor - team.goalsAgainst}</td>
                     <td className="px-2 py-2 text-center font-semibold text-emerald-300">{team.points}</td>
@@ -107,8 +107,10 @@ export function TournamentCard({
                   <span>{fixture.round}</span>
                   <span>{fixture.status}</span>
                 </div>
-                <p className="mt-1 text-sm text-slate-100">
-                  {fixture.homeTeam} {fixture.homeScore ?? "-"} : {fixture.awayScore ?? "-"} {fixture.awayTeam}
+                <p className="mt-1 break-words text-xs text-slate-100 sm:text-sm">
+                  <span className="block sm:inline">{fixture.homeTeam}</span>{" "}
+                  <span className="font-semibold">{fixture.homeScore ?? "-"} : {fixture.awayScore ?? "-"}</span>{" "}
+                  <span className="block sm:inline">{fixture.awayTeam}</span>
                 </p>
                 <p className="mt-1 text-[11px] text-slate-500">Kickoff: {fixture.kickoff}</p>
               </div>

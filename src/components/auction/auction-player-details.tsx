@@ -179,9 +179,9 @@ export function AuctionPlayerDetails({ player }: Props) {
   return (
     <div className="space-y-5">
       <section className="overflow-hidden rounded-3xl border border-emerald-500/20 bg-linear-to-br from-slate-900 via-slate-950 to-black">
-        <div className="flex items-center gap-5 p-5">
+        <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:gap-5">
           {/* FC Card image displayed at proper aspect ratio */}
-          <div className="relative h-44 w-32 shrink-0 overflow-hidden rounded-2xl shadow-2xl shadow-black/80">
+          <div className="relative mx-auto h-44 w-32 shrink-0 overflow-hidden rounded-2xl shadow-2xl shadow-black/80 sm:mx-0">
             <Image
               src={cardImageSrc}
               alt={player.name}
@@ -194,8 +194,8 @@ export function AuctionPlayerDetails({ player }: Props) {
           {/* Player info */}
           <div className="min-w-0 flex-1">
             <h2 className="truncate text-2xl font-black leading-tight text-white">{player.name}</h2>
-            <p className="mt-1 text-sm text-slate-400">{player.club}</p>
-            <p className="text-sm text-slate-500">{league} · {player.nation}</p>
+            <p className="mt-1 truncate text-sm text-slate-400">{player.club}</p>
+            <p className="truncate text-sm text-slate-500">{league} · {player.nation}</p>
             <div className="mt-4 flex items-center gap-3">
               <div className="rounded-2xl border border-emerald-400/40 bg-emerald-400/10 px-4 py-2 text-center">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">OVR</p>
@@ -260,9 +260,9 @@ export function AuctionPlayerDetails({ player }: Props) {
         <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-slate-300">PlayStyles</h3>
         <div className="mt-4 flex flex-wrap gap-2">
           {playstyles.map((style) => (
-            <div key={style.name} className="rounded-full border border-white/10 bg-black/40 px-3 py-2 text-xs text-slate-200">
+            <div key={style.name} className="max-w-full rounded-2xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-slate-200 sm:rounded-full">
               <span className={style.plus ? "font-bold text-emerald-300" : "font-semibold text-white"}>{style.name}</span>
-              <span className="ml-2 text-slate-400">{style.description}</span>
+              <span className="mt-1 block text-slate-400 sm:mt-0 sm:ml-2 sm:inline">{style.description}</span>
             </div>
           ))}
         </div>

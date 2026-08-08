@@ -275,14 +275,14 @@ export default function CompareClient() {
           ))}
         </div>
 
-        <div className="mt-8 overflow-x-auto rounded-3xl border border-white/10 bg-white/5 p-4">
-          <table className="min-w-full border-separate border-spacing-y-2 text-sm" aria-label="Player comparison metrics">
+        <div className="mt-8 scroll-hint-x overflow-x-auto rounded-3xl border border-white/10 bg-white/5 p-4">
+          <table className="min-w-[640px] w-full border-separate border-spacing-y-2 text-sm" aria-label="Player comparison metrics">
             <caption className="sr-only">Side-by-side comparison of selected player attributes</caption>
             <thead>
               <tr>
                 <th className="px-3 py-2 text-left text-xs uppercase tracking-[0.18em] text-slate-400">Metric</th>
                 {selectedPlayers.map((player, idx) => (
-                  <th key={`head-${idx + 1}`} className="px-3 py-2 text-left text-xs uppercase tracking-[0.18em] text-slate-400">
+                  <th key={`head-${idx + 1}`} className="max-w-[120px] truncate px-3 py-2 text-left text-xs uppercase tracking-[0.18em] text-slate-400">
                     {player?.name ?? `Slot ${idx + 1}`}
                   </th>
                 ))}

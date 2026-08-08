@@ -9,16 +9,16 @@ type HeroSectionProps = {
 
 export function HeroSection({ isLoggedIn = false, role }: HeroSectionProps) {
   return (
-    <section className="relative overflow-hidden py-24 sm:py-32">
+    <section className="relative flex min-h-[60vh] items-center py-12 sm:min-h-[65vh] sm:py-16 lg:py-20">
       <Container className="relative z-10 grid gap-10 lg:grid-cols-2 lg:items-center">
         <div className="stagger-rise">
           <p className="mb-4 inline-block rounded-full border border-emerald-400/30 bg-emerald-400/10 px-4 py-1 text-sm text-emerald-300">
             FC26 Tournament Auction Platform
           </p>
-          <h1 className="text-4xl font-black leading-tight sm:text-6xl">
+          <h1 className="text-3xl font-black leading-tight sm:text-4xl md:text-5xl lg:text-6xl">
             Build your squad. Bid live. Win the league.
           </h1>
-          <p className="mt-6 max-w-2xl text-lg text-slate-300">
+          <p className="mt-4 max-w-2xl text-base text-slate-300 sm:mt-6 sm:text-lg">
             Manage tournaments, auction top FC26 players, track budgets, and dominate your custom league with a clean modern platform.
           </p>
           <div className="mt-8 flex flex-wrap gap-4">
@@ -64,18 +64,18 @@ export function HeroSection({ isLoggedIn = false, role }: HeroSectionProps) {
                 </span>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="rounded-2xl bg-slate-900 p-4 text-center">
-                <p className="text-sm text-slate-400">Budget</p>
-                <p className="mt-1 text-xl font-bold">2000</p>
+            <div className="grid grid-cols-3 gap-2 sm:gap-4">
+              <div className="rounded-2xl bg-slate-900 p-3 text-center sm:p-4">
+                <p className="text-[10px] text-slate-400 sm:text-sm">Budget</p>
+                <p className="mt-1 text-lg font-bold sm:text-xl">2000</p>
               </div>
-              <div className="rounded-2xl bg-slate-900 p-4 text-center">
-                <p className="text-sm text-slate-400">Managers</p>
-                <p className="mt-1 text-xl font-bold">10</p>
+              <div className="rounded-2xl bg-slate-900 p-3 text-center sm:p-4">
+                <p className="text-[10px] text-slate-400 sm:text-sm">Managers</p>
+                <p className="mt-1 text-lg font-bold sm:text-xl">10</p>
               </div>
-              <div className="rounded-2xl bg-slate-900 p-4 text-center">
-                <p className="text-sm text-slate-400">Squad Limit</p>
-                <p className="mt-1 text-xl font-bold">24</p>
+              <div className="rounded-2xl bg-slate-900 p-3 text-center sm:p-4">
+                <p className="text-[10px] text-slate-400 sm:text-sm">Squad Limit</p>
+                <p className="mt-1 text-lg font-bold sm:text-xl">24</p>
               </div>
             </div>
           </div>

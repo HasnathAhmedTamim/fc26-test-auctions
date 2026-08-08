@@ -214,10 +214,10 @@ export default async function PlayerDetailsPage({
           </ol>
         </nav>
 
-        <div className="grid gap-8 xl:grid-cols-[420px_1fr]">
+        <div className="grid gap-8 lg:grid-cols-[minmax(280px,380px)_1fr] xl:grid-cols-[minmax(300px,420px)_1fr]">
           <div className="space-y-5">
             <div className="overflow-hidden rounded-3xl border border-emerald-400/30 bg-linear-to-b from-slate-900 to-black">
-              <div className="relative flex h-130 items-end justify-center bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.25),transparent_55%)] p-6">
+              <div className="relative flex h-72 items-end justify-center bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.25),transparent_55%)] p-4 sm:h-96 lg:h-130 lg:p-6">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={player.image?.trim() ? player.image : "/player-placeholder.svg"}
@@ -269,8 +269,8 @@ export default async function PlayerDetailsPage({
                 </Link>
               </div>
 
-              <h1 className="mt-5 text-5xl font-black tracking-tight">{player.name}</h1>
-              <p className="mt-3 text-lg text-slate-300">
+              <h1 className="mt-5 text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">{player.name}</h1>
+              <p className="mt-3 text-base text-slate-300 sm:text-lg">
                 {player.club} | {clean(player.league, "League")} | {player.nation}
               </p>
               <p className="mt-4 text-sm leading-6 text-slate-400">

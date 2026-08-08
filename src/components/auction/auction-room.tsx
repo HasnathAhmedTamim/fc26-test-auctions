@@ -434,7 +434,7 @@ export function AuctionRoom({ roomId, user }: Props) {
         <AuctionPlayerDetails player={state.currentPlayer} />
       </div>
 
-      <div className="order-1 rounded-3xl border border-white/10 bg-white/5 p-4 sm:p-6 xl:order-none xl:col-span-4">
+      <div className="order-1 rounded-3xl border border-white/10 bg-white/5 p-4 sm:p-6 xl:sticky xl:top-20 xl:order-none xl:col-span-4 xl:self-start">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0 flex-1">
             <p className="text-sm text-slate-400">Room</p>
@@ -471,9 +471,11 @@ export function AuctionRoom({ roomId, user }: Props) {
             <p className="text-xs text-slate-400">Current Bid</p>
             <p className="mt-2 text-2xl font-black">{state.currentBid} coins</p>
           </div>
-          <div className="rounded-2xl bg-slate-900 p-4">
+          <div className="min-w-0 rounded-2xl bg-slate-900 p-4">
             <p className="text-xs text-slate-400">Leading</p>
-            <p className="mt-2 text-2xl font-black">{state.highestBidderName ?? "-"}</p>
+            <p className="mt-2 truncate text-xl font-black sm:text-2xl" title={state.highestBidderName ?? undefined}>
+              {state.highestBidderName ?? "-"}
+            </p>
           </div>
         </div>
 
@@ -573,15 +575,19 @@ export function AuctionRoom({ roomId, user }: Props) {
         {user.role === "admin" ? (
           <div className="mt-6 rounded-2xl border border-white/10 bg-slate-900 p-4">
             <p className="mb-3 text-sm font-semibold text-slate-300">Admin Controls</p>
-            <div className="flex flex-wrap items-end gap-3">
-              <AuctionPlayerPicker
-                players={playerPool}
-                soldPlayerIds={soldPlayerIds}
-                soldPlayerNames={soldPlayerNames}
-                value={selectedPlayerId}
-                onChange={setSelectedPlayerId}
-              />
-              <Button                onClick={setPlayer}
+            <div className="space-y-3">
+              <div className="w-full min-w-0">
+                <AuctionPlayerPicker
+                  players={playerPool}
+                  soldPlayerIds={soldPlayerIds}
+                  soldPlayerNames={soldPlayerNames}
+                  value={selectedPlayerId}
+                  onChange={setSelectedPlayerId}
+                />
+              </div>
+              <div className="flex flex-wrap gap-2">
+              <Button
+                onClick={setPlayer}
                 disabled={!selectedPlayerId}
                 className="bg-blue-500 text-white hover:bg-blue-400"
               >
@@ -619,6 +625,7 @@ export function AuctionRoom({ roomId, user }: Props) {
               >
                 Skip
               </Button>
+              </div>
             </div>
           </div>
         ) : null}

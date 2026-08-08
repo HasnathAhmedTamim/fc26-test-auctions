@@ -33,6 +33,7 @@ export default function PlayersPage() {
   const [position, setPosition] = useState("All");
   const [minRating, setMinRating] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
+  const [sortBy, setSortBy] = useState("rating-desc");
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -125,12 +126,10 @@ export default function PlayersPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [position, minRating, maxPrice, debouncedQuery, pageSize]);
+  }, [position, minRating, maxPrice, debouncedQuery, pageSize, sortBy]);
 
-  const filtered = useMemo(
-    () =>
-      // Apply sidebar constraints and search text on top of loaded source data.
-      players.filter((p) => {
+  const filtered = useMemo(() => {
+    const list = players.filter((p) => {
         const pos = String(p.position ?? "").trim().toUpperCase();
         const selectedPos = position.trim().toUpperCase();
 
@@ -148,9 +147,17 @@ export default function PlayersPage() {
         }
 
         return true;
-      }),
-    [players, position, minRating, maxPrice, debouncedQuery]
-  );
+      });
+
+    return [...list].sort((a, b) => {
+      if (sortBy === "rating-desc") return b.rating - a.rating || a.name.localeCompare(b.name);
+      if (sortBy === "rating-asc") return a.rating - b.rating || a.name.localeCompare(b.name);
+      if (sortBy === "price-asc") return a.price - b.price || b.rating - a.rating;
+      if (sortBy === "price-desc") return b.price - a.price || b.rating - a.rating;
+      if (sortBy === "name-asc") return a.name.localeCompare(b.name);
+      return 0;
+    });
+  }, [players, position, minRating, maxPrice, debouncedQuery, sortBy]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(currentPage, totalPages);
@@ -201,7 +208,7 @@ export default function PlayersPage() {
             ) : null}
           </div>
 
-          <div className="mt-5 grid gap-3 md:grid-cols-[1fr_auto]">
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_auto_auto]">
             <label className="block">
               <span className="mb-1 block text-xs uppercase tracking-[0.18em] text-slate-400">Search Player</span>
               <input
@@ -211,6 +218,21 @@ export default function PlayersPage() {
                 placeholder="Search by name, club, nation, or position"
                 className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm outline-none focus:border-emerald-400/60"
               />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-xs uppercase tracking-[0.18em] text-slate-400">Sort By</span>
+              <select
+                aria-label="Sort players"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm outline-none focus:border-emerald-400/60"
+              >
+                <option value="rating-desc">OVR: High to Low</option>
+                <option value="rating-asc">OVR: Low to High</option>
+                <option value="price-asc">Price: Low to High</option>
+                <option value="price-desc">Price: High to Low</option>
+                <option value="name-asc">Name: A to Z</option>
+              </select>
             </label>
             <label className="block">
               <span className="mb-1 block text-xs uppercase tracking-[0.18em] text-slate-400">Cards Per Page</span>
@@ -242,7 +264,8 @@ export default function PlayersPage() {
             positions={positionOptions}
           />
 
-          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="min-w-0">
+            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
             {loading ? (
               Array.from({ length: 6 }).map((_, index) => (
                 <div
@@ -274,14 +297,14 @@ export default function PlayersPage() {
             ) : (
               paginatedPlayers.map((player) => <PlayerCard key={player.id} player={player} />)
             )}
-          </div>
+            </div>
 
-          {filtered.length > 0 ? (
-            <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/5 p-4">
-              <p className="text-sm text-slate-300">
-                Showing {pageStart + 1}-{Math.min(pageEnd, filtered.length)} of {filtered.length}
-              </p>
-              <div className="flex flex-wrap items-center gap-2">
+            {filtered.length > 0 ? (
+              <div className="mt-6 flex flex-col gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                <p className="text-sm text-slate-300">
+                  Showing {pageStart + 1}-{Math.min(pageEnd, filtered.length)} of {filtered.length}
+                </p>
+                <div className="scroll-hint-x flex flex-wrap items-center gap-2 overflow-x-auto pb-1">
                 <button
                   type="button"
                   onClick={() => setCurrentPage(1)}
@@ -327,9 +350,10 @@ export default function PlayersPage() {
                 >
                   Last
                 </button>
+                </div>
               </div>
-            </div>
-          ) : null}
+            ) : null}
+          </div>
         </div>
       </Container>
     </section>

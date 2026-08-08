@@ -4,6 +4,7 @@ import Link from "next/link";
 import { getDb } from "@/lib/mongodb";
 import { toObjectId } from "@/lib/db/object-id";
 import { Button } from "@/components/ui/button";
+import { DashboardCharts } from "@/components/dashboard/dashboard-charts";
 import { playerProfilePath } from "@/lib/players/profile-path";
 
 export default async function DashboardPage({
@@ -128,6 +129,62 @@ export default async function DashboardPage({
     joinableRooms[0] ??
     null;
 
+  const chartRoomId = dashboardRoom ? String(dashboardRoom.roomId ?? "") : "";
+  const roomManagerStats = chartRoomId
+    ? await statsCollection.find({ roomId: chartRoomId }).toArray()
+    : [];
+
+  const managerUserIds = roomManagerStats.map((row) => String(row.userId ?? "")).filter(Boolean);
+  const managerObjectIds = managerUserIds
+    .map((id) => toObjectId(id))
+    .filter((id): id is NonNullable<ReturnType<typeof toObjectId>> => Boolean(id));
+
+  const managerUsers =
+    managerObjectIds.length > 0
+      ? await db
+          .collection("users")
+          .find({ _id: { $in: managerObjectIds } })
+          .project({ name: 1, email: 1 })
+          .toArray()
+      : [];
+
+  const managerNameById = new Map(
+    managerUsers.map((user) => [String(user._id), String(user.name ?? user.email ?? "Manager")])
+  );
+
+  const squadBar = roomManagerStats
+    .map((row) => {
+      const bought = (row.playersBought ?? []) as unknown[];
+      return {
+        label: managerNameById.get(String(row.userId ?? "")) ?? "Manager",
+        value: bought.length,
+      };
+    })
+    .filter((item) => item.value > 0)
+    .sort((a, b) => b.value - a.value);
+
+  const budgetPie = [
+    { label: "Spent", value: budgetSpent, color: "#10b981" },
+    { label: "Remaining", value: budgetLeft, color: "#0891b2" },
+  ];
+
+  const soldRows = chartRoomId
+    ? await db
+        .collection("soldPlayers")
+        .find({ roomId: chartRoomId })
+        .sort({ createdAt: 1 })
+        .toArray()
+    : [];
+
+  const soldLine = soldRows.reduce<{ label: string; value: number }[]>((points, row, index) => {
+    const createdAt = row.createdAt instanceof Date ? row.createdAt : new Date(String(row.createdAt ?? ""));
+    const label = Number.isNaN(createdAt.getTime())
+      ? `#${index + 1}`
+      : createdAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    points.push({ label, value: index + 1 });
+    return points;
+  }, []);
+
   return (
     <div>
       <h1 className="text-3xl font-black">Dashboard</h1>
@@ -150,8 +207,8 @@ export default async function DashboardPage({
                 {String(priorityRoom.roomId ?? "")}
               </p>
             </div>
-            <Link href={`/auction/${String(priorityRoom.roomId ?? "")}`}>
-              <Button size="lg" className="bg-emerald-500 text-black hover:bg-emerald-400">
+            <Link href={`/auction/${String(priorityRoom.roomId ?? "")}`} className="w-full sm:w-auto">
+              <Button size="lg" className="w-full bg-emerald-500 text-black hover:bg-emerald-400 sm:w-auto">
                 {String(priorityRoom.status ?? "") === "live" ? "Join Live Auction" : "Enter Auction Room"}
               </Button>
             </Link>
@@ -222,6 +279,8 @@ export default async function DashboardPage({
           </p>
         </div>
       </div>
+
+      <DashboardCharts squadBar={squadBar} budgetPie={budgetPie} soldLine={soldLine} />
 
       <div className="mt-8">
         <h2 className="text-lg font-bold text-slate-200">Quick Actions</h2>

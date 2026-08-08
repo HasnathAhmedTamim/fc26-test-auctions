@@ -25,10 +25,10 @@ export function FeatureSection() {
 	return (
 		<section className="relative py-20">
 			<Container>
-				<div className="mb-8 flex items-end justify-between gap-4">
-					<div>
+				<div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+					<div className="min-w-0">
 						<p className="text-xs uppercase tracking-[0.2em] text-emerald-300">Platform Experience</p>
-						<h2 className="mt-2 text-4xl font-black">Everything Needed For Auction Night</h2>
+						<h2 className="mt-2 text-3xl font-black sm:text-4xl">Everything Needed For Auction Night</h2>
 					</div>
 					<p className="max-w-md text-sm text-slate-400">
 						Designed to keep managers focused on decisions, not spreadsheets and manual tracking.

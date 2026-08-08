@@ -45,15 +45,17 @@ flowchart LR
 ## Features implemented
 
 ### Public
-- Home page with role-aware CTAs
-- Player catalog (search, filters, pagination, edition badge)
+- Home page with 8 sections (hero, winner banner, features, how it works, live stats, featured players, benefits, FAQ, final CTA)
+- About, Contact (WhatsApp), Privacy, Terms pages
+- Player catalog (search, filters, sorting, pagination, edition badge)
 - Player profile pages
 - Compare up to 4 players (searchable pickers, shareable URL)
 - Tournament list and detail (standings, fixtures)
 
 ### Manager
 - Register / login
-- Dashboard (budget, squad, room access, quick actions)
+- Dashboard (budget, squad, room access, charts from MongoDB, quick actions)
+- Profile page (edit name, optional password change)
 - Join assigned auction rooms
 - Live bidding with quick bid buttons
 - Lineup builder (drag/drop + mobile tap-to-assign)

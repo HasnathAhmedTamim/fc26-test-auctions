@@ -8,6 +8,7 @@ import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { LiveAuctionBadge, LiveAuctionSheetLink } from "@/components/layout/live-auction-badge";
 import { Logo } from "@/components/common/logo";
+import { ProfileMenu } from "@/components/layout/profile-menu";
 import { showConfirmAlert } from "@/lib/alerts";
 import {
   Sheet,
@@ -17,23 +18,20 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
+const PUBLIC_LINKS = [
+  { href: "/", label: "Home" },
+  { href: "/players", label: "Players" },
+  { href: "/tournaments", label: "Tournaments" },
+] as const;
+
 export function Navbar() {
   const { data: session } = useSession();
   const pathname = usePathname();
   const router = useRouter();
 
-  const navLinks = [
-    { href: "/players", label: "Players" },
-    { href: "/tournaments", label: "Tournaments" },
-  ];
-
-  if (session?.user) {
-    navLinks.push({ href: "/dashboard", label: "Dashboard" });
-  }
-
-  if (session?.user?.role === "admin") {
-    navLinks.push({ href: "/admin", label: "Admin" });
-  }
+  const navLinks = session?.user
+    ? [...PUBLIC_LINKS, { href: "/dashboard", label: "Dashboard" }]
+    : [...PUBLIC_LINKS];
 
   async function handleLogout() {
     const confirmed = await showConfirmAlert(
@@ -48,23 +46,22 @@ export function Navbar() {
   }
 
   function navLinkClass(href: string) {
-    return pathname?.startsWith(href)
-      ? "text-emerald-300"
-      : "text-slate-200 hover:text-emerald-400";
+    const active = href === "/" ? pathname === "/" : pathname?.startsWith(href);
+    return active ? "text-emerald-300" : "text-slate-200 hover:text-emerald-400";
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/75 backdrop-blur-xl">
-      <Container className="flex min-h-16 items-center justify-between gap-3 py-2">
-        <Logo compact={false} />
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/75 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
+      <Container className="flex min-h-14 items-center justify-between gap-2 py-2 sm:min-h-16 sm:gap-4">
+        <Logo compact={false} className="min-w-0 shrink" />
 
-        <nav className="hidden items-center gap-6 md:flex" aria-label="Main navigation">
+        <nav className="hidden items-center gap-6 lg:flex" aria-label="Main navigation">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className={`text-sm ${navLinkClass(link.href)}`}
-              aria-current={pathname?.startsWith(link.href) ? "page" : undefined}
+              className={`text-sm font-medium ${navLinkClass(link.href)}`}
+              aria-current={navLinkClass(link.href).includes("emerald-300") ? "page" : undefined}
             >
               {link.label}
             </Link>
@@ -73,13 +70,15 @@ export function Navbar() {
 
         <div className="flex items-center gap-2">
           <LiveAuctionBadge />
+          <ProfileMenu />
+
           <Sheet>
             <SheetTrigger
               render={
                 <Button
                   variant="outline"
                   size="icon"
-                  className="border-white/20 bg-transparent text-white hover:bg-white/10 md:hidden"
+                  className="border-white/20 bg-transparent text-white hover:bg-white/10 lg:hidden"
                   aria-label="Open navigation menu"
                 />
               }
@@ -90,14 +89,13 @@ export function Navbar() {
               <SheetHeader>
                 <SheetTitle className="text-white">Menu</SheetTitle>
               </SheetHeader>
-              <nav className="flex flex-col gap-2 px-4" aria-label="Mobile navigation">
+              <nav className="flex flex-col gap-1 px-4" aria-label="Mobile navigation">
                 {navLinks.map((link) => (
                   <Link
                     key={`sheet-${link.href}`}
                     href={link.href}
-                    aria-current={pathname?.startsWith(link.href) ? "page" : undefined}
                     className={`rounded-xl px-4 py-3 text-sm ${
-                      pathname?.startsWith(link.href)
+                      navLinkClass(link.href).includes("emerald-300")
                         ? "bg-emerald-500/15 font-semibold text-emerald-300"
                         : "text-slate-200 hover:bg-white/5"
                     }`}
@@ -106,21 +104,44 @@ export function Navbar() {
                   </Link>
                 ))}
                 {session?.user ? (
-                  <LiveAuctionSheetLink />
-                ) : null}
+                  <>
+                    <LiveAuctionSheetLink />
+                    <Link
+                      href="/players/compare"
+                      className="rounded-xl px-4 py-3 text-sm text-slate-200 hover:bg-white/5"
+                    >
+                      Compare Players
+                    </Link>
+                    <Link
+                      href="/dashboard/profile"
+                      className="rounded-xl px-4 py-3 text-sm text-slate-200 hover:bg-white/5"
+                    >
+                      Profile
+                    </Link>
+                    {session.user.role === "admin" ? (
+                      <Link
+                        href="/admin"
+                        className="rounded-xl px-4 py-3 text-sm text-slate-200 hover:bg-white/5"
+                      >
+                        Admin Panel
+                      </Link>
+                    ) : null}
+                  </>
+                ) : (
+                  <Link href="/about" className="rounded-xl px-4 py-3 text-sm text-slate-200 hover:bg-white/5">
+                    About
+                  </Link>
+                )}
               </nav>
               <div className="mt-auto border-t border-white/10 p-4">
                 {session?.user ? (
-                  <div className="space-y-3">
-                    <p className="text-sm text-slate-400">Signed in as {session.user.name}</p>
-                    <Button
-                      onClick={handleLogout}
-                      variant="outline"
-                      className="w-full border-white/20 bg-transparent text-white hover:bg-white/10"
-                    >
-                      Logout
-                    </Button>
-                  </div>
+                  <Button
+                    onClick={handleLogout}
+                    variant="outline"
+                    className="w-full border-white/20 bg-transparent text-white hover:bg-white/10"
+                  >
+                    Logout
+                  </Button>
                 ) : (
                   <div className="flex flex-col gap-2">
                     <Button asChild variant="outline" className="border-white/20 bg-transparent text-white hover:bg-white/10">
@@ -135,33 +156,20 @@ export function Navbar() {
             </SheetContent>
           </Sheet>
 
-          {session?.user ? (
-            <>
-              <span className="hidden max-w-[140px] truncate text-sm text-slate-300 md:inline lg:max-w-none">
-                {session.user.name}
-              </span>
-              <Button
-                onClick={handleLogout}
-                variant="outline"
-                className="hidden border-white/20 bg-transparent text-white hover:bg-white/10 md:inline-flex"
-              >
-                Logout
-              </Button>
-            </>
-          ) : (
+          {!session?.user ? (
             <>
               <Button
                 asChild
                 variant="outline"
-                className="hidden border-white/20 bg-transparent text-white hover:bg-white/10 sm:inline-flex"
+                className="hidden border-white/20 bg-transparent text-white hover:bg-white/10 lg:inline-flex"
               >
                 <Link href="/login">Login</Link>
               </Button>
-              <Button asChild className="hidden bg-emerald-500 text-black hover:bg-emerald-400 sm:inline-flex">
+              <Button asChild className="hidden bg-emerald-500 text-black hover:bg-emerald-400 lg:inline-flex">
                 <Link href="/register">Register</Link>
               </Button>
             </>
-          )}
+          ) : null}
         </div>
       </Container>
     </header>
