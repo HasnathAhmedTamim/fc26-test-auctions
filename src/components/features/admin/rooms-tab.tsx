@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { AdminTabSkeleton } from "@/components/features/admin/admin-tab-skeleton";
 import { useAdminPanelContext } from "./admin-panel-context";
 import { STATUS_STYLES } from "./constants";
 
@@ -59,7 +60,7 @@ export function RoomsTab() {
           <h2 className="text-xl font-bold">Auction Rooms</h2>
           {ctx.rooms.length === 0 ? (
             <p className="mt-4 text-slate-400">
-              No ctx.rooms yet. Create one to get started.
+              No rooms yet. Create one to get started.
             </p>
           ) : (
             <div className="mt-4 space-y-4">
@@ -185,7 +186,7 @@ export function RoomsTab() {
                       </div>
 
                       {ctx.roomAccessLoading ? (
-                        <p className="mt-3 text-xs text-slate-500">Loading access list...</p>
+                        <AdminTabSkeleton rows={3} />
                       ) : ctx.roomAccessManagers.length === 0 ? (
                         <p className="mt-3 text-xs text-slate-500">No ctx.managers available.</p>
                       ) : (

@@ -1,11 +1,18 @@
 import { auth } from "@/auth";
 import { Container } from "@/components/layout/container";
+import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { TournamentCard } from "@/components/tournaments/tournament-card";
 import { Button } from "@/components/ui/button";
 import { tournaments } from "@/data/tournaments";
 import { getDb } from "@/lib/mongodb";
 import { Tournament } from "@/types/tournament";
+import { mapTournamentDocument } from "@/lib/tournaments/map-tournament";
 import Link from "next/link";
+
+export const metadata = {
+  title: "Tournaments | FC26 Auction",
+  description: "Follow fixtures, standings, and tournament results.",
+};
 
 export default async function TournamentsPage() {
   const session = await auth();
@@ -19,17 +26,9 @@ export default async function TournamentsPage() {
     const dbTournaments = await db.collection("tournaments").find({}).sort({ createdAt: -1 }).toArray();
 
     // Coerce DB values into the Tournament shape used by UI components.
-    liveTournaments = dbTournaments.map((entry) => ({
-      id: String(entry.id ?? ""),
-      name: String(entry.name ?? ""),
-      status: (entry.status as Tournament["status"]) ?? "Upcoming",
-      budget: Number(entry.budget ?? 0),
-      maxPlayers: Number(entry.maxPlayers ?? 0),
-      minPlayers: Number(entry.minPlayers ?? 0),
-      participants: Number(entry.participants ?? 0),
-      standings: Array.isArray(entry.standings) ? (entry.standings as Tournament["standings"]) : [],
-      fixtures: Array.isArray(entry.fixtures) ? (entry.fixtures as Tournament["fixtures"]) : [],
-    }));
+    liveTournaments = dbTournaments.map((entry) =>
+      mapTournamentDocument(entry as Record<string, unknown>)
+    );
   } catch {
     // Fall back to static seeded data if DB is unavailable.
     liveTournaments = tournaments;
@@ -48,6 +47,7 @@ export default async function TournamentsPage() {
   return (
     <section className="py-10">
       <Container>
+        <Breadcrumbs />
         <div className="mb-8">
           <h1 className="text-3xl font-black">Tournaments</h1>
           <p className="mt-2 text-slate-400">

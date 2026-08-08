@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { AdminTabSkeleton } from "@/components/features/admin/admin-tab-skeleton";
 import { useAdminPanelContext } from "./admin-panel-context";
 import { STATUS_STYLES } from "./constants";
 
@@ -75,8 +76,10 @@ export function UsersTab() {
 
           <div>
             {ctx.usersError ? <p className="mb-3 text-sm text-red-400">{ctx.usersError}</p> : null}
-            {ctx.users.length === 0 ? (
-              <p className="text-slate-400">No ctx.users found.</p>
+            {ctx.usersLoading && ctx.users.length === 0 ? (
+              <AdminTabSkeleton rows={5} />
+            ) : ctx.users.length === 0 ? (
+              <p className="text-slate-400">No users found.</p>
             ) : (
               <div className="space-y-3">
                 {ctx.users.map((user) => {

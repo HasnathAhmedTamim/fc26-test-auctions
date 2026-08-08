@@ -31,8 +31,16 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${sora.variable} ${bebasNeue.variable} min-h-screen bg-slate-950 text-white antialiased`}>
         <AuthSessionProvider>
+          <a
+            href="#main-content"
+            className="sr-only focus:fixed focus:left-4 focus:top-4 focus:z-100 focus:block focus:rounded-xl focus:bg-emerald-500 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-black"
+          >
+            Skip to main content
+          </a>
           <Navbar />
-          <main className="relative z-10">{children}</main>
+          <main id="main-content" className="relative z-10" tabIndex={-1}>
+            {children}
+          </main>
           <Footer />
         </AuthSessionProvider>
       </body>

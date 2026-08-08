@@ -2,7 +2,12 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/container";
 
-export function HeroSection() {
+type HeroSectionProps = {
+  isLoggedIn?: boolean;
+  role?: "admin" | "manager";
+};
+
+export function HeroSection({ isLoggedIn = false, role }: HeroSectionProps) {
   return (
     <section className="relative overflow-hidden py-24 sm:py-32">
       <Container className="relative z-10 grid gap-10 lg:grid-cols-2 lg:items-center">
@@ -17,16 +22,37 @@ export function HeroSection() {
             Manage tournaments, auction top FC26 players, track budgets, and dominate your custom league with a clean modern platform.
           </p>
           <div className="mt-8 flex flex-wrap gap-4">
-            <Button asChild className="bg-emerald-500 text-black hover:bg-emerald-400">
-              <Link href="/players">Explore Players</Link>
-            </Button>
-            <Button asChild variant="outline" className="border-white/20 bg-transparent text-white hover:bg-white/10">
-              <Link href="/tournaments">View Tournaments</Link>
-            </Button>
+            {isLoggedIn ? (
+              <>
+                <Button asChild className="bg-emerald-500 text-black hover:bg-emerald-400">
+                  <Link href="/dashboard">Open Dashboard</Link>
+                </Button>
+                {role === "admin" ? (
+                  <Button asChild variant="outline" className="border-amber-400/30 bg-transparent text-amber-200 hover:bg-amber-500/10">
+                    <Link href="/admin">Admin Panel</Link>
+                  </Button>
+                ) : (
+                  <Button asChild variant="outline" className="border-white/20 bg-transparent text-white hover:bg-white/10">
+                    <Link href="/tournaments">View Tournaments</Link>
+                  </Button>
+                )}
+              </>
+            ) : (
+              <>
+                <Button asChild className="bg-emerald-500 text-black hover:bg-emerald-400">
+                  <Link href="/register">Get Started</Link>
+                </Button>
+                <Button asChild variant="outline" className="border-white/20 bg-transparent text-white hover:bg-white/10">
+                  <Link href="/login">Login</Link>
+                </Button>
+                <Button asChild variant="outline" className="border-white/20 bg-transparent text-white hover:bg-white/10">
+                  <Link href="/players">Explore Players</Link>
+                </Button>
+              </>
+            )}
           </div>
         </div>
 
-        {/* Right-side preview card highlights the live auction experience. */}
         <div className="panel-glass stagger-rise rounded-3xl p-6 shadow-2xl" style={{ animationDelay: "120ms" }}>
           <div className="space-y-4">
             <div className="rounded-2xl bg-slate-900 p-5">

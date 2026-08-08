@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { AdminTabSkeleton } from "@/components/features/admin/admin-tab-skeleton";
 import { useAdminPanelContext } from "./admin-panel-context";
 import { STATUS_STYLES } from "./constants";
 
@@ -113,7 +114,7 @@ export function BadgesTab() {
           ) : null}
 
           {ctx.achievementsLoading ? (
-            <p className="mt-4 text-slate-400">Loading badges...</p>
+            <AdminTabSkeleton rows={4} />
           ) : ctx.achievements.length === 0 ? (
             <p className="mt-4 text-slate-400">
               {ctx.achievementUserId

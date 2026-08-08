@@ -66,6 +66,7 @@ type LineupPlayer = {
 
 type LineupResponse = {
   roomId: string | null;
+  rooms?: Array<{ roomId: string; roomName: string; playersCount: number }>;
   formation: string;
   starters: LineupStarter[];
   availablePlayers: LineupPlayer[];
@@ -77,16 +78,55 @@ export function LineupBuilder() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [roomId, setRoomId] = useState<string | null>(null);
+  const [roomOptions, setRoomOptions] = useState<Array<{ roomId: string; roomName: string; playersCount: number }>>([]);
   const [formation, setFormation] = useState<string>("4-3-3");
   const [formationInput, setFormationInput] = useState("4-3-3");
   const [availablePlayers, setAvailablePlayers] = useState<LineupPlayer[]>([]);
   const [starterMap, setStarterMap] = useState<Record<string, string>>({});
+  const [selectedBenchPlayerId, setSelectedBenchPlayerId] = useState<string | null>(null);
 
-  const loadLineup = useCallback(async () => {
+  function assignPlayerToSlot(slotId: string, playerId: string, fromSlot?: string) {
+    setStarterMap((prev) => {
+      const next = { ...prev };
+      const targetPlayer = next[slotId];
+
+      for (const slot of Object.keys(next)) {
+        if (next[slot] === playerId) delete next[slot];
+      }
+
+      next[slotId] = playerId;
+
+      if (fromSlot && fromSlot !== slotId && targetPlayer) {
+        next[fromSlot] = targetPlayer;
+      }
+
+      return next;
+    });
+    setSelectedBenchPlayerId(null);
+  }
+
+  function handleSlotTap(slotId: string) {
+    if (selectedBenchPlayerId) {
+      assignPlayerToSlot(slotId, selectedBenchPlayerId);
+      return;
+    }
+
+    if (starterMap[slotId]) {
+      setSelectedBenchPlayerId(null);
+      setStarterMap((prev) => {
+        const next = { ...prev };
+        delete next[slotId];
+        return next;
+      });
+    }
+  }
+
+  const loadLineup = useCallback(async (targetRoomId?: string) => {
     setLoading(true);
     setError("");
 
-    const res = await fetch("/api/dashboard/lineup", { cache: "no-store" });
+    const query = targetRoomId ? `?roomId=${encodeURIComponent(targetRoomId)}` : "";
+    const res = await fetch(`/api/dashboard/lineup${query}`, { cache: "no-store" });
     const data = (await res.json()) as LineupResponse & { error?: string };
     setLoading(false);
 
@@ -95,6 +135,7 @@ export function LineupBuilder() {
       return;
     }
 
+    setRoomOptions(Array.isArray(data.rooms) ? data.rooms : []);
     setRoomId(data.roomId);
     setFormation(data.formation);
     setFormationInput(data.formation);
@@ -142,26 +183,7 @@ export function LineupBuilder() {
     const playerId = event.dataTransfer.getData("playerId");
     const fromSlot = event.dataTransfer.getData("fromSlot");
     if (!playerId) return;
-
-    setStarterMap((prev) => {
-      const next = { ...prev };
-      const targetPlayer = next[slotId];
-
-      // Remove player from any previous slot to preserve one-player-per-slot invariant.
-      for (const slot of Object.keys(next)) {
-        if (next[slot] === playerId) {
-          delete next[slot];
-        }
-      }
-
-      next[slotId] = playerId;
-
-      if (fromSlot && fromSlot !== slotId && targetPlayer) {
-        next[fromSlot] = targetPlayer;
-      }
-
-      return next;
-    });
+    assignPlayerToSlot(slotId, playerId, fromSlot || undefined);
   }
 
   function applyFormation() {
@@ -254,25 +276,63 @@ export function LineupBuilder() {
   }
 
   if (loading) {
-    return <p className="text-slate-400">Loading lineup...</p>;
+    return (
+      <div className="space-y-4">
+        <div className="h-28 animate-pulse rounded-2xl border border-white/10 bg-white/5" />
+        <div className="h-80 animate-pulse rounded-3xl border border-white/10 bg-white/5" />
+      </div>
+    );
   }
 
   if (!roomId) {
-    return <p className="text-slate-400">No purchased players found yet. Buy players to build your lineup.</p>;
+    return (
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+        <p className="text-slate-300">No purchased players found yet.</p>
+        <p className="mt-2 text-sm text-slate-400">
+          Buy players in an auction room first, then come back here to build your lineup.
+        </p>
+      </div>
+    );
   }
+
+  const activeRoom = roomOptions.find((room) => room.roomId === roomId);
 
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
+          <div>
             <h2 className="text-lg font-black">Main Squad Builder</h2>
-            <p className="text-xs text-slate-400">Room: {roomId}</p>
-        </div>
+            <p className="text-xs text-slate-400">
+              Room: {activeRoom?.roomName ?? roomId}
+            </p>
+          </div>
           <p className="rounded-full border border-emerald-300/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">
             Formation {formation}
           </p>
         </div>
+
+        {roomOptions.length > 1 ? (
+          <label className="mt-3 block">
+            <span className="mb-1 block text-xs uppercase tracking-[0.18em] text-slate-400">
+              Squad Room
+            </span>
+            <select
+              aria-label="Select room for lineup"
+              value={roomId}
+              onChange={(event) => {
+                void loadLineup(event.target.value);
+              }}
+              className="w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-emerald-400/50 md:max-w-sm"
+            >
+              {roomOptions.map((room) => (
+                <option key={room.roomId} value={room.roomId}>
+                  {room.roomName} ({room.playersCount} players)
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
 
         <div className="mt-3 grid gap-2 lg:grid-cols-[180px_1fr_100px_130px]">
           <select
@@ -312,6 +372,9 @@ export function LineupBuilder() {
 
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
       {message ? <p className="text-sm text-emerald-400">{message}</p> : null}
+      <p className="text-xs text-slate-500 md:hidden">
+        Tap a bench player, then tap an empty pitch slot to assign. Tap a filled slot to remove.
+      </p>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="rounded-3xl border border-emerald-400/20 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.25),transparent_45%),linear-gradient(180deg,#0d1f1b,#070f0d)] p-3 md:p-4">
@@ -334,7 +397,8 @@ export function LineupBuilder() {
                       key={slot.slotId}
                       onDragOver={allowDrop}
                       onDrop={(event) => dropToSlot(event, slot.slotId)}
-                      className="min-h-16"
+                      onClick={() => handleSlotTap(slot.slotId)}
+                      className="min-h-16 cursor-pointer"
                     >
                       {player ? (
                         <div
@@ -380,7 +444,16 @@ export function LineupBuilder() {
                   key={player.playerId}
                   draggable
                   onDragStart={(event) => onDragStart(event, player.playerId)}
-                  className="cursor-move rounded-xl border border-white/10 bg-slate-900 px-3 py-2"
+                  onClick={() =>
+                    setSelectedBenchPlayerId((prev) =>
+                      prev === player.playerId ? null : player.playerId
+                    )
+                  }
+                  className={`cursor-pointer rounded-xl border px-3 py-2 md:cursor-move ${
+                    selectedBenchPlayerId === player.playerId
+                      ? "border-emerald-400/60 bg-emerald-500/15"
+                      : "border-white/10 bg-slate-900"
+                  }`}
                 >
                   <p className="text-sm font-semibold text-white">{player.playerName}</p>
                   <p className="text-xs text-slate-400">{player.amount} coins</p>

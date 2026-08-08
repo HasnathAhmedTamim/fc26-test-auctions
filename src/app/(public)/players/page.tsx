@@ -3,11 +3,22 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Container } from "@/components/layout/container";
+import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { PlayerFilterSidebar } from "@/components/players/player-filter-sidebar";
 import { PlayerCard } from "@/components/players/player-card";
 import { Button } from "@/components/ui/button";
 import { Player } from "@/types/player";
 import { fetchPlayersFromEditionJson } from "@/lib/players/fallback";
+
+const EDITION_LABELS: Record<string, string> = {
+  fc24: "FC24 Database",
+  fc26: "FC26 Database",
+  "lower-rated": "Lower-rated Auction Pool",
+};
+
+function formatEditionLabel(edition: string) {
+  return EDITION_LABELS[edition] ?? edition.replace(/-/g, " ");
+}
 
 export default function PlayersPage() {
   const [query, setQuery] = useState("");
@@ -17,7 +28,7 @@ export default function PlayersPage() {
 
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
-  const [source, setSource] = useState<"db" | "json" | "none">("none");
+  const [activeEdition, setActiveEdition] = useState("");
   const [total, setTotal] = useState(0);
   const [position, setPosition] = useState("All");
   const [minRating, setMinRating] = useState("");
@@ -37,6 +48,11 @@ export default function PlayersPage() {
     async function loadPlayers() {
       setLoading(true);
       try {
+        const versionRes = await fetch("/api/players/version", { cache: "no-store" });
+        const versionData = versionRes.ok ? await versionRes.json() : { activeEdition: "fc24" };
+        const edition = String(versionData.activeEdition ?? "fc24");
+        if (!cancelled) setActiveEdition(edition);
+
         // Prefer paginated DB API first; fallback JSON is used only when DB data is unavailable.
         const allDbPlayers: Player[] = [];
         let hasMore = true;
@@ -67,15 +83,11 @@ export default function PlayersPage() {
 
         if (!cancelled && allDbPlayers.length > 0) {
           setPlayers(allDbPlayers);
-          setSource("db");
           setTotal(allDbPlayers.length);
           setCurrentPage(1);
           return;
         }
 
-        const versionRes = await fetch("/api/players/version", { cache: "no-store" });
-        const versionData = versionRes.ok ? await versionRes.json() : { activeEdition: "fc24" };
-        const edition = String(versionData.activeEdition ?? "fc24");
         const mapped = await fetchPlayersFromEditionJson(edition);
         const fallbackFiltered = debouncedQuery
           ? mapped.filter((p) => {
@@ -91,14 +103,12 @@ export default function PlayersPage() {
 
         if (!cancelled) {
           setPlayers(fallbackFiltered);
-          setSource(fallbackFiltered.length > 0 ? "json" : "none");
           setTotal(fallbackFiltered.length);
           setCurrentPage(1);
         }
       } catch {
         if (!cancelled) {
           setPlayers([]);
-          setSource("none");
           setTotal(0);
           setCurrentPage(1);
         }
@@ -172,17 +182,23 @@ export default function PlayersPage() {
   return (
     <section className="py-10">
       <Container>
+        <Breadcrumbs />
         <div className="mb-8">
           <h1 className="text-3xl font-black">Players</h1>
           <p className="mt-2 text-slate-400">
             Explore your FC player pool before the auction begins.
           </p>
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-4 flex flex-wrap items-center gap-2">
             <Link href="/players/compare">
               <Button size="sm" className="bg-emerald-500 text-black hover:bg-emerald-400">
                 Compare Players
               </Button>
             </Link>
+            {activeEdition ? (
+              <span className="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">
+                {formatEditionLabel(activeEdition)}
+              </span>
+            ) : null}
           </div>
 
           <div className="mt-5 grid gap-3 md:grid-cols-[1fr_auto]">
@@ -213,12 +229,6 @@ export default function PlayersPage() {
           <p className="mt-3 text-sm text-slate-400">
             Showing {filtered.length} matched players{filtered.length ? ` • Page ${safePage} of ${totalPages}` : ""}
           </p>
-
-          {source === "json" ? (
-            <p className="mt-2 text-sm text-amber-300">
-              Showing fallback data from public JSON file.
-            </p>
-          ) : null}
         </div>
 
         <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
@@ -234,13 +244,32 @@ export default function PlayersPage() {
 
           <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
             {loading ? (
-              <p className="col-span-full text-slate-400">Loading players...</p>
+              Array.from({ length: 6 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="h-80 animate-pulse rounded-3xl border border-white/10 bg-white/5"
+                />
+              ))
             ) : filtered.length === 0 ? (
               <div className="col-span-full rounded-2xl border border-white/10 bg-white/5 p-6">
                 <p className="text-slate-300">No players match the current filters.</p>
                 <p className="mt-2 text-sm text-slate-400">
                   Try clearing position/rating/price filters to see all players.
                 </p>
+                {(position !== "All" || minRating !== "" || maxPrice !== "" || query.trim()) ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPosition("All");
+                      setMinRating("");
+                      setMaxPrice("");
+                      setQuery("");
+                    }}
+                    className="mt-4 rounded-full border border-emerald-400/40 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300 hover:bg-emerald-500/20"
+                  >
+                    Clear all filters
+                  </button>
+                ) : null}
               </div>
             ) : (
               paginatedPlayers.map((player) => <PlayerCard key={player.id} player={player} />)
@@ -251,7 +280,6 @@ export default function PlayersPage() {
             <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/5 p-4">
               <p className="text-sm text-slate-300">
                 Showing {pageStart + 1}-{Math.min(pageEnd, filtered.length)} of {filtered.length}
-                {total > 0 ? ` loaded (${total} source)` : ""}
               </p>
               <div className="flex flex-wrap items-center gap-2">
                 <button

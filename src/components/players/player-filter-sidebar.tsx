@@ -1,3 +1,7 @@
+"use client";
+
+import { useState } from "react";
+
 type Props = {
   position: string;
   setPosition: (v: string) => void;
@@ -36,37 +40,23 @@ export function PlayerFilterSidebar({
   setMaxPrice,
   positions,
 }: Props) {
+  const [mobileOpen, setMobileOpen] = useState(false);
   const hasFilters = position !== "All" || minRating !== "" || maxPrice !== "";
   const options = positions && positions.length > 0 ? positions : DEFAULT_POSITIONS;
   const quickPositions = options.filter((p) => p !== "All").slice(0, 8);
 
-  return (
-    <aside className="rounded-3xl border border-white/10 bg-white/5 p-5 lg:sticky lg:top-24 lg:h-fit">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold">Filters</h2>
-        {hasFilters && (
-          <button
-            onClick={() => {
-              setPosition("All");
-              setMinRating("");
-              setMaxPrice("");
-            }}
-            className="text-xs text-emerald-300 hover:text-emerald-200"
-          >
-            Clear all
-          </button>
-        )}
-      </div>
-
-      <div className="mt-3 flex flex-wrap gap-2">
+  const content = (
+    <>
+      <div className="flex flex-wrap gap-2">
         {quickPositions.map((p) => (
           <button
             key={p}
             type="button"
             onClick={() => setPosition(p)}
-            className={`rounded-full border px-3 py-1 text-xs ${position === p
-              ? "border-emerald-400/60 bg-emerald-500/15 text-emerald-300"
-              : "border-white/10 text-slate-300 hover:border-emerald-400/40"
+            className={`rounded-full border px-3 py-1 text-xs ${
+              position === p
+                ? "border-emerald-400/60 bg-emerald-500/15 text-emerald-300"
+                : "border-white/10 text-slate-300 hover:border-emerald-400/40"
             }`}
           >
             {p}
@@ -111,6 +101,41 @@ export function PlayerFilterSidebar({
           />
         </div>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setMobileOpen((open) => !open)}
+        className="mb-4 flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white lg:hidden"
+      >
+        <span>
+          Filters{hasFilters ? " (active)" : ""}
+        </span>
+        <span className="text-slate-400">{mobileOpen ? "Hide" : "Show"}</span>
+      </button>
+
+      <aside className={`rounded-3xl border border-white/10 bg-white/5 p-5 lg:sticky lg:top-24 lg:block lg:h-fit ${mobileOpen ? "block" : "hidden"}`}>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold">Filters</h2>
+          {hasFilters ? (
+            <button
+              type="button"
+              onClick={() => {
+                setPosition("All");
+                setMinRating("");
+                setMaxPrice("");
+              }}
+              className="text-xs text-emerald-300 hover:text-emerald-200"
+            >
+              Clear all
+            </button>
+          ) : null}
+        </div>
+        <div className="mt-3">{content}</div>
+      </aside>
+    </>
   );
 }

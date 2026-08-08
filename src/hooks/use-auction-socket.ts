@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+
+export type SocketConnectionStatus = "connecting" | "connected" | "disconnected" | "error";
 import { io, Socket } from "socket.io-client";
 import { AuctionRoomState, BidEntry } from "@/types/auction";
 import { AUCTION_SOCKET_EVENTS as E } from "@/lib/auction/constants";
@@ -50,10 +52,16 @@ export function useAuctionSocket(
   const socketRef = useRef<Socket | null>(null);
   const handlersRef = useRef(handlers);
   handlersRef.current = handlers;
+  const [connectionStatus, setConnectionStatus] = useState<SocketConnectionStatus>("connecting");
 
   useEffect(() => {
+    setConnectionStatus("connecting");
     const socket = io(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000");
     socketRef.current = socket;
+
+    socket.on("connect", () => setConnectionStatus("connected"));
+    socket.on("disconnect", () => setConnectionStatus("disconnected"));
+    socket.on("connect_error", () => setConnectionStatus("error"));
 
     socket.emit(E.JOIN, {
       roomId,
@@ -86,6 +94,7 @@ export function useAuctionSocket(
   }
 
   return {
+    connectionStatus,
     emitBid: (amount: number) => emit(E.BID, { roomId, userId: user.id, userName: user.name, amount }),
     emitStart: () => emit(E.START, { roomId }),
     emitPause: () => emit(E.PAUSE, { roomId }),

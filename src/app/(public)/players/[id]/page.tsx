@@ -1,7 +1,10 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Container } from "@/components/layout/container";
+import { buildCompareUrl } from "@/lib/players/compare-link";
 import { getDb } from "@/lib/mongodb";
 import { getActivePlayerEdition } from "@/lib/player-edition";
 import {
@@ -95,7 +98,20 @@ function mapJsonPlayer(item: RawPlayerJson, slug: string, idx: number) {
   };
 }
 
-type PlayerView = NonNullable<ReturnType<typeof mapJsonPlayer>>;
+type PlayerView = NonNullable<ReturnType<typeof mapJsonPlayer>> & { basePrice?: number };
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const label = decodeURIComponent(id).replace(/-/g, " ");
+  return {
+    title: `${label} | Players | FC26 Auction`,
+    description: `View stats, attributes, and profile details for ${label}.`,
+  };
+}
 
 export default async function PlayerDetailsPage({
   params,
@@ -129,6 +145,7 @@ export default async function PlayerDetailsPage({
         nation: String(doc.nation),
         league: String(doc.league ?? "Unknown League"),
         price: Number(doc.price),
+        basePrice: doc.basePrice != null ? Number(doc.basePrice) : undefined,
         pace: Number(doc.pace),
         shooting: Number(doc.shooting),
         passing: Number(doc.passing),
@@ -172,9 +189,31 @@ export default async function PlayerDetailsPage({
 
   if (!player) return notFound();
 
+  const displayPrice = player.basePrice ?? player.price;
+
   return (
     <section className="py-10">
       <Container>
+        <nav aria-label="Breadcrumb" className="mb-6 text-sm text-slate-400">
+          <ol className="flex flex-wrap items-center gap-2">
+            <li>
+              <Link href="/" className="hover:text-emerald-300">
+                Home
+              </Link>
+            </li>
+            <li className="flex items-center gap-2">
+              <span aria-hidden="true">/</span>
+              <Link href="/players" className="hover:text-emerald-300">
+                Players
+              </Link>
+            </li>
+            <li className="flex items-center gap-2">
+              <span aria-hidden="true">/</span>
+              <span className="font-medium text-slate-200">{player.name}</span>
+            </li>
+          </ol>
+        </nav>
+
         <div className="grid gap-8 xl:grid-cols-[420px_1fr]">
           <div className="space-y-5">
             <div className="overflow-hidden rounded-3xl border border-emerald-400/30 bg-linear-to-b from-slate-900 to-black">
@@ -211,8 +250,23 @@ export default async function PlayerDetailsPage({
                   {player.position}
                 </span>
                 <span className="rounded-full border border-white/10 px-4 py-2 text-sm font-semibold">
-                  {player.price} coins
+                  {displayPrice} coins
                 </span>
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-3">
+                <Link
+                  href={buildCompareUrl([player.id])}
+                  className="rounded-full border border-emerald-400/40 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300 transition hover:bg-emerald-500/20"
+                >
+                  Add to Compare
+                </Link>
+                <Link
+                  href="/players"
+                  className="rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:border-white/20 hover:text-white"
+                >
+                  Back to Players
+                </Link>
               </div>
 
               <h1 className="mt-5 text-5xl font-black tracking-tight">{player.name}</h1>

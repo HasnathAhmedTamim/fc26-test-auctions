@@ -84,14 +84,15 @@ export async function getRoomLiveState(db: Db, roomId: string, defaultTimer: num
   const room = await findRoomById(db, roomId);
   if (!room) return null;
 
-  const [recentBids, soldPlayers] = await Promise.all([
+  const [recentBids, soldRows] = await Promise.all([
     db.collection("bids").find({ roomId }).sort({ createdAt: -1 }).limit(10).toArray(),
-    db.collection("soldPlayers").find({ roomId }).sort({ createdAt: -1 }).limit(20).toArray(),
+    db.collection("soldPlayers").find({ roomId }).sort({ createdAt: -1 }).toArray(),
   ]);
 
   return {
     room: {
       roomId: room.roomId,
+      name: String(room.name ?? room.roomId),
       status: room.status,
       timer: Math.max(0, Number(room.timer ?? defaultTimer)),
       currentPlayer: room.currentPlayer,
@@ -105,12 +106,27 @@ export async function getRoomLiveState(db: Db, roomId: string, defaultTimer: num
       amount: bid.amount,
       timestamp: bid.createdAt,
     })),
-    soldPlayers: soldPlayers.map((item) => ({
-      playerName: item.playerName,
-      winnerName: item.winnerName,
+    soldPlayers: soldRows.slice(0, 20).map((item) => ({
+      playerId: String(item.playerId ?? ""),
+      playerName: String(item.playerName ?? ""),
+      winnerName: String(item.winnerName ?? ""),
       amount: Number(item.amount ?? 0),
       timestamp: item.createdAt,
     })),
+    soldPlayerIds: [
+      ...new Set(
+        soldRows
+          .map((item) => String(item.playerId ?? "").trim())
+          .filter(Boolean)
+      ),
+    ],
+    soldPlayerNames: [
+      ...new Set(
+        soldRows
+          .map((item) => String(item.playerName ?? "").trim().toLowerCase())
+          .filter(Boolean)
+      ),
+    ],
   };
 }
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Container } from "@/components/layout/container";
+import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { Button } from "@/components/ui/button";
 import { showErrorAlert, showSuccessAlert } from "@/lib/alerts";
 
@@ -17,6 +18,7 @@ export function AdminSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [editions, setEditions] = useState<string[]>([]);
+  const [editionCounts, setEditionCounts] = useState<Record<string, number>>({});
 
   const [roundTimeSeconds, setRoundTimeSeconds] = useState("120");
   const [bidIncrement, setBidIncrement] = useState("10");
@@ -42,6 +44,11 @@ export function AdminSettingsPage() {
       setBidCooldownMs(String(settings.bidCooldownMs ?? 500));
       setActiveEdition(String(settings.activeEdition ?? "fc24"));
       setEditions(Array.isArray(data.editions) ? data.editions.map((item: unknown) => String(item)) : []);
+      setEditionCounts(
+        data.editionCounts && typeof data.editionCounts === "object"
+          ? (data.editionCounts as Record<string, number>)
+          : {}
+      );
     } catch {
       setError("Failed to load settings. Please refresh and try again.");
     } finally {
@@ -97,6 +104,7 @@ export function AdminSettingsPage() {
 
   return (
     <Container className="py-10">
+      <Breadcrumbs />
       <div className="mb-6">
         <h1 className="text-3xl font-black">Admin Settings</h1>
         <p className="mt-2 text-slate-400">
@@ -106,7 +114,11 @@ export function AdminSettingsPage() {
 
       <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
         {loading ? (
-          <p className="text-sm text-slate-400">Loading settings...</p>
+          <div className="space-y-4">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="h-12 animate-pulse rounded-xl border border-white/10 bg-white/5" />
+            ))}
+          </div>
         ) : (
           <form onSubmit={saveSettings} className="space-y-5">
             <div className="grid gap-5 md:grid-cols-2">
@@ -169,11 +181,17 @@ export function AdminSettingsPage() {
                     editions.map((edition) => (
                       <option key={edition} value={edition}>
                         {edition}
+                        {editionCounts[edition] != null ? ` (${editionCounts[edition]} players)` : ""}
                       </option>
                     ))
                   )}
                 </select>
-                <p className="mt-1 text-xs text-slate-500">Used by player APIs and player detail page.</p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Used by player APIs and player detail page.
+                  {editionCounts[activeEdition] != null
+                    ? ` Current edition has ${editionCounts[activeEdition]} players in the database.`
+                    : ""}
+                </p>
               </div>
             </div>
 

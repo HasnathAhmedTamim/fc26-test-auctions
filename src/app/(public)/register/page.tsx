@@ -1,8 +1,15 @@
+import Link from "next/link";
+import type { Metadata } from "next";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { Container } from "@/components/layout/container";
 import { RegisterForm } from "@/components/auth/register-form";
 import { getSafePath, resolvePostAuthPath } from "@/lib/safe-path";
+
+export const metadata: Metadata = {
+  title: "Register | FC26 Auction",
+  description: "Create a manager account for your FC26 auction league.",
+};
 
 export default async function RegisterPage({
   searchParams,
@@ -27,9 +34,17 @@ export default async function RegisterPage({
           <h1 className="text-3xl font-black">Register</h1>
           <p className="mt-2 text-slate-400">Create your manager account.</p>
           <p className="mt-2 text-sm text-slate-500">
-            New accounts are created as manager roles by default.
+            New accounts are created as manager roles by default. After registering, ask your admin to
+            grant room access before joining an auction.
           </p>
           <RegisterForm callbackUrl={safeCallback} />
+
+          <p className="mt-6 text-center text-sm text-slate-400">
+            Already have an account?{" "}
+            <Link href="/login" className="font-semibold text-emerald-300 hover:text-emerald-200">
+              Login here
+            </Link>
+          </p>
         </div>
       </Container>
     </section>

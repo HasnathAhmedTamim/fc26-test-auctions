@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { Container } from "@/components/layout/container";
+import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { Button } from "@/components/ui/button";
+import { AdminSetupGuide } from "@/components/features/admin/admin-setup-guide";
 import { AdminPanelProvider, useAdminPanelContext } from "@/components/features/admin/admin-panel-context";
 import { BadgesTab } from "@/components/features/admin/badges-tab";
 import { RoomsTab } from "@/components/features/admin/rooms-tab";
@@ -15,10 +17,13 @@ function AdminPanelShell() {
 
   return (
     <Container className="py-10">
+      <Breadcrumbs />
       <h1 className="text-3xl font-black">Admin Panel</h1>
       <p className="mt-2 text-slate-400">
         Create rooms, control live auctions, and manually fix any squad ownership issue.
       </p>
+
+      <AdminSetupGuide />
 
       <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4">
         <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Control Center</p>

@@ -31,13 +31,23 @@ export async function GET() {
     const runtime = await getAuctionRuntimeSettings(db);
     const activeEdition = await getActivePlayerEdition(db);
     const editions = await listAvailablePlayerEditions(db);
+    const editionList = editions.length ? editions : [activeEdition];
+    const editionCounts = Object.fromEntries(
+      await Promise.all(
+        editionList.map(async (edition) => [
+          edition,
+          await db.collection("players").countDocuments({ edition }),
+        ])
+      )
+    );
 
     return NextResponse.json({
       settings: {
         ...runtime,
         activeEdition,
       },
-      editions: editions.length ? editions : [activeEdition],
+      editions: editionList,
+      editionCounts,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to load settings";

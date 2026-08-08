@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Tournament } from "@/types/tournament";
+import { AdminTabSkeleton } from "@/components/features/admin/admin-tab-skeleton";
 import { useAdminPanelContext } from "./admin-panel-context";
 import { STATUS_STYLES } from "./constants";
 
@@ -375,7 +376,7 @@ export function TournamentsTab() {
           </div>
 
           {ctx.tournamentsLoading ? (
-            <p className="mt-4 text-slate-400">Loading tournaments...</p>
+            <AdminTabSkeleton rows={5} />
           ) : ctx.managedTournaments.length === 0 ? (
             <p className="mt-4 text-slate-400">No custom tournaments found yet. Create one from the left panel.</p>
           ) : (

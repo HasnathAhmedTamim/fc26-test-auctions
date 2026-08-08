@@ -3,7 +3,11 @@ import { auth } from "@/auth";
 import { getDb } from "@/lib/mongodb";
 import { saveLineupSchema } from "@/lib/validations";
 import type { LineupFormation, LineupSlotId } from "@/types/auction";
-import { resolveUserRoster, type BoughtPlayer } from "@/services/dashboard.service";
+import {
+  listUserLineupRooms,
+  resolveUserRosterForRoom,
+  type BoughtPlayer,
+} from "@/services/dashboard.service";
 
 const DEFAULT_FORMATION = "4-3-3";
 
@@ -30,28 +34,25 @@ function getFormationSlots(formationInput: string): LineupSlotId[] {
 
 type BoughtPlayerLocal = BoughtPlayer;
 
-async function resolveUserRosterForSession(userId: string) {
-  const db = await getDb();
-  return resolveUserRoster(db, userId);
-}
-
-function toBench(playersBought: BoughtPlayerLocal[], starterPlayerIds: string[]) {
-  // Bench is derived as owned players minus selected starters.
-  const starterSet = new Set(starterPlayerIds);
-  return playersBought.filter((player) => !starterSet.has(player.playerId));
-}
-
-export async function GET() {
+export async function GET(request: NextRequest) {
   const session = await auth();
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { roomId, playersBought } = await resolveUserRosterForSession(session.user.id);
+  const db = await getDb();
+  const requestedRoomId = request.nextUrl.searchParams.get("roomId")?.trim() || undefined;
+  const rooms = await listUserLineupRooms(db, session.user.id);
+  const { roomId, playersBought } = await resolveUserRosterForRoom(
+    db,
+    session.user.id,
+    requestedRoomId ?? rooms[0]?.roomId
+  );
 
   if (!roomId) {
     return NextResponse.json({
       roomId: null,
+      rooms,
       formation: DEFAULT_FORMATION,
       starters: [],
       bench: [],
@@ -59,8 +60,6 @@ export async function GET() {
       updatedAt: null,
     });
   }
-
-  const db = await getDb();
   const lineupsCollection = db.collection("lineups");
   const existing = await lineupsCollection.findOne({ userId: session.user.id, roomId });
 
@@ -106,12 +105,18 @@ export async function GET() {
 
   return NextResponse.json({
     roomId,
+    rooms,
     formation,
     starters: normalizedStarters,
     bench: toBench(playersBought, normalizedStarters.map((s) => s.playerId)),
     availablePlayers: playersBought,
     updatedAt: existing?.updatedAt ? new Date(existing.updatedAt).toISOString() : null,
   });
+}
+
+function toBench(playersBought: BoughtPlayerLocal[], starterPlayerIds: string[]) {
+  const starterSet = new Set(starterPlayerIds);
+  return playersBought.filter((player) => !starterSet.has(player.playerId));
 }
 
 export async function PUT(request: NextRequest) {

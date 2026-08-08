@@ -123,6 +123,14 @@ export function TournamentCard({
       </div>
 
       <div className="mt-4">
+        <Link href={`/tournaments/${tournament.id}`}>
+          <Button size="sm" className="bg-emerald-500 text-black hover:bg-emerald-400">
+            View Full Details
+          </Button>
+        </Link>
+      </div>
+
+      <div className="mt-4">
         {viewerRole === "admin" ? (
           <div className="flex flex-wrap gap-2">
             <Link href="/admin">

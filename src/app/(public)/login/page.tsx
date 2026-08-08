@@ -1,8 +1,15 @@
+import Link from "next/link";
+import type { Metadata } from "next";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { Container } from "@/components/layout/container";
 import { LoginForm } from "@/components/auth/login-form";
 import { getSafePath, resolvePostAuthPath } from "@/lib/safe-path";
+
+export const metadata: Metadata = {
+  title: "Login | FC26 Auction",
+  description: "Sign in to access your manager dashboard and auction rooms.",
+};
 
 // This page is rendered on the server to check for an active session and redirect if necessary. If no session is found, it renders the login form.
 export default async function LoginPage({
@@ -37,6 +44,13 @@ export default async function LoginPage({
           </p>
 
           <LoginForm callbackUrl={safeCallback} />
+
+          <p className="mt-6 text-center text-sm text-slate-400">
+            Don&apos;t have an account?{" "}
+            <Link href="/register" className="font-semibold text-emerald-300 hover:text-emerald-200">
+              Register here
+            </Link>
+          </p>
         </div>
       </Container>
     </section>

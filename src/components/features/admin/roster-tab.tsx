@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { AdminTabSkeleton } from "@/components/features/admin/admin-tab-skeleton";
 import { useAdminPanelContext } from "./admin-panel-context";
 import { STATUS_STYLES } from "./constants";
 
@@ -178,7 +179,7 @@ export function RosterTab() {
           {!ctx.selectedRoomId ? (
             <p className="mt-4 text-slate-400">Select a room to manage its ctx.users.</p>
           ) : ctx.rosterLoading ? (
-            <p className="mt-4 text-slate-400">Loading manager rosters...</p>
+            <AdminTabSkeleton rows={6} />
           ) : ctx.managers.length === 0 ? (
             <p className="mt-4 text-slate-400">No ctx.managers found for this room yet.</p>
           ) : (

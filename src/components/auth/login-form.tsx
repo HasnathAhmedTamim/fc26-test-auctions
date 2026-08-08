@@ -6,7 +6,7 @@ import { signIn } from "next-auth/react";
 import { getSafePath, resolvePostAuthPath } from "@/lib/safe-path";
 import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { showErrorAlert, showSuccessAlert } from "@/lib/alerts";
+import { showErrorAlert } from "@/lib/alerts";
 
 type LoginFormProps = {
   callbackUrl?: string;
@@ -38,8 +38,6 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
         await showErrorAlert("Login failed", "Invalid email or password.");
         return;
       }
-
-      await showSuccessAlert("Welcome back", "Redirecting to your dashboard...");
 
       router.replace(safeCallbackUrl);
       router.refresh();
@@ -82,6 +80,10 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
           </button>
         </div>
       </label>
+
+      <p className="text-xs text-slate-500">
+        Forgot your password? Contact your tournament admin to reset it.
+      </p>
 
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
 
