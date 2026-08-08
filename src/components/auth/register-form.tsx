@@ -6,7 +6,7 @@ import { signIn } from "next-auth/react";
 import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { showErrorAlert, showInfoAlert, showSuccessAlert } from "@/lib/alerts";
-import { getSafePath } from "@/lib/safe-path";
+import { resolvePostAuthPath } from "@/lib/safe-path";
 
 type RegisterFormProps = {
   callbackUrl?: string;
@@ -90,8 +90,8 @@ export function RegisterForm({ callbackUrl }: RegisterFormProps) {
         }
 
         await showSuccessAlert("Account ready", "Welcome to FC26 Auction.");
-        const safeDestination = getSafePath(callbackUrl) ?? "/dashboard";
-        router.replace(safeDestination);
+        router.replace(resolvePostAuthPath(callbackUrl));
+        router.refresh();
       } finally {
         setSubmitting(false);
       }

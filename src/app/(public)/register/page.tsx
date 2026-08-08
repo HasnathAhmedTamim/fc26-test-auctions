@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { Container } from "@/components/layout/container";
 import { RegisterForm } from "@/components/auth/register-form";
-import { getSafePath } from "@/lib/safe-path";
+import { getSafePath, resolvePostAuthPath } from "@/lib/safe-path";
 
 export default async function RegisterPage({
   searchParams,
@@ -15,11 +15,7 @@ export default async function RegisterPage({
   const safeCallback = getSafePath(callbackUrl);
 
   if (session?.user) {
-    // Route users directly to callback when safe; otherwise role-specific home.
-    redirect(
-      safeCallback ??
-        (session.user.role === "admin" ? "/admin" : "/dashboard")
-    );
+    redirect(resolvePostAuthPath(safeCallback, session.user.role));
   }
 
   return (

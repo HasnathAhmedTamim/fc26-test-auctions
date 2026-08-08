@@ -80,18 +80,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return session;
     },
     async redirect({ url, baseUrl }) {
-      const vercelUrl = process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : undefined;
-      const normalizedBaseUrl = baseUrl.replace(/\/$/, "");
-      const rawAppUrl =
-        normalizedBaseUrl
-        || process.env.AUTH_URL
-        || process.env.NEXTAUTH_URL
-        || process.env.NEXT_PUBLIC_APP_URL
-        || vercelUrl
-        || baseUrl;
-      const appUrl = rawAppUrl.replace(/\/$/, "");
+      const appUrl = baseUrl.replace(/\/$/, "");
 
       if (url.startsWith("/")) {
         return `${appUrl}${url}`;

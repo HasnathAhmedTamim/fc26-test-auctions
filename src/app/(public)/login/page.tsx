@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { Container } from "@/components/layout/container";
 import { LoginForm } from "@/components/auth/login-form";
-import { getSafePath } from "@/lib/safe-path";
+import { getSafePath, resolvePostAuthPath } from "@/lib/safe-path";
 
 // This page is rendered on the server to check for an active session and redirect if necessary. If no session is found, it renders the login form.
 export default async function LoginPage({
@@ -16,11 +16,7 @@ export default async function LoginPage({
 
   // redirect logged in users
   if (session?.user) {
-    const redirectTo =
-      safeCallback ??
-      (session.user.role === "admin" ? "/admin" : "/dashboard");
-
-    redirect(redirectTo);
+    redirect(resolvePostAuthPath(safeCallback, session.user.role));
   }
 
   return (

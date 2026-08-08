@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
+import { getSafePath, resolvePostAuthPath } from "@/lib/safe-path";
 import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { showErrorAlert, showSuccessAlert } from "@/lib/alerts";
@@ -16,11 +18,8 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
-  const requestedCallbackUrl = callbackUrl ?? "/dashboard";
-  const safeCallbackUrl = requestedCallbackUrl.startsWith("/")
-    && !requestedCallbackUrl.startsWith("//")
-    ? requestedCallbackUrl
-    : "/dashboard";
+  const router = useRouter();
+  const safeCallbackUrl = resolvePostAuthPath(getSafePath(callbackUrl));
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -42,11 +41,8 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
 
       await showSuccessAlert("Welcome back", "Redirecting to your dashboard...");
 
-      const destination = result?.url
-        ? new URL(result.url, window.location.origin).toString()
-        : safeCallbackUrl;
-
-      window.location.assign(destination);
+      router.replace(safeCallbackUrl);
+      router.refresh();
     });
   }
 
