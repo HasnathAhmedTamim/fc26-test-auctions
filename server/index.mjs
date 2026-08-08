@@ -3,12 +3,14 @@ import { createServer } from "node:http";
 import next from "next";
 import { Server } from "socket.io";
 import { fetchAuctionRuntimeSettings } from "../src/lib/auction/runtime-settings.mjs";
+import { configureMongoDns } from "./lib/dns-bootstrap.mjs";
 import { connectDb } from "./lib/db.mjs";
 import { createSocketAuthMiddleware } from "./socket/auth.mjs";
 import { createRoomRuntime } from "./socket/room-runtime.mjs";
 import { registerAuctionHandlers } from "./socket/handlers.mjs";
 
 dotenv.config({ path: ".env.local" });
+configureMongoDns();
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = "localhost";
@@ -24,7 +26,13 @@ const app = next({ dev, hostname, port });
 const handler = app.getRequestHandler();
 
 app.prepare().then(async () => {
-  const { db } = await connectDb(mongoUri);
+  let db;
+  try {
+    ({ db } = await connectDb(mongoUri));
+  } catch (error) {
+    console.error("Failed to connect to MongoDB:", error);
+    process.exit(1);
+  }
   const runtimeSettingsCache = { value: null, fetchedAt: 0 };
 
   async function getAuctionSettings() {

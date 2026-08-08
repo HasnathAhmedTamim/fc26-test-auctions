@@ -1,5 +1,8 @@
 import { MongoClient, ServerApiVersion } from "mongodb";
 import { DB_NAME } from "@/lib/db/constants";
+import { configureMongoDns } from "@/lib/dns-bootstrap";
+
+configureMongoDns();
 
 const uri = process.env.MONGODB_URI;
 
