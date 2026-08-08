@@ -413,8 +413,9 @@ export function AuctionRoom({ roomId, user }: Props) {
 
       {socketActions.connectionStatus === "error" || socketActions.connectionStatus === "disconnected" ? (
         <div className="col-span-full rounded-2xl border border-red-500/30 bg-red-500/10 px-5 py-3 text-sm text-red-200">
-          Real-time auction updates are unavailable. Refresh the page or confirm the server is running with{" "}
-          <code className="rounded bg-black/30 px-1">npm run dev</code>.
+          Real-time auction updates are unavailable. This app must run on a Node host with{" "}
+          <code className="rounded bg-black/30 px-1">npm start</code> (Render, Railway, etc.). Vercel-only
+          deploys do not support Socket.IO. See README → &quot;Production (live auction)&quot;.
         </div>
       ) : null}
 

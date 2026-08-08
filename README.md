@@ -114,31 +114,52 @@ server/
 | --- | --- | --- |
 | `MONGODB_URI` | Yes | MongoDB connection string for app runtime and data scripts |
 | `AUTH_SECRET` | Yes | NextAuth JWT/session encryption secret |
-| `NEXT_PUBLIC_APP_URL` | Recommended | Base URL used by Socket.IO client/server CORS |
+| `NEXT_PUBLIC_APP_URL` | Recommended | Public site URL (auth redirects, server CORS) |
+| `NEXT_PUBLIC_SOCKET_URL` | Optional | Socket.IO URL if different from app URL; browser defaults to current origin |
 | `AUTH_URL` | Recommended | Explicit app/auth base URL fallback for redirects |
+| `PORT` | Optional | HTTP port for `npm start` (set automatically on Render/Railway) |
+| `HOSTNAME` | Optional | Bind address for `npm start` (default `0.0.0.0`) |
+| `MONGODB_DNS_SERVERS` | Optional | Windows/local SRV DNS workaround (`8.8.8.8,1.1.1.1`) |
 | `NEXTAUTH_URL` | Optional | Legacy URL fallback |
 | `NEXTAUTH_SECRET` | Optional | Legacy/fallback secret check in middleware |
 | `VERCEL_URL` | Optional | Used as redirect fallback in hosted environments |
 
-### Production (Vercel)
+### Production (live auction)
 
-Set these in the [Vercel project environment variables](https://vercel.com/docs/projects/environment-variables) for [fc26-test-auctions.vercel.app](https://fc26-test-auctions.vercel.app/):
+**Vercel alone cannot run live auctions.** Socket.IO needs the custom Node server in `server/index.mjs` (`npm start`). Deploy the **full app** to **Render** or **Railway**, then use that URL for everyone (managers, admins).
 
-```env
-MONGODB_URI=<your-atlas-uri>
-AUTH_SECRET=<same-secret-as-local-or-new-one>
-AUTH_URL=https://fc26-test-auctions.vercel.app
-NEXT_PUBLIC_APP_URL=https://fc26-test-auctions.vercel.app
+#### Render (recommended)
+
+1. Push this repo to GitHub (already done).
+2. [Render Dashboard](https://dashboard.render.com) → **New** → **Blueprint** → connect repo (uses `render.yaml`).
+3. Set **`MONGODB_URI`** when prompted (same Atlas URI as local).
+4. After first deploy, open the service URL (e.g. `https://fc26-auction.onrender.com`).
+5. Set environment variables to that exact URL (no trailing slash):
+   ```env
+   AUTH_URL=https://fc26-auction.onrender.com
+   NEXT_PUBLIC_APP_URL=https://fc26-auction.onrender.com
+   ```
+6. Redeploy. Open `/auction/{roomId}` — socket badge should show **Connected**.
+
+#### Railway
+
+1. [Railway](https://railway.app) → **New Project** → **Deploy from GitHub** → select repo.
+2. Railway reads `railway.toml` (`npm ci && npm run build`, `npm start`).
+3. Add variables: `MONGODB_URI`, `AUTH_SECRET`, `AUTH_URL`, `NEXT_PUBLIC_APP_URL` (your Railway URL).
+4. Generate a public domain in Railway settings, then set `AUTH_URL` / `NEXT_PUBLIC_APP_URL` to that URL and redeploy.
+
+#### Player data on production
+
+```bash
+npm run import:players -- public/lower-rated-players.json lower-rated
+npm run players:version -- lower-rated
 ```
 
-Use **Production** scope for all four variables. Redeploy after changing env vars.
+Run against production MongoDB (same `MONGODB_URI`), or switch edition in **Admin → Settings**.
 
-Automated setup (after `vercel login`):
+#### Vercel (optional, no live auction)
 
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/set-vercel-production-env.ps1
-vercel --prod
-```
+You can keep Vercel for previews, but **managers must use the Render/Railway URL** for auction rooms. Vercel deploys do not run Socket.IO.
 
 ## Scripts
 

@@ -6,6 +6,7 @@ export type SocketConnectionStatus = "connecting" | "connected" | "disconnected"
 import { io, Socket } from "socket.io-client";
 import { AuctionRoomState, BidEntry } from "@/types/auction";
 import { AUCTION_SOCKET_EVENTS as E } from "@/lib/auction/constants";
+import { getSocketServerUrl } from "@/lib/auction/socket-url";
 
 type AuctionSocketUser = {
   id: string;
@@ -56,7 +57,10 @@ export function useAuctionSocket(
 
   useEffect(() => {
     setConnectionStatus("connecting");
-    const socket = io(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000");
+    const socket = io(getSocketServerUrl(), {
+      transports: ["websocket", "polling"],
+      withCredentials: true,
+    });
     socketRef.current = socket;
 
     socket.on("connect", () => setConnectionStatus("connected"));

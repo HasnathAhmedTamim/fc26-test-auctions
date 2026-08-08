@@ -9,17 +9,33 @@ import { createSocketAuthMiddleware } from "./socket/auth.mjs";
 import { createRoomRuntime } from "./socket/room-runtime.mjs";
 import { registerAuctionHandlers } from "./socket/handlers.mjs";
 
-dotenv.config({ path: ".env.local" });
+if (process.env.NODE_ENV !== "production") {
+  dotenv.config({ path: ".env.local" });
+}
+
 configureMongoDns();
 
+function resolveAppUrl() {
+  return (
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.AUTH_URL ||
+    process.env.RENDER_EXTERNAL_URL ||
+    process.env.RAILWAY_STATIC_URL ||
+    "http://localhost:3000"
+  )
+    .trim()
+    .replace(/\/$/, "");
+}
+
 const dev = process.env.NODE_ENV !== "production";
-const hostname = "localhost";
-const port = 3000;
+const hostname = process.env.HOSTNAME || "0.0.0.0";
+const port = Number(process.env.PORT) || 3000;
+const appUrl = resolveAppUrl();
 
 const mongoUri = process.env.MONGODB_URI;
 
 if (!mongoUri) {
-  throw new Error("MONGODB_URI is missing in .env.local");
+  throw new Error("MONGODB_URI is missing. Set it in .env.local (dev) or your host env (production).");
 }
 
 const app = next({ dev, hostname, port });
@@ -33,6 +49,7 @@ app.prepare().then(async () => {
     console.error("Failed to connect to MongoDB:", error);
     process.exit(1);
   }
+
   const runtimeSettingsCache = { value: null, fetchedAt: 0 };
 
   async function getAuctionSettings() {
@@ -42,8 +59,9 @@ app.prepare().then(async () => {
   const httpServer = createServer(handler);
   const io = new Server(httpServer, {
     cors: {
-      origin: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+      origin: appUrl,
       methods: ["GET", "POST"],
+      credentials: true,
     },
   });
 
@@ -52,7 +70,8 @@ app.prepare().then(async () => {
   io.use(createSocketAuthMiddleware());
   registerAuctionHandlers(io, { db, getAuctionSettings, runtime });
 
-  httpServer.listen(port, () => {
-    console.log(`> Ready on http://${hostname}:${port}`);
+  httpServer.listen(port, hostname, () => {
+    console.log(`> Ready on ${appUrl} (listening ${hostname}:${port})`);
+    console.log(`> Socket.IO enabled — live auction requires this Node host (not Vercel-only).`);
   });
 });
