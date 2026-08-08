@@ -147,10 +147,22 @@ export function AuctionRoom({ roomId, user }: Props) {
     let cancelled = false;
 
     async function loadPlayers() {
-      const res = await fetch("/api/players", { cache: "no-store" });
-      const data = await res.json();
+      const all: Player[] = [];
+      let page = 1;
+      let hasMore = true;
+
+      while (hasMore) {
+        const res = await fetch(`/api/players?limit=200&page=${page}`, { cache: "no-store" });
+        const data = await res.json();
+        if (!res.ok) break;
+
+        all.push(...(data.players ?? []));
+        hasMore = Boolean(data.hasMore);
+        page += 1;
+      }
+
       if (!cancelled) {
-        setPlayerPool(data.players ?? []);
+        setPlayerPool(all);
       }
     }
 
@@ -347,7 +359,7 @@ export function AuctionRoom({ roomId, user }: Props) {
       height: "178cm / 5'10\"",
       weight: "74kg / 163lb",
       image: player.image,
-      basePrice: player.price,
+      basePrice: player.basePrice ?? player.price,
       pace: player.pace,
       shooting: player.shooting,
       passing: player.passing,
@@ -536,7 +548,7 @@ export function AuctionRoom({ roomId, user }: Props) {
                   </option>
                   {filteredPlayerPool.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.name} ({p.position}, {p.rating} OVR) - {p.price} coins
+                      {p.name} ({p.position}, {p.rating} OVR) - {p.basePrice ?? p.price} coins
                     </option>
                   ))}
                 </select>

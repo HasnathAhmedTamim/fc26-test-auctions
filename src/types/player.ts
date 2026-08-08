@@ -7,6 +7,7 @@ export type Player = {
   league?: string;
   nation: string;
   price: number;
+  basePrice?: number;
   pace: number;
   shooting: number;
   passing: number;

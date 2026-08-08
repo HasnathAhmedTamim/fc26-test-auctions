@@ -20,12 +20,17 @@ export type RawPlayerJson = {
   height?: string;
   weight?: string;
   playStyle?: string;
+  basePrice?: number;
   slug?: string;
+  fullName?: string;
+  firstName?: string;
+  lastName?: string;
 };
 
 export const PLAYER_JSON_BY_EDITION: Record<string, string> = {
   fc24: "/fifa24-player-list.json",
   fc26: "/fc26-player-list-with-base-price.json",
+  "lower-rated": "/lower-rated-players.json",
 };
 
 export function getPlayerJsonPathForEdition(edition: string) {
@@ -37,21 +42,35 @@ function derivePrice(overall: number) {
   return Math.round(overall * 4.5);
 }
 
+function slugify(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
 export function mapRawJsonToPlayer(item: RawPlayerJson, idx: number): Player {
   const rating = Number(item.overall ?? 60);
-  const id = String(item.slug ?? `${item.name ?? "player"}-${idx}`)
+  const name =
+    String(item.name ?? item.fullName ?? [item.firstName, item.lastName].filter(Boolean).join(" ") ?? `Player ${idx + 1}`);
+  const id = String(item.slug ?? slugify(name))
     .toLowerCase()
     .replace(/[^a-z0-9-]+/g, "-");
+  const basePrice = Number(item.basePrice);
+  const price = Number.isFinite(basePrice) && basePrice >= 0 ? basePrice : derivePrice(rating);
 
   return {
     id,
-    name: String(item.name ?? `Player ${idx + 1}`),
+    name,
     rating,
     position: String(item.position ?? "CM"),
     club: String(item.club ?? "Unknown Club"),
     league: String(item.league ?? "Unknown League"),
     nation: String(item.nation ?? "Unknown Nation"),
-    price: derivePrice(rating),
+    price,
     pace: Number(item.pace ?? 50),
     shooting: Number(item.shooting ?? 50),
     passing: Number(item.passing ?? 50),

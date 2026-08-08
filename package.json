@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test": "vitest run --config vitest.config.mts",
     "import:players": "node -r dotenv/config scripts/import-fc-players.mjs",
+    "players:build:lower-rated": "node scripts/build-lower-rated-players.mjs",
     "players:version": "node -r dotenv/config scripts/set-active-edition.mjs"
   },
   "dependencies": {

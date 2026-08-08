@@ -1,7 +1,15 @@
-import "dotenv/config";
+import dotenv from "dotenv";
 import fs from "node:fs";
 import path from "node:path";
 import { MongoClient } from "mongodb";
+import dns from "node:dns";
+
+dotenv.config({ path: ".env.local" });
+
+const dnsServers = process.env.MONGODB_DNS_SERVERS?.split(",").map((value) => value.trim()).filter(Boolean);
+if (dnsServers?.length) {
+  dns.setServers(dnsServers);
+}
 
 const fileArg = process.argv[2];
 const editionArg = (process.argv[3] || "fc24").toLowerCase();
@@ -39,6 +47,26 @@ function toNumber(value, fallback = 0) {
 function cleanText(value, fallback = "") {
   if (value === undefined || value === null) return fallback;
   return String(value).trim();
+}
+
+function resolveName(item, idx) {
+  return (
+    cleanText(item.name)
+    || cleanText(item.fullName)
+    || cleanText(
+      [item.firstName, item.lastName].filter(Boolean).join(" ")
+    )
+    || `Player ${idx + 1}`
+  );
+}
+
+function resolveBasePrice(item, overall) {
+  const explicit = item.basePrice ?? item.base_price;
+  if (explicit !== undefined && explicit !== null && String(explicit).trim() !== "") {
+    const parsed = Number(explicit);
+    if (Number.isFinite(parsed) && parsed >= 0) return parsed;
+  }
+  return derivePrice(overall);
 }
 
 function derivePrice(overall) {
@@ -82,21 +110,24 @@ if (!sourcePlayers.length) {
 const now = new Date();
 
 const docs = sourcePlayers.map((item, idx) => {
-  const name = cleanText(item.name, `Player ${idx + 1}`);
+  const name = resolveName(item, idx);
   const playerId = cleanText(item.slug) || slugify(`${name}-${item.position || idx}`);
+  const rating = toNumber(item.overall, 60);
+  const basePrice = resolveBasePrice(item, rating);
 
   return {
     edition: editionArg,
     playerId,
     name,
-    rating: toNumber(item.overall, 60),
+    rating,
     position: cleanText(item.position, "CM"),
     club: cleanText(item.club, "Unknown Club"),
     league: cleanText(item.league, "Unknown League"),
     nation: cleanText(item.nation, "Unknown Nation"),
-    image: upsizePortrait(item.picture) || cleanText(item.cardPicture),
+    image: upsizePortrait(item.picture) || cleanText(item.cardPicture) || "/player-placeholder.svg",
     cardImage: cleanText(item.cardPicture),
-    price: derivePrice(item.overall),
+    price: basePrice,
+    basePrice,
 
     pace: toNumber(item.pace, 50),
     shooting: toNumber(item.shooting, 50),

@@ -11,6 +11,7 @@ export function mapPlayerDocument(doc: Record<string, unknown>) {
     league: doc.league,
     nation: doc.nation,
     price: doc.price,
+    basePrice: doc.basePrice ?? doc.price,
     pace: doc.pace,
     shooting: doc.shooting,
     passing: doc.passing,
