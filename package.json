@@ -2,6 +2,9 @@
   "name": "fc26-auction",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "node server/index.mjs",
     "build": "next build",

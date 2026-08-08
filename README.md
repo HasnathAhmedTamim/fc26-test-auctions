@@ -141,6 +141,24 @@ server/
    ```
 6. Redeploy. Open `/auction/{roomId}` — socket badge should show **Connected**.
 
+#### Render 502 troubleshooting
+
+If you see **HTTP 502**:
+
+1. **Render → your service → Logs** — look for `MONGODB_URI is missing`, `AUTH_SECRET is missing`, or MongoDB connection errors.
+2. **Environment variables** (required):
+   ```env
+   MONGODB_URI=mongodb+srv://...
+   AUTH_SECRET=<long random string>
+   AUTH_URL=https://fc26-test-auctions.onrender.com
+   NEXT_PUBLIC_APP_URL=https://fc26-test-auctions.onrender.com
+   ```
+3. **MongoDB Atlas → Network Access** → add **`0.0.0.0/0`** (allow Render’s dynamic IPs).
+4. **Redeploy** after saving env vars (Manual Deploy → Deploy latest commit).
+5. Check **`https://your-app.onrender.com/health`** — should return `ok` when running.
+
+Free tier cold starts can take 30–60 seconds after idle; wait and refresh once.
+
 #### Railway
 
 1. [Railway](https://railway.app) → **New Project** → **Deploy from GitHub** → select repo.
