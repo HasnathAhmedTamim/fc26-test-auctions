@@ -118,7 +118,7 @@ server/
 | `NEXT_PUBLIC_SOCKET_URL` | Optional | Socket.IO URL if different from app URL; browser defaults to current origin |
 | `AUTH_URL` | Recommended | Explicit app/auth base URL fallback for redirects |
 | `PORT` | Optional | HTTP port for `npm start` (set automatically on Render/Railway) |
-| `HOSTNAME` | Optional | Bind address for `npm start` (default `0.0.0.0`) |
+| `BIND_HOST` | Optional | HTTP bind address for `npm start` (default `0.0.0.0`; do not set to `HOSTNAME`) |
 | `MONGODB_DNS_SERVERS` | Optional | Windows/local SRV DNS workaround (`8.8.8.8,1.1.1.1`) |
 | `NEXTAUTH_URL` | Optional | Legacy URL fallback |
 | `NEXTAUTH_SECRET` | Optional | Legacy/fallback secret check in middleware |

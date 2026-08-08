@@ -27,7 +27,9 @@ function resolveAppUrl() {
 }
 
 const dev = process.env.NODE_ENV !== "production";
-const hostname = process.env.HOSTNAME || "0.0.0.0";
+// Do not use process.env.HOSTNAME — Render/Linux containers set it to the pod name,
+// which breaks load balancer routing (502). Always bind all interfaces in production.
+const bindHost = process.env.BIND_HOST || "0.0.0.0";
 const port = Number(process.env.PORT) || 3000;
 const appUrl = resolveAppUrl();
 const mongoUri = process.env.MONGODB_URI;
@@ -67,8 +69,8 @@ const httpServer = createServer((req, res) => {
   nextHandler(req, res);
 });
 
-httpServer.listen(port, hostname, () => {
-  console.log(`> Listening on ${hostname}:${port}`);
+httpServer.listen(port, bindHost, () => {
+  console.log(`> Listening on ${bindHost}:${port}`);
   void bootstrap();
 });
 
